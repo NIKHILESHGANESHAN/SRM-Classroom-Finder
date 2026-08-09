@@ -283,21 +283,26 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 ## Screenshots
 
-
-| File                              | Screen                                     |
-| --------------------------------- | ------------------------------------------ |
-| `docs/screenshots/landing.png`    | Landing — Class Finder + Contributor cards |
-| `docs/screenshots/finder.png`     | Class Finder — filters, cards, countdown   |
-| `docs/screenshots/contribute.png` | Contributor wizard                         |
-| `docs/screenshots/stats.png`      | Stats dashboard + bar chart                |
-| `docs/screenshots/mobile.png`     | Mobile viewport (optional)                 |
-
-
 ```markdown
-![Landing](docs/screenshots/landing.png)
+## 📸 Screenshots
+
+### Landing Page
+![Landing Page](docs/screenshots/landing.png)
+
+### Class Finder
 ![Class Finder](docs/screenshots/finder.png)
-![Contributor](docs/screenshots/contribute.png)
-![Stats](docs/screenshots/stats.png)
+
+### Contributor
+![Contributor](docs/screenshots/contributor.png)
+
+### Stats Dashboard
+![Stats Dashboard](docs/screenshots/stats.png)
+
+### Report Modal
+![Report Modal](docs/screenshots/report-modal.png)
+
+### Mobile View
+![Mobile View](docs/screenshots/mobile-view.png)
 ```
 
 ---
