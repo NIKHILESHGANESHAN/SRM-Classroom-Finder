@@ -2,26 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
+  /* Brand: deep navy primary (#0F2C59), amber accent (#F59E0B) */
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 210 40% 98%;
+    --foreground: 214 71% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 214 71% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 71% 12%;
+    --primary: 214 71% 20%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 214 30% 94%;
+    --secondary-foreground: 214 71% 20%;
+    --muted: 214 20% 94%;
+    --muted-foreground: 214 15% 40%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 214 71% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 214 71% 20%;
+    --chart-1: 214 71% 20%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 214 40% 45%;
+    --chart-4: 38 70% 65%;
+    --chart-5: 214 25% 65%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 214 50% 8%;
+    --foreground: 210 40% 96%;
+    --card: 214 45% 12%;
+    --card-foreground: 210 40% 96%;
+    --popover: 214 45% 12%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 214 71% 12%;
+    --secondary: 214 30% 18%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 214 25% 18%;
+    --muted-foreground: 214 15% 65%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 214 71% 12%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 25% 22%;
+    --input: 214 25% 22%;
+    --ring: 38 92% 50%;
+    --chart-1: 38 92% 50%;
+    --chart-2: 214 60% 55%;
+    --chart-3: 38 70% 65%;
+    --chart-4: 214 40% 45%;
+    --chart-5: 214 25% 65%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Tactile pressed-state feedback for interactive controls */
+  button:active,
+  [role="button"]:active,
+  a:active {
+    transform: scale(0.97);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }

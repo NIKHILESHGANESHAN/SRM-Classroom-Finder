@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SRM KTR Classroom Finder
 
-## Getting Started
+Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2) between periods. Anonymous crowd reports — no login.
 
-First, run the development server:
+> **Status:** Phase 1 scaffold complete (Next.js 14 + Tailwind + shadcn/ui + Framer Motion + sonner). Database and features land in later phases.
+
+## Tech stack
+
+- **Framework:** Next.js 14 (App Router, TypeScript)
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Animation:** Framer Motion
+- **Toasts:** sonner
+- **Database (upcoming):** PostgreSQL + Prisma
+- **Deploy target:** Vercel + Neon/Supabase
+
+## Local setup (Phase 1)
 
 ```bash
+git clone <repo-url>
+cd SRM-Classroom-Finder
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Use **Test toast** on the landing page to verify sonner.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Database env vars and seed commands arrive in Phase 2+.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Theme
 
-## Learn More
+- Primary: deep navy `#0F2C59`
+- Accent: amber `#F59E0B`
+- Font: Inter
+- Dark mode via `next-themes` (system preference)
 
-To learn more about Next.js, take a look at the following resources:
+## DBMS Concepts Used
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Documented in `/docs` after Phase 13 (schema, ER diagram, normalization notes).

@@ -1,0 +1,11 @@
+Always use TypeScript strict mode.
+
+Prefer Server Components; only use "use client" where interactivity is required.
+
+Keep Prisma schema comments explaining DBMS design decisions (this is a coursework project).
+
+Never invent env vars silently — add new ones to .env.example and mention them in chat.
+
+After generating a feature, briefly list:
+- what you built
+- what still needs manual setup (database provisioning, API keys, etc.)
