@@ -62,6 +62,26 @@ export function getCampusDateString(
   }).format(now);
 }
 
+/**
+ * Monday (inclusive) of the campus calendar week containing `now`, as YYYY-MM-DD.
+ * Used by Stats “this week” aggregates (Mon → today).
+ */
+export function getCampusWeekStartString(
+  now: Date = new Date(),
+  timeZone: string = CAMPUS_TIMEZONE,
+): string {
+  const ymd = getCampusDateString(now, timeZone);
+  const [y, m, d] = ymd.split("-").map(Number);
+  // Weekday of that calendar date (UTC date parts = campus YMD)
+  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0=Sun … 6=Sat
+  const mondayOffset = weekday === 0 ? -6 : 1 - weekday;
+  const monday = new Date(Date.UTC(y, m - 1, d + mondayOffset));
+  const my = monday.getUTCFullYear();
+  const mm = String(monday.getUTCMonth() + 1).padStart(2, "0");
+  const md = String(monday.getUTCDate()).padStart(2, "0");
+  return `${my}-${mm}-${md}`;
+}
+
 export function formatMinutesAsLabel(totalMinutes: number): string {
   const h24 = Math.floor(totalMinutes / 60) % 24;
   const m = totalMinutes % 60;

@@ -2,7 +2,7 @@
 
 Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2) between periods. Anonymous crowd reports — no login.
 
-> **Status:** Phase 8 complete — Auto-expiry cron (`/api/cron/expire` every 5 min).
+> **Status:** Phase 10 complete — Stats page with raw SQL aggregates + Recharts.
 
 ## Tech stack
 
@@ -96,6 +96,14 @@ npm run db:seed
 | `occupied_reports` | Strike reports against a free claim |
 
 Also in migration SQL: CHECK constraints, composite FK (classroom floor ∈ building), index on `free_reports(report_date, time_slot_id, status)`, and view `active_free_classrooms`.
+
+### Stats aggregates (Phase 10)
+
+`/stats` reads history via `prisma.$queryRaw` (`GROUP BY`, `COUNT`, `AVG`, `HAVING`, `FILTER`, `LEFT JOIN`). Optional local seed for demos:
+
+```bash
+npx tsx scripts/seed-stats-data.ts
+```
 
 ## DBMS Concepts Used
 

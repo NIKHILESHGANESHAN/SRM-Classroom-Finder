@@ -7,6 +7,8 @@
  *   - TRANSACTION (prisma.$transaction) for classroom find-or-create + upsert
  *   - Natural-key uniqueness on (classroom_id, time_slot_id, report_date)
  *   - Soft rate limit keyed by anonymous device token (~15 / day)
+ *   - Soft-throttle (Phase 9): COUNT(hidden reports today) ≥ 3 raises the
+ *     confirmation_count needed before status becomes "confirmed"
  */
 
 import { prisma } from "@/lib/prisma";
@@ -19,6 +21,10 @@ import {
 } from "@/lib/slots";
 import { isValidDeviceToken } from "@/lib/token";
 import { getDeviceTokenFromCookies } from "@/lib/token-server";
+import {
+  getConfirmationThresholdForToken,
+  nextStatusAfterConfirmation,
+} from "@/lib/token-trust";
 
 const DAILY_CONTRIBUTION_CAP = 15;
 
@@ -145,6 +151,7 @@ export async function submitFreeReport(
       }
 
       if (!existing) {
+        // First report is always Unverified (trusted or soft-throttled).
         const created = await tx.freeReport.create({
           data: {
             classroomId: classroom.id,
@@ -185,11 +192,19 @@ export async function submitFreeReport(
         };
       }
 
+      // Trust weight follows the ORIGINAL contributor, not the confirmer.
+      const threshold = await getConfirmationThresholdForToken(
+        tx,
+        existing.contributorToken,
+        reportDate,
+      );
+
       const nextCount = existing.confirmationCount + 1;
-      const nextStatus =
-        nextCount >= 2 && existing.status === "unverified"
-          ? ("confirmed" as const)
-          : existing.status;
+      const nextStatus = nextStatusAfterConfirmation({
+        currentStatus: existing.status,
+        nextConfirmationCount: nextCount,
+        threshold,
+      });
 
       const updated = await tx.freeReport.update({
         where: { id: existing.id },

@@ -16,7 +16,8 @@ datasource db {
 // -----------------------------------------------------------------------------
 // Enums
 // Confidence is NOT a separate stored column beyond status — "confirmed" is
-// derived from confirmation_count / status transitions (see FreeReport).
+// derived from confirmation_count transitions against a trust-weighted
+// threshold (Phase 9 soft-throttle). Badge UI reads status only.
 // -----------------------------------------------------------------------------
 
 /// Lifecycle of a free-room report. Expired rows are retained for Stats history.
@@ -128,7 +129,9 @@ model FreeReport {
   /// Anonymous device token (cookie + localStorage) — NOT a user account FK.
   contributorToken  String           @map("contributor_token") @db.VarChar(64)
   status            FreeReportStatus @default(unverified)
-  /// Starts at 1; additional unique contributors bump this (confidence signal).
+  /// Starts at 1; additional unique contributors bump this. Status becomes
+  /// "confirmed" when count meets the original token's threshold (2 trusted /
+  /// 3 soft-throttled — see lib/token-trust.ts).
   confirmationCount Int              @default(1) @map("confirmation_count")
   createdAt         DateTime         @default(now()) @map("created_at")
   /// Set to report_date + time_slot.end_time; cron marks status=expired after this.

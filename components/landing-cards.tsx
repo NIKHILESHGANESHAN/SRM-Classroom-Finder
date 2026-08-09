@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { BarChart3, PenLine, Search } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
@@ -33,7 +31,6 @@ const cards = [
 
 /**
  * Landing hero cards — Framer Motion entrance + spring hover.
- * Routes are wired; page content lands in later build phases.
  */
 export function LandingCards() {
   const reduceMotion = useReducedMotion();
@@ -56,11 +53,17 @@ export function LandingCards() {
               whileHover={
                 reduceMotion
                   ? undefined
-                  : { scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 20 } }
+                  : {
+                      scale: 1.02,
+                      transition: { type: "spring", stiffness: 300, damping: 20 },
+                    }
               }
               whileTap={reduceMotion ? undefined : { scale: 0.97 }}
             >
-              <Link href={card.href} className="block h-full focus-visible:outline-none">
+              <Link
+                href={card.href}
+                className="block h-full focus-visible:outline-none"
+              >
                 <Card className="h-full min-h-[160px] border-border/80 shadow-md transition-shadow hover:shadow-lg">
                   <CardHeader className="gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -79,7 +82,7 @@ export function LandingCards() {
       </div>
 
       <motion.div
-        className="flex flex-col items-center gap-4"
+        className="flex flex-col items-center"
         initial={reduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: reduceMotion ? 0 : 0.2, duration: 0.3, ease: EASE }}
@@ -91,20 +94,6 @@ export function LandingCards() {
           <BarChart3 className="h-4 w-4" aria-hidden />
           Stats
         </Link>
-
-        {/* Smoke-test control for sonner — removed once contribute flow ships */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            toast.success("Stack check passed", {
-              description: "Framer Motion, shadcn/ui, and sonner are wired up.",
-            })
-          }
-        >
-          Test toast
-        </Button>
       </motion.div>
     </div>
   );
