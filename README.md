@@ -2,7 +2,7 @@
 
 Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2) between periods. Anonymous crowd reports — no login.
 
-> **Status:** Phase 4 complete — anonymous device token (cookie + localStorage sync).
+> **Status:** Phase 6 complete — Class Finder (view-backed free rooms, filters, search, countdown).
 
 ## Tech stack
 

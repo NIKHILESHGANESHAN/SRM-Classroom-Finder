@@ -86,3 +86,19 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+@keyframes countdown-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .countdown-pulse {
+    animation: countdown-pulse 1.5s ease-in-out infinite;
+  }
+}
