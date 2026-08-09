@@ -4,7 +4,9 @@ Find free classrooms at **SRM Institute of Science and Technology, Kattankulathu
 
 This repository is a DBMS coursework project: a production-style Next.js app on top of a **normalized PostgreSQL schema** with primary/foreign keys, CHECK constraints, composite keys, indexes, a SQL view, transactions, and aggregate queries.
 
-> **Status:** Phase 14 complete — production-ready after final QA. See `[docs/QA-REPORT.md](docs/QA-REPORT.md)`.
+> **Status:** Production Ready (Phase 14 Complete)
+
+See the [QA Report](docs/QA-REPORT.md) for the complete verification checklist.
 
 ---
 
@@ -222,7 +224,7 @@ npx tsx scripts/seed-stats-data.ts
 
 Also in migration SQL: CHECK constraints, composite FK (classroom floor ∈ building), indexes on Finder/cron hot paths, and view `active_free_classrooms`.
 
-Full DDL for coursework: `[docs/schema.sql](docs/schema.sql)`.
+Full DDL for coursework: [docs/schema.sql](docs/schema.sql).
 
 ---
 
@@ -283,31 +285,28 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 ## Screenshots
 
-```markdown
-## 📸 Screenshots
-
 ### Landing Page
+
 ![Landing Page](docs/screenshots/landing.png)
 
 ### Class Finder
+
 ![Class Finder](docs/screenshots/finder.png)
 
 ### Contributor
-![Contributor](docs/screenshots/contributor.png)
+
+![Contributor](docs/screenshots/contribute.png)
 
 ### Stats Dashboard
+
 ![Stats Dashboard](docs/screenshots/stats.png)
-
-### Report Modal
-![Report Modal](docs/screenshots/report-modal.png)
-
-### Mobile View
-![Mobile View](docs/screenshots/mobile-view.png)
-```
 
 ---
 
+## 🗂️ Entity Relationship Diagram
 
+![ER Diagram](docs/ER-diagram.png)
+![Mermaid Flowchart](docs/Mermaid Flowchart(ER).png)
 
 ## DBMS Concepts Used
 
@@ -326,12 +325,12 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 Coursework write-ups:
 
-- `[docs/schema.sql](docs/schema.sql)` — full DDL
-- `[docs/ER-diagram.mmd](docs/ER-diagram.mmd)` — Mermaid ER diagram
-- `[docs/ER-diagram.dbml](docs/ER-diagram.dbml)` — DBML for [dbdiagram.io](https://dbdiagram.io)
-- `[docs/normalization-notes.md](docs/normalization-notes.md)`
-- `[docs/dbms-report-notes.md](docs/dbms-report-notes.md)`
-- `[docs/QA-REPORT.md](docs/QA-REPORT.md)` — Phase 14 final QA sign-off
+- [docs/schema.sql](docs/schema.sql) — full DDL
+- [docs/ER-diagram.mmd](docs/ER-diagram.mmd) — Mermaid ER diagram
+- [docs/ER-diagram.dbml](docs/ER-diagram.dbml) — DBML for [dbdiagram.io](https://dbdiagram.io)
+- [docs/normalization-notes.md](docs/normalization-notes.md)
+- [docs/dbms-report-notes.md](docs/dbms-report-notes.md)
+- [docs/QA-REPORT.md](docs/QA-REPORT.md) — Phase 14 final QA sign-off
 
 ---
 
@@ -351,6 +350,6 @@ Coursework write-ups:
 
 ## License
 
-MIT © NikhileshGaneshan & Sabrina — see `[LICENSE](LICENSE)`.
+MIT © 2026 Nikhilesh Ganeshan & Sabrina — see `[LICENSE](LICENSE)`.
 
 Built for an SRM KTR DBMS course project.
