@@ -2,7 +2,7 @@
 
 Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2) between periods. Anonymous crowd reports — no login.
 
-> **Status:** Phase 10 complete — Stats page with raw SQL aggregates + Recharts.
+> **Status:** Phase 11 complete — PWA, error/loading/404, SEO/OG, Zod env validation, API rate limiting, structured logging.
 
 ## Tech stack
 
@@ -59,15 +59,17 @@ curl -sS -H "Authorization: Bearer $CRON_SECRET" \
   http://localhost:3000/api/cron/expire
 ```
 
-Unauthorized calls return `401`. Missing `CRON_SECRET` on the server returns `500`.
+Unauthorized calls return `401`. Missing `CRON_SECRET` / `DATABASE_URL` fail clearly at startup via Zod (`lib/env.ts`).
 
-Optional smoke test (spins up embedded Postgres, applies migration, tears down):
+### PWA / hardening (Phase 11)
+
+- Manifest: `/manifest.webmanifest` · icons in `/public/icons` · service worker `/sw.js`
+- Optional public URL: `NEXT_PUBLIC_APP_URL` (defaults to `http://localhost:3000`)
+- `/api/*` rate-limited in middleware (429 + `Retry-After`)
 
 ```bash
-npm run db:verify-migration
-```
-
-```bash
+npx tsx scripts/test-phase11.ts   # Phase 11 smoke (dev server for HTTP checks)
+npm run db:verify-migration       # embedded Postgres migration check
 npm run db:seed
 ```
 

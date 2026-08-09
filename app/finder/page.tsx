@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Class Finder",
   description:
     "See which SRM KTR classrooms are free right now across UB, TP1, and TP2.",
+  openGraph: {
+    title: "Class Finder · SRM KTR Classroom Finder",
+    description:
+      "See which SRM KTR classrooms are free right now across UB, TP1, and TP2.",
+  },
 };
 
 export const dynamic = "force-dynamic";

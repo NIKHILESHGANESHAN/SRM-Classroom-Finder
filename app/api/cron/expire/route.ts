@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
 import { expireFreeReports } from "@/lib/expire-free-reports";
+import { logger } from "@/lib/logger";
+import {
+  RATE_LIMITS,
+  getClientIp,
+  rateLimit,
+} from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,8 +23,7 @@ export const runtime = "nodejs";
  */
 
 function authorize(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
+  const secret = env.CRON_SECRET;
 
   const header = request.headers.get("authorization");
   if (header === `Bearer ${secret}`) return true;
@@ -30,30 +36,38 @@ function authorize(request: Request): boolean {
 }
 
 async function handleExpire(request: Request): Promise<NextResponse> {
-  if (!process.env.CRON_SECRET) {
-    console.error(
-      JSON.stringify({
-        event: "cron.expire",
-        ok: false,
-        error: "CRON_SECRET is not configured",
-        timestamp: new Date().toISOString(),
-      }),
+  const ip = getClientIp(request);
+  const rl = rateLimit(
+    `cron:${ip}`,
+    RATE_LIMITS.cron.limit,
+    RATE_LIMITS.cron.windowMs,
+  );
+
+  if (!rl.success) {
+    const retryAfterSec = Math.max(
+      1,
+      Math.ceil((rl.resetAt - Date.now()) / 1000),
     );
+    logger.warn("cron.expire", {
+      ok: false,
+      error: "rate_limited",
+      ip,
+    });
     return NextResponse.json(
-      { ok: false, error: "Server misconfigured: CRON_SECRET missing" },
-      { status: 500 },
+      { ok: false, error: "Too many requests" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(retryAfterSec) },
+      },
     );
   }
 
   if (!authorize(request)) {
-    console.warn(
-      JSON.stringify({
-        event: "cron.expire",
-        ok: false,
-        error: "unauthorized",
-        timestamp: new Date().toISOString(),
-      }),
-    );
+    logger.warn("cron.expire", {
+      ok: false,
+      error: "unauthorized",
+      ip,
+    });
     return NextResponse.json(
       { ok: false, error: "Unauthorized" },
       { status: 401 },
@@ -63,15 +77,12 @@ async function handleExpire(request: Request): Promise<NextResponse> {
   try {
     const result = await expireFreeReports();
 
-    console.info(
-      JSON.stringify({
-        event: "cron.expire",
-        ok: true,
-        expiredCount: result.expiredCount,
-        durationMs: result.durationMs,
-        timestamp: result.timestamp,
-      }),
-    );
+    logger.info("cron.expire", {
+      ok: true,
+      expiredCount: result.expiredCount,
+      durationMs: result.durationMs,
+      ip,
+    });
 
     return NextResponse.json({
       ok: true,
@@ -82,14 +93,11 @@ async function handleExpire(request: Request): Promise<NextResponse> {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown expiry failure";
-    console.error(
-      JSON.stringify({
-        event: "cron.expire",
-        ok: false,
-        error: message,
-        timestamp: new Date().toISOString(),
-      }),
-    );
+    logger.error("cron.expire", {
+      ok: false,
+      error: message,
+      ip,
+    });
     return NextResponse.json(
       { ok: false, error: "Expiry job failed" },
       { status: 500 },

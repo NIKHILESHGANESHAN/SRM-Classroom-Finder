@@ -10,7 +10,12 @@
  */
 
 import { Prisma, type OccupiedReason } from "@prisma/client";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import {
+  RATE_LIMITS,
+  rateLimit,
+} from "@/lib/rate-limit";
 import { isValidDeviceToken } from "@/lib/token";
 import { getDeviceTokenFromCookies } from "@/lib/token-server";
 
@@ -63,6 +68,19 @@ export async function submitOccupiedReport(
     return {
       ok: false,
       error: "Missing device token. Refresh the page and try again.",
+    };
+  }
+
+  const rl = rateLimit(
+    `report:${token}`,
+    RATE_LIMITS.report.limit,
+    RATE_LIMITS.report.windowMs,
+  );
+  if (!rl.success) {
+    logger.warn("report.rate_limited", { tokenPrefix: token.slice(0, 8) });
+    return {
+      ok: false,
+      error: "Too many requests. Please wait a moment and try again.",
     };
   }
 
@@ -173,7 +191,9 @@ export async function submitOccupiedReport(
       };
     });
   } catch (error) {
-    console.error("[report] submitOccupiedReport failed", error);
+    const message =
+      error instanceof Error ? error.message : "unknown";
+    logger.error("report.submit_failed", { error: message });
     return {
       ok: false,
       error: "Something went wrong submitting your report. Please try again.",

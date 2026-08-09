@@ -11,7 +11,12 @@
  *     confirmation_count needed before status becomes "confirmed"
  */
 
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import {
+  RATE_LIMITS,
+  rateLimit,
+} from "@/lib/rate-limit";
 import {
   buildExpiresAt,
   getCampusDateString,
@@ -62,6 +67,19 @@ export async function submitFreeReport(
     return {
       ok: false,
       error: "Missing device token. Refresh the page and try again.",
+    };
+  }
+
+  const rl = rateLimit(
+    `contribute:${token}`,
+    RATE_LIMITS.contribute.limit,
+    RATE_LIMITS.contribute.windowMs,
+  );
+  if (!rl.success) {
+    logger.warn("contribute.rate_limited", { tokenPrefix: token.slice(0, 8) });
+    return {
+      ok: false,
+      error: "Too many requests. Please wait a moment and try again.",
     };
   }
 
@@ -223,7 +241,9 @@ export async function submitFreeReport(
       };
     });
   } catch (error) {
-    console.error("[contribute] submitFreeReport failed", error);
+    const message =
+      error instanceof Error ? error.message : "unknown";
+    logger.error("contribute.submit_failed", { error: message });
     return {
       ok: false,
       error: "Something went wrong saving your report. Please try again.",

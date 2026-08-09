@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Stats",
   description:
     "Aggregate classroom report statistics for SRM KTR — busiest buildings, slots, and weekly trends.",
+  openGraph: {
+    title: "Stats · SRM KTR Classroom Finder",
+    description:
+      "Aggregate classroom report statistics for SRM KTR — busiest buildings, slots, and weekly trends.",
+  },
 };
 
 export const dynamic = "force-dynamic";

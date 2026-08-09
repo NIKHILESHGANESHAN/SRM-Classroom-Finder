@@ -69,11 +69,13 @@
     @apply bg-background text-foreground antialiased;
   }
 
-  /* Tactile pressed-state feedback for interactive controls */
-  button:active,
-  [role="button"]:active,
-  a:active {
-    transform: scale(0.97);
+  /* Tactile pressed-state feedback — skipped when reduced-motion is preferred */
+  @media (prefers-reduced-motion: no-preference) {
+    button:active,
+    [role="button"]:active,
+    a:active {
+      transform: scale(0.97);
+    }
   }
 }
 
