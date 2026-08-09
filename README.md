@@ -4,9 +4,11 @@ Find free classrooms at **SRM Institute of Science and Technology, Kattankulathu
 
 This repository is a DBMS coursework project: a production-style Next.js app on top of a **normalized PostgreSQL schema** with primary/foreign keys, CHECK constraints, composite keys, indexes, a SQL view, transactions, and aggregate queries.
 
-> **Status:** Phase 14 complete — production-ready after final QA. See [`docs/QA-REPORT.md`](docs/QA-REPORT.md).
+> **Status:** Phase 14 complete — production-ready after final QA. See `[docs/QA-REPORT.md](docs/QA-REPORT.md)`.
 
 ---
+
+
 
 ## Features
 
@@ -20,19 +22,25 @@ This repository is a DBMS coursework project: a production-style Next.js app on 
 
 ---
 
+
+
 ## Tech stack
 
-| Layer | Choice |
-|--------|--------|
-| Framework | Next.js 14 (App Router), TypeScript (strict) |
-| UI | Tailwind CSS, shadcn/ui, Framer Motion, Sonner, Recharts |
-| Database | PostgreSQL 16 |
-| ORM | Prisma 6 (+ `$queryRaw` / `$transaction` where DBMS concepts must be visible) |
-| Auth | None — anonymous UUID device tokens (cookie + `localStorage`) |
-| Deploy | Vercel + Neon or Supabase Postgres |
-| Cron | Vercel Cron → `GET /api/cron/expire` |
+
+| Layer     | Choice                                                                        |
+| --------- | ----------------------------------------------------------------------------- |
+| Framework | Next.js 14 (App Router), TypeScript (strict)                                  |
+| UI        | Tailwind CSS, shadcn/ui, Framer Motion, Sonner, Recharts                      |
+| Database  | PostgreSQL 16                                                                 |
+| ORM       | Prisma 6 (+ `$queryRaw` / `$transaction` where DBMS concepts must be visible) |
+| Auth      | None — anonymous UUID device tokens (cookie + `localStorage`)                 |
+| Deploy    | Vercel + Neon or Supabase Postgres                                            |
+| Cron      | Vercel Cron → `GET /api/cron/expire`                                          |
+
 
 ---
+
+
 
 ## Folder structure
 
@@ -62,13 +70,19 @@ SRM-Classroom-Finder/
 
 ---
 
+
+
 ## Local setup
+
+
 
 ### Prerequisites
 
 - Node.js 20+
 - npm
 - Docker (recommended for local Postgres) **or** a Neon/Supabase connection string
+
+
 
 ### 1. Clone and install
 
@@ -78,6 +92,8 @@ cd SRM-Classroom-Finder
 npm install
 cp .env.example .env
 ```
+
+
 
 ### 2. Environment variables
 
@@ -104,6 +120,8 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
+
+
 ### 4. Run the app
 
 ```bash
@@ -114,19 +132,27 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
+
+
 ## Environment variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL URL (`postgresql://` or `postgres://`). Validated at startup by Zod (`lib/env.ts`). |
-| `CRON_SECRET` | Yes | Bearer secret for `/api/cron/expire` (min 8 characters). Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`. |
-| `NEXT_PUBLIC_APP_URL` | No | Canonical site origin for Open Graph / `metadataBase`. Defaults to `http://localhost:3000`. Set on Vercel to your production URL. |
+
+| Variable              | Required | Description                                                                                                                       |
+| --------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`        | Yes      | PostgreSQL URL (`postgresql://` or `postgres://`). Validated at startup by Zod (`lib/env.ts`).                                    |
+| `CRON_SECRET`         | Yes      | Bearer secret for `/api/cron/expire` (min 8 characters). Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`.                 |
+| `NEXT_PUBLIC_APP_URL` | No       | Canonical site origin for Open Graph / `metadataBase`. Defaults to `http://localhost:3000`. Set on Vercel to your production URL. |
+
 
 Never commit real secrets. `.env` is gitignored; `.env.example` documents the contract.
 
 ---
 
+
+
 ## Database setup
+
+
 
 ### Prisma migration steps
 
@@ -153,6 +179,8 @@ npm run db:studio           # Prisma Studio browser
 npm run db:verify-migration # Smoke-test migration on embedded Postgres
 ```
 
+
+
 ### Seed instructions
 
 The seed is **idempotent** (safe to re-run):
@@ -163,11 +191,13 @@ npx prisma db seed
 npm run db:seed
 ```
 
-| Entity | Count | Notes |
-|--------|-------|-------|
-| Buildings | 3 | UB, TP1, TP2 |
-| Floors | 35 | UB 5–12, TP1 1–15, TP2 2–13 |
-| Time slots | 10 | Campus periods 08:00–16:50 |
+
+| Entity     | Count | Notes                       |
+| ---------- | ----- | --------------------------- |
+| Buildings  | 3     | UB, TP1, TP2                |
+| Floors     | 35    | UB 5–12, TP1 1–15, TP2 2–13 |
+| Time slots | 10    | Campus periods 08:00–16:50  |
+
 
 Optional demo data for Stats charts:
 
@@ -175,22 +205,28 @@ Optional demo data for Stats charts:
 npx tsx scripts/seed-stats-data.ts
 ```
 
+
+
 ### Schema overview
 
-| Table | Role |
-|-------|------|
-| `buildings` | Campus buildings (rows, not enums) |
-| `floors` | Floors per building |
-| `time_slots` | Period start/end times |
-| `classrooms` | Rooms — unique `(building, floor, room_number)` |
-| `free_reports` | Anonymous free-room claims |
-| `occupied_reports` | Strike reports against a free claim |
+
+| Table              | Role                                            |
+| ------------------ | ----------------------------------------------- |
+| `buildings`        | Campus buildings (rows, not enums)              |
+| `floors`           | Floors per building                             |
+| `time_slots`       | Period start/end times                          |
+| `classrooms`       | Rooms — unique `(building, floor, room_number)` |
+| `free_reports`     | Anonymous free-room claims                      |
+| `occupied_reports` | Strike reports against a free claim             |
+
 
 Also in migration SQL: CHECK constraints, composite FK (classroom floor ∈ building), indexes on Finder/cron hot paths, and view `active_free_classrooms`.
 
-Full DDL for coursework: [`docs/schema.sql`](docs/schema.sql).
+Full DDL for coursework: `[docs/schema.sql](docs/schema.sql)`.
 
 ---
+
+
 
 ## Running locally
 
@@ -200,6 +236,8 @@ npm run build    # production build
 npm run start    # serve production build
 npm run lint     # ESLint
 ```
+
+
 
 ### Cron (local)
 
@@ -213,20 +251,24 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 ---
 
+
+
 ## Deployment (Vercel + Neon / Supabase)
 
 1. **Database** — Create a Neon or Supabase Postgres project; copy the connection string.
 2. **Vercel** — Import this repo; set env vars:
-   - `DATABASE_URL`
-   - `CRON_SECRET` (long random string)
-   - `NEXT_PUBLIC_APP_URL` = `https://<your-vercel-domain>`
+  - `DATABASE_URL`
+  - `CRON_SECRET` (long random string)
+  - `NEXT_PUBLIC_APP_URL` = `https://<your-vercel-domain>`
 3. **Build** — Vercel runs `next build`. Ensure migrations run once against production:
-   - Add a build/release step: `npx prisma migrate deploy && npx prisma generate`, **or**
-   - Run `migrate deploy` + `db seed` locally against the production URL once.
-4. **Cron** — `vercel.json` schedules `*/5 * * * *` on `/api/cron/expire`. Vercel injects the Authorization header using `CRON_SECRET` when configured for Cron Jobs.
+  - Add a build/release step: `npx prisma migrate deploy && npx prisma generate`, **or**
+  - Run `migrate deploy` + `db seed` locally against the production URL once.
+4. **Cron** — `vercel.json` schedules `*/5 * * * `* on `/api/cron/expire`. Vercel injects the Authorization header using `CRON_SECRET` when configured for Cron Jobs.
 5. **Seed** — Run `npx prisma db seed` against production once so buildings/floors/slots exist.
 
 ---
+
+
 
 ## PWA support
 
@@ -237,17 +279,19 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 ---
 
+
+
 ## Screenshots
 
-Add captures under [`docs/screenshots/`](docs/screenshots/) using the filenames below, then they appear in GitHub/README renders.
 
-| File | Screen |
-|------|--------|
-| `docs/screenshots/landing.png` | Landing — Class Finder + Contributor cards |
-| `docs/screenshots/finder.png` | Class Finder — filters, cards, countdown |
-| `docs/screenshots/contribute.png` | Contributor wizard |
-| `docs/screenshots/stats.png` | Stats dashboard + bar chart |
-| `docs/screenshots/mobile.png` | Mobile viewport (optional) |
+| File                              | Screen                                     |
+| --------------------------------- | ------------------------------------------ |
+| `docs/screenshots/landing.png`    | Landing — Class Finder + Contributor cards |
+| `docs/screenshots/finder.png`     | Class Finder — filters, cards, countdown   |
+| `docs/screenshots/contribute.png` | Contributor wizard                         |
+| `docs/screenshots/stats.png`      | Stats dashboard + bar chart                |
+| `docs/screenshots/mobile.png`     | Mobile viewport (optional)                 |
+
 
 ```markdown
 ![Landing](docs/screenshots/landing.png)
@@ -258,29 +302,35 @@ Add captures under [`docs/screenshots/`](docs/screenshots/) using the filenames 
 
 ---
 
+
+
 ## DBMS Concepts Used
 
-| Concept | Where it appears |
-|---------|------------------|
-| Primary / foreign keys | All tables; see `docs/schema.sql` |
-| Composite unique + composite FK | `floors(id, building_id)` ← `classrooms` |
-| CHECK constraints | Floor &gt; 0, slot end &gt; start, non-blank tokens/rooms |
-| Indexes | Finder/cron path `(report_date, time_slot_id, status)`, expiry, tokens |
-| VIEW | `active_free_classrooms` — Finder read model |
-| Transactions | Contribute upsert; occupied 2-strike hide (`prisma.$transaction`) |
-| Aggregates | Stats via `$queryRaw`: `GROUP BY`, `COUNT`, `AVG`, `HAVING`, `FILTER` |
-| 3NF design | Separate `buildings` / `floors` / `time_slots`; no redundant confidence column |
+
+| Concept                         | Where it appears                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| Primary / foreign keys          | All tables; see `docs/schema.sql`                                              |
+| Composite unique + composite FK | `floors(id, building_id)` ← `classrooms`                                       |
+| CHECK constraints               | Floor > 0, slot end > start, non-blank tokens/rooms                            |
+| Indexes                         | Finder/cron path `(report_date, time_slot_id, status)`, expiry, tokens         |
+| VIEW                            | `active_free_classrooms` — Finder read model                                   |
+| Transactions                    | Contribute upsert; occupied 2-strike hide (`prisma.$transaction`)              |
+| Aggregates                      | Stats via `$queryRaw`: `GROUP BY`, `COUNT`, `AVG`, `HAVING`, `FILTER`          |
+| 3NF design                      | Separate `buildings` / `floors` / `time_slots`; no redundant confidence column |
+
 
 Coursework write-ups:
 
-- [`docs/schema.sql`](docs/schema.sql) — full DDL
-- [`docs/ER-diagram.mmd`](docs/ER-diagram.mmd) — Mermaid ER diagram
-- [`docs/ER-diagram.dbml`](docs/ER-diagram.dbml) — DBML for [dbdiagram.io](https://dbdiagram.io)
-- [`docs/normalization-notes.md`](docs/normalization-notes.md)
-- [`docs/dbms-report-notes.md`](docs/dbms-report-notes.md)
-- [`docs/QA-REPORT.md`](docs/QA-REPORT.md) — Phase 14 final QA sign-off
+- `[docs/schema.sql](docs/schema.sql)` — full DDL
+- `[docs/ER-diagram.mmd](docs/ER-diagram.mmd)` — Mermaid ER diagram
+- `[docs/ER-diagram.dbml](docs/ER-diagram.dbml)` — DBML for [dbdiagram.io](https://dbdiagram.io)
+- `[docs/normalization-notes.md](docs/normalization-notes.md)`
+- `[docs/dbms-report-notes.md](docs/dbms-report-notes.md)`
+- `[docs/QA-REPORT.md](docs/QA-REPORT.md)` — Phase 14 final QA sign-off
 
 ---
+
+
 
 ## Future improvements
 
@@ -292,8 +342,10 @@ Coursework write-ups:
 
 ---
 
+
+
 ## License
 
-MIT © NikhileshGaneshan & Sabrina — see [`LICENSE`](LICENSE).
+MIT © NikhileshGaneshan & Sabrina — see `[LICENSE](LICENSE)`.
 
 Built for an SRM KTR DBMS course project.
