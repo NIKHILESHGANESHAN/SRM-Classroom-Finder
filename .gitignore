@@ -29,6 +29,14 @@ yarn-error.log*
 .env
 .env*.local
 
+# embedded postgres smoke-test data
+.pg-verify-data/
+
+# local conda/initdb Postgres data directory (dev only)
+.pgdata/
+logfile
+*.log
+
 # vercel
 .vercel
 

@@ -1,0 +1,165 @@
+// =============================================================================
+// SRM KTR Classroom Finder — Prisma schema (PostgreSQL)
+// DBMS course project: 3NF relational design with explicit PKs, FKs, UNIQUEs,
+// CHECKs (via migration SQL), indexes, and documented design decisions.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// Confidence is NOT a separate stored column beyond status — "confirmed" is
+// derived from confirmation_count / status transitions (see FreeReport).
+// -----------------------------------------------------------------------------
+
+/// Lifecycle of a free-room report. Expired rows are retained for Stats history.
+enum FreeReportStatus {
+  unverified
+  confirmed
+  hidden
+  expired
+}
+
+/// Why a student flagged a free report as wrong / occupied.
+enum OccupiedReason {
+  occupied
+  class_in_progress
+  wrong_info
+  duplicate
+}
+
+// -----------------------------------------------------------------------------
+// Dimension tables (lookup / reference data — seed once, rarely change)
+// Kept as rows (not Prisma enums) so adding Building #4 is one INSERT.
+// -----------------------------------------------------------------------------
+
+/// Campus building. Separated from floors/classrooms to avoid repeating name/code
+/// on every room row (2NF/3NF: non-key attributes depend only on building PK).
+model Building {
+  id   String @id @default(cuid())
+  /// Short code shown in UI filters: UB | TP1 | TP2
+  code String @unique @db.VarChar(16)
+  name String @db.VarChar(128)
+
+  floors     Floor[]
+  classrooms Classroom[]
+
+  @@map("buildings")
+}
+
+/// Floor belongs to exactly one building.
+/// Separate table so floor ranges differ per building without sparse nullable
+/// columns, and so classrooms can FK to a concrete floor row.
+model Floor {
+  id          String @id @default(cuid())
+  buildingId  String @map("building_id")
+  floorNumber Int    @map("floor_number")
+
+  building   Building    @relation(fields: [buildingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  classrooms Classroom[]
+
+  /// A building cannot list the same floor twice.
+  @@unique([buildingId, floorNumber])
+  /// Composite unique enables Classroom.(floor_id, building_id) FK — guarantees
+  /// the chosen floor belongs to the same building (no cross-building floor ids).
+  @@unique([id, buildingId])
+  @@index([buildingId])
+  @@map("floors")
+}
+
+/// Official SRM period boundaries. Stored as rows so slot times can change
+/// without an application redeploy, and so free_reports FK to a stable id.
+model TimeSlot {
+  id        String   @id @default(cuid())
+  /// Display/order index (1–10). Unique so "slot 3" always means one row.
+  slotOrder Int      @unique @map("slot_order")
+  startTime DateTime @map("start_time") @db.Time(0)
+  endTime   DateTime @map("end_time") @db.Time(0)
+
+  freeReports FreeReport[]
+
+  @@map("time_slots")
+}
+
+// -----------------------------------------------------------------------------
+// Classrooms — the physical room entity students search for
+// -----------------------------------------------------------------------------
+
+/// A room is uniquely identified by (building, floor, room_number).
+/// buildingId is stored alongside floorId for query convenience; integrity is
+/// enforced by a composite FK to floors(id, building_id) so a room cannot
+/// reference a floor from a different building (3NF + referential integrity).
+model Classroom {
+  id         String @id @default(cuid())
+  buildingId String @map("building_id")
+  floorId    String @map("floor_id")
+  roomNumber String @map("room_number") @db.VarChar(32)
+
+  building    Building     @relation(fields: [buildingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  floor       Floor        @relation(fields: [floorId, buildingId], references: [id, buildingId], onDelete: Restrict, onUpdate: Cascade)
+  freeReports FreeReport[]
+
+  @@unique([buildingId, floorId, roomNumber])
+  @@index([buildingId])
+  @@index([floorId])
+  @@map("classrooms")
+}
+
+// -----------------------------------------------------------------------------
+// Fact tables — crowd-sourced reports (anonymous device tokens, no users table)
+// -----------------------------------------------------------------------------
+
+/// One logical "this room is free in this slot today" claim.
+/// Duplicate submissions for the same (classroom, slot, date) UPSERT and
+/// increment confirmation_count inside a transaction (Phase 5/9).
+model FreeReport {
+  id                String           @id @default(cuid())
+  classroomId       String           @map("classroom_id")
+  timeSlotId        String           @map("time_slot_id")
+  /// Calendar day of the report (IST date at submit time). Part of the natural key.
+  reportDate        DateTime         @map("report_date") @db.Date
+  /// Anonymous device token (cookie + localStorage) — NOT a user account FK.
+  contributorToken  String           @map("contributor_token") @db.VarChar(64)
+  status            FreeReportStatus @default(unverified)
+  /// Starts at 1; additional unique contributors bump this (confidence signal).
+  confirmationCount Int              @default(1) @map("confirmation_count")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  /// Set to report_date + time_slot.end_time; cron marks status=expired after this.
+  expiresAt         DateTime         @map("expires_at")
+
+  classroom       Classroom        @relation(fields: [classroomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  timeSlot        TimeSlot         @relation(fields: [timeSlotId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  occupiedReports OccupiedReport[]
+
+  /// Natural key: one active claim per room per slot per day.
+  @@unique([classroomId, timeSlotId, reportDate])
+  /// Hot path for Finder / cron: filter by day + slot + visibility status.
+  @@index([reportDate, timeSlotId, status])
+  @@index([contributorToken, reportDate])
+  @@index([expiresAt, status])
+  @@map("free_reports")
+}
+
+/// "This free report is wrong" strike. Two distinct tokens → hide the free report
+/// (transaction in Phase 7). Unique (free_report_id, reporter_token) = rate limit.
+model OccupiedReport {
+  id            String         @id @default(cuid())
+  freeReportId  String         @map("free_report_id")
+  reporterToken String         @map("reporter_token") @db.VarChar(64)
+  reason        OccupiedReason
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  freeReport FreeReport @relation(fields: [freeReportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([freeReportId, reporterToken])
+  @@index([freeReportId])
+  @@index([reporterToken, createdAt])
+  @@map("occupied_reports")
+}

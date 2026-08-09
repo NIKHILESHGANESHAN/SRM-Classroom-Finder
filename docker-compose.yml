@@ -1,0 +1,25 @@
+# Local PostgreSQL for SRM KTR Classroom Finder (Phase 2+)
+# Usage: docker compose up -d
+# Then set DATABASE_URL in .env to the URL below.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: srm-classroom-finder-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: srm
+      POSTGRES_PASSWORD: srm
+      POSTGRES_DB: srm_classroom_finder
+    volumes:
+      - srm_classroom_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U srm -d srm_classroom_finder"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  srm_classroom_pgdata:
