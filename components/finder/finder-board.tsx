@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, LayoutGroup } from "framer-motion";
 import { ArrowLeft, Search } from "lucide-react";
@@ -20,11 +20,18 @@ type FinderBoardProps = {
 /**
  * Class Finder client shell: debounced room search + layout-animated list.
  * Building / floor / slot filters hit the server via URL searchParams.
+ * Local `hiddenIds` lets 2-strike reports collapse cards without a full reload.
  */
 export function FinderBoard({ data }: FinderBoardProps) {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset local hides when server payload / filters change
+  useEffect(() => {
+    setHiddenIds(new Set());
+  }, [data.rooms]);
 
   function handleSearchChange(raw: string) {
     setSearchInput(raw);
@@ -34,13 +41,24 @@ export function FinderBoard({ data }: FinderBoardProps) {
     }, SEARCH_DEBOUNCE_MS);
   }
 
+  function handleRemove(freeReportId: string) {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.add(freeReportId);
+      return next;
+    });
+  }
+
   const deferredSearch = useDeferredValue(debouncedSearch);
 
   const filteredRooms = useMemo(() => {
     const q = deferredSearch.toLowerCase();
-    if (!q) return data.rooms;
-    return data.rooms.filter((r) => r.roomNumber.toLowerCase().includes(q));
-  }, [data.rooms, deferredSearch]);
+    return data.rooms.filter((r) => {
+      if (hiddenIds.has(r.freeReportId)) return false;
+      if (!q) return true;
+      return r.roomNumber.toLowerCase().includes(q);
+    });
+  }, [data.rooms, deferredSearch, hiddenIds]);
 
   const slotLabel = useMemo(() => {
     if (!data.applied.timeSlotId) return "all slots";
@@ -136,6 +154,7 @@ export function FinderBoard({ data }: FinderBoardProps) {
                   key={room.freeReportId}
                   room={room}
                   index={index}
+                  onRemove={handleRemove}
                 />
               ))}
             </AnimatePresence>

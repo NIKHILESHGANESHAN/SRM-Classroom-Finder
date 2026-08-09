@@ -1,48 +1,59 @@
 "use client";
 
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Flag } from "lucide-react";
-import { toast } from "sonner";
 import { ConfidenceBadge } from "@/components/finder/confidence-badge";
 import { FreeCountdown } from "@/components/finder/free-countdown";
+import { ReportModal } from "@/components/finder/report-modal";
 import { Button } from "@/components/ui/button";
 import type { ActiveFreeClassroom } from "@/lib/finder-data";
 
 type ClassroomCardProps = {
   room: ActiveFreeClassroom;
   index: number;
+  /** Remove this card from the Finder list (AnimatePresence collapse). */
+  onRemove: (freeReportId: string) => void;
 };
 
 /**
- * Free-classroom card. Report button is wired for Phase 7 modal (toast stub now).
+ * Free-classroom card with Report → responsive Sheet/Dialog (Phase 7).
  */
-export function ClassroomCard({ room, index }: ClassroomCardProps) {
+export function ClassroomCard({ room, index, onRemove }: ClassroomCardProps) {
   const reduceMotion = useReducedMotion();
+  const [reportOpen, setReportOpen] = useState(false);
 
-  function handleReport() {
-    // Phase 7: open responsive Sheet/Dialog. Button is interactive today.
-    toast.message("Report", {
-      description: `Flagging ${room.buildingCode} ${room.roomNumber} — report modal ships next.`,
-    });
-  }
+  const roomLabel = `${room.buildingCode} ${room.roomNumber}`;
 
   return (
     <motion.article
       layout={!reduceMotion}
       initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={
-        reduceMotion
-          ? { opacity: 0 }
-          : { opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }
-      }
-      transition={
-        reduceMotion
+      animate={{
+        opacity: 1,
+        y: 0,
+        transition: reduceMotion
           ? { duration: 0.15 }
           : {
               duration: 0.3,
               delay: Math.min(index, 12) * 0.03,
               ease: [0.22, 1, 0.36, 1],
+            },
+      }}
+      exit={
+        reduceMotion
+          ? { opacity: 0, transition: { duration: 0.15 } }
+          : {
+              opacity: 0,
+              height: 0,
+              marginBottom: 0,
+              paddingTop: 0,
+              paddingBottom: 0,
+              overflow: "hidden",
+              transition: {
+                duration: 0.35,
+                ease: [0.22, 1, 0.36, 1],
+              },
             }
       }
       className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5"
@@ -75,12 +86,20 @@ export function ClassroomCard({ room, index }: ClassroomCardProps) {
           variant="outline"
           size="sm"
           className="min-h-11 gap-1.5"
-          onClick={handleReport}
+          onClick={() => setReportOpen(true)}
         >
           <Flag className="h-4 w-4" aria-hidden />
           Report
         </Button>
       </div>
+
+      <ReportModal
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        freeReportId={room.freeReportId}
+        roomLabel={roomLabel}
+        onHidden={() => onRemove(room.freeReportId)}
+      />
     </motion.article>
   );
 }
