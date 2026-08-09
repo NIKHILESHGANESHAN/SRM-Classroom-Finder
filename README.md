@@ -2,7 +2,7 @@
 
 Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2) between periods. Anonymous crowd reports — no login.
 
-> **Status:** Phase 7 complete — Report modal (Sheet/Dialog) + 2-strike auto-hide.
+> **Status:** Phase 8 complete — Auto-expiry cron (`/api/cron/expire` every 5 min).
 
 ## Tech stack
 
@@ -45,6 +45,21 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### Auto-expiry cron (Phase 8)
+
+Past-due free reports are marked `status = 'expired'` (rows kept for Stats history; excluded by `active_free_classrooms`).
+
+- **Production:** `vercel.json` schedules `GET /api/cron/expire` every 5 minutes. Set `CRON_SECRET` in the Vercel project env — Vercel sends `Authorization: Bearer <CRON_SECRET>`.
+- **Local manual run:**
+
+```bash
+# CRON_SECRET must match .env (see .env.example)
+curl -sS -H "Authorization: Bearer $CRON_SECRET" \
+  http://localhost:3000/api/cron/expire
+```
+
+Unauthorized calls return `401`. Missing `CRON_SECRET` on the server returns `500`.
 
 Optional smoke test (spins up embedded Postgres, applies migration, tears down):
 
