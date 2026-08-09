@@ -19,7 +19,11 @@ export function ProgressIndicator({ step }: ProgressIndicatorProps) {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="w-full space-y-3" aria-label={`Step ${step + 1} of 4`}>
+    <div
+      className="w-full space-y-3"
+      role="status"
+      aria-label={`Step ${step + 1} of 4: ${STEP_LABELS[step]}`}
+    >
       <div className="flex gap-2">
         {STEP_LABELS.map((label, index) => {
           const filled = index <= step;

@@ -4,6 +4,8 @@ Find free classrooms at **SRM Institute of Science and Technology, Kattankulathu
 
 This repository is a DBMS coursework project: a production-style Next.js app on top of a **normalized PostgreSQL schema** with primary/foreign keys, CHECK constraints, composite keys, indexes, a SQL view, transactions, and aggregate queries.
 
+> **Status:** Phase 14 complete — production-ready after final QA. See [`docs/QA-REPORT.md`](docs/QA-REPORT.md).
+
 ---
 
 ## Features
@@ -276,6 +278,7 @@ Coursework write-ups:
 - [`docs/ER-diagram.dbml`](docs/ER-diagram.dbml) — DBML for [dbdiagram.io](https://dbdiagram.io)
 - [`docs/normalization-notes.md`](docs/normalization-notes.md)
 - [`docs/dbms-report-notes.md`](docs/dbms-report-notes.md)
+- [`docs/QA-REPORT.md`](docs/QA-REPORT.md) — Phase 14 final QA sign-off
 
 ---
 

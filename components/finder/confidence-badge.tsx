@@ -50,7 +50,7 @@ export function ConfidenceBadge({
         transition={
           reduceMotion ? { duration: 0.15 } : SPRING_BADGE
         }
-        style={{ transformPerspective: 600 }}
+        style={{ perspective: 600 }}
         className={cn(
           "inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold",
           confirmed

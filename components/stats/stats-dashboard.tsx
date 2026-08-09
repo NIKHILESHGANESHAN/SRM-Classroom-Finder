@@ -1,10 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, BarChart3, Building2, Clock3, DoorOpen } from "lucide-react";
 import { CountUp } from "@/components/stats/count-up";
-import { ReportsBarChart } from "@/components/stats/reports-bar-chart";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +15,23 @@ import {
 } from "@/components/ui/card";
 import type { StatsPageData } from "@/lib/stats-data";
 import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
+
+/** Lazy-load Recharts — keeps /stats first-load JS smaller without changing UI. */
+const ReportsBarChart = dynamic(
+  () =>
+    import("@/components/stats/reports-bar-chart").then(
+      (m) => m.ReportsBarChart,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-64 w-full animate-pulse rounded-xl bg-muted/50 sm:h-72"
+        aria-hidden
+      />
+    ),
+  },
+);
 
 type StatsDashboardProps = {
   data: StatsPageData;

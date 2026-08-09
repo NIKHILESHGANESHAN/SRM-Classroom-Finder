@@ -78,10 +78,16 @@ export function FinderFiltersBar({
         "space-y-4 rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5",
         pending && "opacity-80",
       )}
+      aria-busy={pending}
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Building</Label>
+          <Label
+            htmlFor="finder-building"
+            className="text-xs text-muted-foreground"
+          >
+            Building
+          </Label>
           <Select
             value={applied.buildingId ?? "all"}
             onValueChange={(value) => {
@@ -93,7 +99,7 @@ export function FinderFiltersBar({
               });
             }}
           >
-            <SelectTrigger className="min-h-11">
+            <SelectTrigger id="finder-building" className="min-h-11">
               <SelectValue placeholder="All buildings" />
             </SelectTrigger>
             <SelectContent>
@@ -108,7 +114,12 @@ export function FinderFiltersBar({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Floor</Label>
+          <Label
+            htmlFor="finder-floor"
+            className="text-xs text-muted-foreground"
+          >
+            Floor
+          </Label>
           <Select
             value={applied.floorId ?? "all"}
             disabled={!applied.buildingId}
@@ -120,7 +131,7 @@ export function FinderFiltersBar({
               });
             }}
           >
-            <SelectTrigger className="min-h-11">
+            <SelectTrigger id="finder-floor" className="min-h-11">
               <SelectValue
                 placeholder={
                   applied.buildingId ? "All floors" : "Pick a building first"
@@ -139,7 +150,12 @@ export function FinderFiltersBar({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Time slot</Label>
+          <Label
+            htmlFor="finder-slot"
+            className="text-xs text-muted-foreground"
+          >
+            Time slot
+          </Label>
           <Select
             value={applied.timeSlotId ?? "all"}
             onValueChange={(value) => {
@@ -150,7 +166,7 @@ export function FinderFiltersBar({
               });
             }}
           >
-            <SelectTrigger className="min-h-11">
+            <SelectTrigger id="finder-slot" className="min-h-11">
               <SelectValue placeholder="Current slot" />
             </SelectTrigger>
             <SelectContent>
