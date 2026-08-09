@@ -1,0 +1,77 @@
+%%{
+  init: {
+    "theme": "base",
+    "themeVariables": {
+      "primaryColor": "#0F2C59",
+      "primaryTextColor": "#ffffff",
+      "primaryBorderColor": "#F59E0B",
+      "lineColor": "#64748b",
+      "secondaryColor": "#f8fafc",
+      "tertiaryColor": "#e2e8f0"
+    }
+  }
+}%%
+erDiagram
+  %% SRM KTR Classroom Finder — Entity-Relationship diagram
+  %% Cardinalities: ||--o{  one-to-many ; }o--||  many-to-one
+
+  buildings {
+    text id PK
+    varchar code UK "unique"
+    varchar name
+  }
+
+  floors {
+    text id PK
+    text building_id FK
+    int floor_number
+  }
+
+  time_slots {
+    text id PK
+    int slot_order UK "unique"
+    time start_time
+    time end_time
+  }
+
+  classrooms {
+    text id PK
+    text building_id FK
+    text floor_id FK
+    varchar room_number
+  }
+
+  free_reports {
+    text id PK
+    text classroom_id FK
+    text time_slot_id FK
+    date report_date
+    varchar contributor_token
+    FreeReportStatus status
+    int confirmation_count
+    timestamp created_at
+    timestamp expires_at
+  }
+
+  occupied_reports {
+    text id PK
+    text free_report_id FK
+    varchar reporter_token
+    OccupiedReason reason
+    timestamp created_at
+  }
+
+  buildings ||--o{ floors : "has"
+  buildings ||--o{ classrooms : "contains"
+  floors ||--o{ classrooms : "locates"
+  time_slots ||--o{ free_reports : "schedules"
+  classrooms ||--o{ free_reports : "claimed_free"
+  free_reports ||--o{ occupied_reports : "flagged_by"
+
+  %% Notes (not drawable as FK edges in Mermaid):
+  %% - UNIQUE (floors.building_id, floors.floor_number)
+  %% - UNIQUE (floors.id, floors.building_id) supports composite FK
+  %% - classrooms (floor_id, building_id) → floors (id, building_id)
+  %% - UNIQUE free_reports (classroom_id, time_slot_id, report_date)
+  %% - UNIQUE occupied_reports (free_report_id, reporter_token)
+  %% - VIEW active_free_classrooms joins free_reports + dimensions

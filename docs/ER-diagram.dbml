@@ -1,0 +1,107 @@
+// SRM KTR Classroom Finder — DBML for https://dbdiagram.io
+// Paste this file into dbdiagram.io to render / export PNG for the report.
+
+Enum FreeReportStatus {
+  unverified
+  confirmed
+  hidden
+  expired
+}
+
+Enum OccupiedReason {
+  occupied
+  class_in_progress
+  wrong_info
+  duplicate
+}
+
+Table buildings {
+  id   varchar [pk, note: 'cuid']
+  code varchar(16) [unique, not null, note: 'UB | TP1 | TP2']
+  name varchar(128) [not null]
+
+  Note: 'Campus building dimension. 1 building → many floors / classrooms.'
+}
+
+Table floors {
+  id           varchar [pk]
+  building_id  varchar [not null, ref: > buildings.id]
+  floor_number int [not null, note: 'CHECK > 0']
+
+  indexes {
+    (building_id)
+    (building_id, floor_number) [unique]
+    (id, building_id) [unique, note: 'Supports composite FK from classrooms']
+  }
+
+  Note: '1 building → many floors. Floor ranges differ per building.'
+}
+
+Table time_slots {
+  id         varchar [pk]
+  slot_order int [unique, not null, note: 'CHECK > 0']
+  start_time time [not null]
+  end_time   time [not null, note: 'CHECK end > start']
+
+  Note: 'Official campus periods (slots 1–10).'
+}
+
+Table classrooms {
+  id          varchar [pk]
+  building_id varchar [not null, ref: > buildings.id]
+  floor_id    varchar [not null]
+  room_number varchar(32) [not null]
+
+  indexes {
+    (building_id)
+    (floor_id)
+    (building_id, floor_id, room_number) [unique]
+  }
+
+  Note: 'Physical room. Composite FK (floor_id, building_id) → floors(id, building_id).'
+}
+
+Table free_reports {
+  id                 varchar [pk]
+  classroom_id       varchar [not null, ref: > classrooms.id]
+  time_slot_id       varchar [not null, ref: > time_slots.id]
+  report_date        date [not null]
+  contributor_token  varchar(64) [not null, note: 'Anonymous device UUID']
+  status             FreeReportStatus [not null, default: 'unverified']
+  confirmation_count int [not null, default: 1, note: 'CHECK >= 1']
+  created_at         timestamp [not null]
+  expires_at         timestamp [not null]
+
+  indexes {
+    (report_date, time_slot_id, status) [note: 'Finder / filter hot path']
+    (contributor_token, report_date)
+    (expires_at, status)
+    (classroom_id, time_slot_id, report_date) [unique, note: 'Natural key']
+  }
+
+  Note: '1 classroom+slot+day → at most one free claim. Many occupied_reports.'
+}
+
+Table occupied_reports {
+  id             varchar [pk]
+  free_report_id varchar [not null, ref: > free_reports.id]
+  reporter_token varchar(64) [not null]
+  reason         OccupiedReason [not null]
+  created_at     timestamp [not null]
+
+  indexes {
+    (free_report_id)
+    (reporter_token, created_at)
+    (free_report_id, reporter_token) [unique, note: 'One strike per device']
+  }
+
+  Note: '2 distinct tokens → free_reports.status = hidden (app transaction).'
+}
+
+// Cardinality summary:
+// buildings 1—N floors
+// buildings 1—N classrooms
+// floors 1—N classrooms
+// time_slots 1—N free_reports
+// classrooms 1—N free_reports
+// free_reports 1—N occupied_reports
