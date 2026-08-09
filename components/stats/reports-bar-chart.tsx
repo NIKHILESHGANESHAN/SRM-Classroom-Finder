@@ -9,15 +9,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { BuildingReportBar } from "@/lib/stats-data";
+import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
 
 type ReportsBarChartProps = {
   data: BuildingReportBar[];
 };
 
 /**
- * Reports-per-building bar chart (Recharts). Animated bars unless reduced-motion.
+ * Reports-per-building bar chart. Bars grow on scroll-into-view (`whileInView`).
  */
 export function ReportsBarChart({ data }: ReportsBarChartProps) {
   const reduceMotion = useReducedMotion();
@@ -38,7 +39,13 @@ export function ReportsBarChart({ data }: ReportsBarChartProps) {
   }
 
   return (
-    <div className="h-64 w-full sm:h-72">
+    <motion.div
+      className="h-64 w-full sm:h-72"
+      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.35 }}
+      transition={{ duration: DURATION_UI, ease: EASE_OUT_EXPO }}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
@@ -64,6 +71,7 @@ export function ReportsBarChart({ data }: ReportsBarChartProps) {
               borderRadius: 12,
               border: "1px solid hsl(var(--border))",
               background: "hsl(var(--card))",
+              color: "hsl(var(--card-foreground))",
               fontSize: 13,
             }}
             formatter={(value: number) => [`${value} reports`, "Count"]}
@@ -80,9 +88,10 @@ export function ReportsBarChart({ data }: ReportsBarChartProps) {
             isAnimationActive={!reduceMotion}
             animationDuration={700}
             animationEasing="ease-out"
+            animationBegin={reduceMotion ? 0 : 120}
           />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </motion.div>
   );
 }

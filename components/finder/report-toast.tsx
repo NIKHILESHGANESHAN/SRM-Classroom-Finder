@@ -2,8 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE_OUT_EXPO } from "@/lib/motion";
 
 function ToastCheckmark() {
   const reduceMotion = useReducedMotion();
@@ -27,7 +26,7 @@ function ToastCheckmark() {
           transition={
             reduceMotion
               ? { duration: 0 }
-              : { duration: 0.4, ease: EASE, delay: 0.05 }
+              : { duration: 0.4, ease: EASE_OUT_EXPO, delay: 0.05 }
           }
           style={{ originX: 0.5, originY: 0.5 }}
         />
@@ -37,7 +36,7 @@ function ToastCheckmark() {
           className="absolute inset-0 rounded-full bg-emerald-500/25"
           initial={{ scale: 0.4, opacity: 0.7 }}
           animate={{ scale: 1.8, opacity: 0 }}
-          transition={{ duration: 0.5, ease: EASE }}
+          transition={{ duration: 0.5, ease: EASE_OUT_EXPO }}
           aria-hidden
         />
       )}

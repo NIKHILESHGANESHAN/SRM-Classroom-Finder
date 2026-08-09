@@ -2,7 +2,7 @@
 
 Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2) between periods. Anonymous crowd reports — no login.
 
-> **Status:** Phase 11 complete — PWA, error/loading/404, SEO/OG, Zod env validation, API rate limiting, structured logging.
+> **Status:** Phase 12 complete — UI/UX & animation polish (Section 7).
 
 ## Tech stack
 

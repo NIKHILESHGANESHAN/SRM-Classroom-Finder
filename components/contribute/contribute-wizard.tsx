@@ -17,10 +17,9 @@ import type {
   ContributePageData,
   TimeSlotOption,
 } from "@/lib/contribute-data";
+import { DURATION_WIZARD, EASE_OUT_EXPO } from "@/lib/motion";
 import { ensureDeviceToken } from "@/lib/token";
 import { cn } from "@/lib/utils";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -50,7 +49,7 @@ function ChoiceCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-14 w-full flex-col items-start justify-center rounded-xl border px-4 py-3 text-left transition-colors",
+        "flex min-h-14 w-full flex-col items-start justify-center rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         selected
           ? "border-primary bg-primary text-primary-foreground shadow-sm"
           : "border-border bg-card hover:border-primary/40 hover:bg-secondary/50",
@@ -246,7 +245,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                 transition={
                   reduceMotion
                     ? { duration: 0.1 }
-                    : { duration: 0.22, ease: EASE }
+                    : { duration: DURATION_WIZARD, ease: EASE_OUT_EXPO }
                 }
                 className="w-full space-y-5"
               >
@@ -301,7 +300,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                           type="button"
                           onClick={() => selectFloor(f.id)}
                           className={cn(
-                            "flex min-h-11 items-center justify-center rounded-xl border text-base font-semibold transition-colors",
+                            "flex min-h-11 items-center justify-center rounded-xl border text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             floorId === f.id
                               ? "border-primary bg-primary text-primary-foreground"
                               : "border-border bg-background hover:border-primary/40",

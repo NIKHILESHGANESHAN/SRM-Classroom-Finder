@@ -1,9 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 const STEP_LABELS = ["Building", "Floor", "Room", "Slot"] as const;
 
@@ -34,7 +33,7 @@ export function ProgressIndicator({ step }: ProgressIndicatorProps) {
                   transition={
                     reduceMotion
                       ? { duration: 0 }
-                      : { duration: 0.3, ease: EASE }
+                      : { duration: DURATION_UI, ease: EASE_OUT_EXPO }
                   }
                 />
               </div>

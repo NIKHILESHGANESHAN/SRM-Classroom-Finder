@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { SPRING_BADGE } from "@/lib/motion";
 import { isConfirmedBadgeStatus } from "@/lib/token-trust";
 import { cn } from "@/lib/utils";
 
@@ -12,9 +13,7 @@ type ConfidenceBadgeProps = {
 
 /**
  * 🟡 Unverified / 🟢 Confirmed.
- * Status is authoritative — soft-throttled rooms can have confirmation_count ≥ 2
- * while still unverified. Hidden / expired never show Confirmed.
- * Spring flip on status change; opacity-only when prefers-reduced-motion.
+ * Quick flip/scale pop on status change; opacity-only when prefers-reduced-motion.
  */
 export function ConfidenceBadge({
   status,
@@ -29,19 +28,29 @@ export function ConfidenceBadge({
       <motion.span
         key={confirmed ? "confirmed" : "unverified"}
         initial={
-          reduceMotion ? { opacity: 0 } : { scale: 0.85, opacity: 0 }
+          reduceMotion
+            ? { opacity: 0 }
+            : { opacity: 0, scale: 0.85, rotateY: -70 }
         }
-        animate={reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+        animate={
+          reduceMotion
+            ? { opacity: 1 }
+            : { opacity: 1, scale: 1, rotateY: 0 }
+        }
         exit={
           reduceMotion
             ? { opacity: 0 }
-            : { scale: 0.9, opacity: 0, transition: { duration: 0.12 } }
+            : {
+                opacity: 0,
+                scale: 0.9,
+                rotateY: 50,
+                transition: { duration: 0.12 },
+              }
         }
         transition={
-          reduceMotion
-            ? { duration: 0.15 }
-            : { type: "spring", stiffness: 420, damping: 22 }
+          reduceMotion ? { duration: 0.15 } : SPRING_BADGE
         }
+        style={{ transformPerspective: 600 }}
         className={cn(
           "inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold",
           confirmed

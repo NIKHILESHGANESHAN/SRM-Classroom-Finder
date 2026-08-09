@@ -8,6 +8,7 @@ import { FreeCountdown } from "@/components/finder/free-countdown";
 import { ReportModal } from "@/components/finder/report-modal";
 import { Button } from "@/components/ui/button";
 import type { ActiveFreeClassroom } from "@/lib/finder-data";
+import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
 
 type ClassroomCardProps = {
   room: ActiveFreeClassroom;
@@ -17,7 +18,7 @@ type ClassroomCardProps = {
 };
 
 /**
- * Free-classroom card with Report → responsive Sheet/Dialog (Phase 7).
+ * Free-classroom card with staggered entrance, layout reflow, and collapse exit.
  */
 export function ClassroomCard({ room, index, onRemove }: ClassroomCardProps) {
   const reduceMotion = useReducedMotion();
@@ -33,16 +34,16 @@ export function ClassroomCard({ room, index, onRemove }: ClassroomCardProps) {
         opacity: 1,
         y: 0,
         transition: reduceMotion
-          ? { duration: 0.15 }
+          ? { duration: 0.12 }
           : {
-              duration: 0.3,
+              duration: DURATION_UI,
               delay: Math.min(index, 12) * 0.03,
-              ease: [0.22, 1, 0.36, 1],
+              ease: EASE_OUT_EXPO,
             },
       }}
       exit={
         reduceMotion
-          ? { opacity: 0, transition: { duration: 0.15 } }
+          ? { opacity: 0, transition: { duration: 0.12 } }
           : {
               opacity: 0,
               height: 0,
@@ -52,11 +53,11 @@ export function ClassroomCard({ room, index, onRemove }: ClassroomCardProps) {
               overflow: "hidden",
               transition: {
                 duration: 0.35,
-                ease: [0.22, 1, 0.36, 1],
+                ease: EASE_OUT_EXPO,
               },
             }
       }
-      className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5"
+      className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5 dark:shadow-black/30"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

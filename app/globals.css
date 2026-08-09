@@ -77,6 +77,16 @@
       transform: scale(0.97);
     }
   }
+
+  /* Lighthouse / a11y: cut decorative motion when the user asks for less */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer,
+    .countdown-pulse,
+    .animate-pulse,
+    .animate-spin {
+      animation: none !important;
+    }
+  }
 }
 
 @layer utilities {

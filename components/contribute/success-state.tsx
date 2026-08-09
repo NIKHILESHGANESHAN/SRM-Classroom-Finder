@@ -2,8 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
+import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
 
 type SuccessStateProps = {
   roomLabel: string;
@@ -39,7 +38,10 @@ export function SuccessState({
       <motion.div
         initial={reduceMotion ? false : { scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: reduceMotion ? 0 : 0.35, ease: EASE }}
+        transition={{
+          duration: reduceMotion ? 0 : DURATION_UI,
+          ease: EASE_OUT_EXPO,
+        }}
         className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
       >
         <svg
@@ -61,7 +63,7 @@ export function SuccessState({
             transition={
               reduceMotion
                 ? { duration: 0 }
-                : { duration: 0.45, ease: EASE, delay: 0.1 }
+                : { duration: 0.45, ease: EASE_OUT_EXPO, delay: 0.1 }
             }
           />
         </svg>
@@ -87,7 +89,7 @@ export function SuccessState({
         transition={
           reduceMotion
             ? { duration: 0 }
-            : { delay: 0.4, duration: 0.3, ease: EASE }
+            : { delay: 0.4, duration: DURATION_UI, ease: EASE_OUT_EXPO }
         }
       >
         <Button
