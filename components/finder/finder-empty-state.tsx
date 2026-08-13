@@ -1,30 +1,47 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ClipboardList, DoorOpen, MapPinOff } from "lucide-react";
+import { ClipboardList, Clock, DoorOpen, MapPinOff, Sparkles } from "lucide-react";
 import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
-import type { FinderCoverageKind } from "@/lib/finder-data";
+import type { FinderEmptyReason } from "@/lib/finder-realtime";
 
 type FinderEmptyStateProps = {
   slotLabel: string;
-  coverageKind?: FinderCoverageKind;
-  searchMiss?: boolean;
+  reason?: FinderEmptyReason;
 };
 
-function copyFor(kind: FinderCoverageKind, slotLabel: string): {
-  title: string;
-  body: string;
-} {
-  if (kind === "inventory_gap") {
+function copyFor(
+  reason: FinderEmptyReason,
+  slotLabel: string,
+): { title: string; body: string } {
+  if (reason === "inventory_gap") {
     return {
       title: "We don't have classroom listings here yet",
       body: `No verified rooms are on file for ${slotLabel}. That does not mean every room is occupied — inventory for this area is still being added.`,
     };
   }
-  if (kind === "insufficient_reports") {
+  if (reason === "insufficient_reports") {
     return {
       title: "We don't have enough reports for this floor yet",
       body: `Classrooms exist, but nobody has reported a free room for ${slotLabel}. Check back later, or be the first via Contributor.`,
+    };
+  }
+  if (reason === "search_miss") {
+    return {
+      title: "No matching rooms",
+      body: `Nothing showing for ${slotLabel}. Try a different room number or clear the search.`,
+    };
+  }
+  if (reason === "no_recent") {
+    return {
+      title: "No recently reported rooms",
+      body: "No free reports or Still Free confirmations in the last 10 minutes. Other rooms may still be free — try All free, or check back shortly.",
+    };
+  }
+  if (reason === "no_ending") {
+    return {
+      title: "No rooms ending soon",
+      body: "Nothing is due to expire in the next 10 minutes. That does not mean other rooms are occupied — try All free to see the full list.",
     };
   }
   return {
@@ -33,29 +50,23 @@ function copyFor(kind: FinderCoverageKind, slotLabel: string): {
   };
 }
 
+const ICONS = {
+  inventory_gap: MapPinOff,
+  insufficient_reports: ClipboardList,
+  none_free: DoorOpen,
+  search_miss: DoorOpen,
+  no_recent: Sparkles,
+  no_ending: Clock,
+} as const;
+
 /** Honest empty state: inventory gap ≠ all occupied ≠ none free right now. */
 export function FinderEmptyState({
   slotLabel,
-  coverageKind = "none_free",
-  searchMiss = false,
+  reason = "none_free",
 }: FinderEmptyStateProps) {
   const reduceMotion = useReducedMotion();
-
-  const { title, body, Icon } = searchMiss
-    ? {
-        title: "No matching rooms",
-        body: `Nothing showing for ${slotLabel}. Try a different room number or clear the search.`,
-        Icon: DoorOpen,
-      }
-    : {
-        ...copyFor(coverageKind, slotLabel),
-        Icon:
-          coverageKind === "inventory_gap"
-            ? MapPinOff
-            : coverageKind === "insufficient_reports"
-              ? ClipboardList
-              : DoorOpen,
-      };
+  const { title, body } = copyFor(reason, slotLabel);
+  const Icon = ICONS[reason];
 
   return (
     <motion.div

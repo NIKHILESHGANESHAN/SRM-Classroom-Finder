@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "framer-motion";
+import { AlertTriangle } from "lucide-react";
 import { formatMinutesAsLabel } from "@/lib/slots";
 import { cn } from "@/lib/utils";
 
@@ -99,7 +100,12 @@ export function FreeCountdown({ reportDate, endMinutes }: CountdownProps) {
   const untilLabel = formatMinutesAsLabel(endMinutes);
   const color = useMemo(() => countdownColor(ms, dark), [ms, dark]);
   const urgent = ms > 0 && ms < 2 * 60 * 1000;
-  const endingSoon = ms > 0 && ms < 5 * 60 * 1000;
+  const endingSoon = ms > 0 && ms <= 10 * 60 * 1000;
+  const remainingMins = Math.floor(ms / 60_000);
+  const freeForLabel =
+    remainingMins < 1
+      ? `Free for ${Math.max(1, Math.floor(ms / 1000))}s`
+      : `Free for ${remainingMins} min`;
 
   if (ms <= 0) {
     return (
@@ -118,13 +124,29 @@ export function FreeCountdown({ reportDate, endMinutes }: CountdownProps) {
       style={{ color }}
       aria-live="polite"
       aria-atomic="true"
+      aria-label={
+        endingSoon
+          ? `Ending soon, ${freeForLabel}, until ${untilLabel}`
+          : `Free until ${untilLabel}, ${formatRemaining(ms)}`
+      }
     >
-      Free until {untilLabel}
-      <span className="mx-1.5 opacity-50">·</span>
-      <span className="tabular-nums font-semibold">{formatRemaining(ms)}</span>
       {endingSoon ? (
-        <span className="ml-1.5 font-semibold">
-          {urgent ? "· Ending now" : "· Ending soon"}
+        <AlertTriangle className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+      ) : null}
+      {endingSoon ? (
+        <span className="font-semibold">{freeForLabel}</span>
+      ) : (
+        <>
+          Free until {untilLabel}
+          <span className="mx-1.5 opacity-50">·</span>
+          <span className="tabular-nums font-semibold">
+            {formatRemaining(ms)}
+          </span>
+        </>
+      )}
+      {endingSoon ? (
+        <span className="ml-1.5 font-normal text-foreground/70">
+          · until {untilLabel}
         </span>
       ) : null}
     </span>

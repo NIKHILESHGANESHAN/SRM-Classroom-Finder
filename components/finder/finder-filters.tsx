@@ -11,6 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { FinderBuilding, FinderSlot } from "@/lib/finder-data";
+import {
+  buildFinderQuery,
+  type FinderFocus,
+} from "@/lib/finder-realtime";
 import { cn } from "@/lib/utils";
 
 type FinderFiltersBarProps = {
@@ -22,33 +26,21 @@ type FinderFiltersBarProps = {
     floorId: string | null;
     timeSlotId: string | null;
   };
+  focus: FinderFocus;
 };
 
-function buildQuery(params: {
-  buildingId: string | null;
-  floorId: string | null;
-  timeSlotId: string | null;
-  currentSlotId: string | null;
-}): string {
-  const q = new URLSearchParams();
-  if (params.buildingId) q.set("building", params.buildingId);
-  if (params.floorId) q.set("floor", params.floorId);
-  // Omit slot when it equals current → clean “Free Right Now” URL
-  if (params.timeSlotId && params.timeSlotId !== params.currentSlotId) {
-    q.set("slot", params.timeSlotId);
-  }
-  if (params.timeSlotId === null) {
-    q.set("slot", "all");
-  }
-  const s = q.toString();
-  return s ? `?${s}` : "";
-}
+const FOCUS_OPTIONS: { value: FinderFocus; label: string }[] = [
+  { value: "all", label: "All free" },
+  { value: "recent", label: "Recently reported" },
+  { value: "ending", label: "Ending soon" },
+];
 
 export function FinderFiltersBar({
   buildings,
   timeSlots,
   currentSlotId,
   applied,
+  focus,
 }: FinderFiltersBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -65,8 +57,12 @@ export function FinderFiltersBar({
     buildingId: string | null;
     floorId: string | null;
     timeSlotId: string | null;
+    focus: FinderFocus;
   }) {
-    const href = `${pathname}${buildQuery({ ...next, currentSlotId })}`;
+    const href = `${pathname}${buildFinderQuery({
+      ...next,
+      currentSlotId,
+    })}`;
     startTransition(() => {
       router.push(href);
     });
@@ -96,6 +92,7 @@ export function FinderFiltersBar({
                 buildingId,
                 floorId: null,
                 timeSlotId: applied.timeSlotId,
+                focus,
               });
             }}
           >
@@ -128,6 +125,7 @@ export function FinderFiltersBar({
                 buildingId: applied.buildingId,
                 floorId: value === "all" ? null : value,
                 timeSlotId: applied.timeSlotId,
+                focus,
               });
             }}
           >
@@ -163,6 +161,7 @@ export function FinderFiltersBar({
                 buildingId: applied.buildingId,
                 floorId: applied.floorId,
                 timeSlotId: value === "all" ? null : value,
+                focus,
               });
             }}
           >
@@ -179,6 +178,45 @@ export function FinderFiltersBar({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <p id="finder-focus-label" className="text-xs text-muted-foreground">
+          List focus
+        </p>
+        <div
+          role="group"
+          aria-labelledby="finder-focus-label"
+          className="grid grid-cols-3 gap-2"
+        >
+          {FOCUS_OPTIONS.map((option) => {
+            const selected = focus === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={selected}
+                className={cn(
+                  "min-h-11 rounded-xl border px-2 text-xs font-medium sm:text-sm",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  selected
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted/60",
+                )}
+                onClick={() =>
+                  navigate({
+                    buildingId: applied.buildingId,
+                    floorId: applied.floorId,
+                    timeSlotId: applied.timeSlotId,
+                    focus: option.value,
+                  })
+                }
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

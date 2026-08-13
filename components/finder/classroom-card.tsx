@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { memo, useState, useTransition } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Flag, ThumbsUp } from "lucide-react";
 import { ConfidenceBadge } from "@/components/finder/confidence-badge";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useDeviceToken } from "@/hooks/use-device-token";
 import { submitStillFree } from "@/lib/actions/still-free";
 import type { ActiveFreeClassroom } from "@/lib/finder-data";
+import { roomUpdateSignature } from "@/lib/finder-realtime";
 import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
 import { toast } from "sonner";
 
@@ -18,6 +19,7 @@ type ClassroomCardProps = {
   room: ActiveFreeClassroom;
   index: number;
   onRemove: (freeReportId: string) => void;
+  onNeedRefresh?: () => void;
 };
 
 function isNetworkFailure(error: unknown, serverMessage?: string): boolean {
@@ -27,7 +29,12 @@ function isNetworkFailure(error: unknown, serverMessage?: string): boolean {
   return /fetch|network|failed/i.test(message);
 }
 
-export function ClassroomCard({ room, index, onRemove }: ClassroomCardProps) {
+function ClassroomCardInner({
+  room,
+  index,
+  onRemove,
+  onNeedRefresh,
+}: ClassroomCardProps) {
   const reduceMotion = useReducedMotion();
   const deviceToken = useDeviceToken();
   const [reportOpen, setReportOpen] = useState(false);
@@ -57,9 +64,11 @@ export function ClassroomCard({ room, index, onRemove }: ClassroomCardProps) {
         }
         if (result.kind === "already_reported") {
           toast.success("Already confirmed from this device");
+          onNeedRefresh?.();
           return;
         }
         toast.success("Marked still free");
+        onNeedRefresh?.();
       } catch (error) {
         if (isNetworkFailure(error)) {
           setStillFreeRetry(true);
@@ -178,8 +187,22 @@ export function ClassroomCard({ room, index, onRemove }: ClassroomCardProps) {
         onOpenChange={setReportOpen}
         freeReportId={room.freeReportId}
         roomLabel={roomLabel}
-        onHidden={() => onRemove(room.freeReportId)}
+        onHidden={() => {
+          onRemove(room.freeReportId);
+          onNeedRefresh?.();
+        }}
       />
     </motion.article>
   );
 }
+
+export const ClassroomCard = memo(ClassroomCardInner, (prev, next) => {
+  return (
+    roomUpdateSignature(prev.room) === roomUpdateSignature(next.room) &&
+    prev.room.roomNumber === next.room.roomNumber &&
+    prev.index === next.index &&
+    prev.onRemove === next.onRemove &&
+    prev.onNeedRefresh === next.onNeedRefresh
+  );
+});
+ClassroomCard.displayName = "ClassroomCard";

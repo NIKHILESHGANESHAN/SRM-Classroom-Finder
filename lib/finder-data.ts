@@ -230,9 +230,23 @@ export async function queryFinderCoverage(
   };
 }
 
-export async function getFinderPageData(
+type FinderContext = {
+  buildings: FinderBuilding[];
+  timeSlots: FinderSlot[];
+  currentSlotId: string | null;
+  applied: {
+    buildingId: string | null;
+    floorId: string | null;
+    timeSlotId: string | null;
+  };
+};
+
+/**
+ * Shared Building → Floor → Slot resolution for the page and V2.3 poll API.
+ */
+export async function resolveFinderContext(
   filters: FinderFilters = {},
-): Promise<FinderPageData> {
+): Promise<FinderContext> {
   const [buildings, slots] = await Promise.all([
     prisma.building.findMany({
       orderBy: { code: "asc" },
@@ -282,21 +296,7 @@ export async function getFinderPageData(
     floorId = null;
   }
 
-  const [rooms, coverage] = await Promise.all([
-    queryActiveFreeClassrooms({
-      buildingId,
-      floorId,
-      timeSlotId,
-    }),
-    queryFinderCoverage({
-      buildingId,
-      floorId,
-      timeSlotId,
-    }),
-  ]);
-
   return {
-    rooms,
     buildings: buildings.map((b) => ({
       id: b.id,
       code: b.code,
@@ -316,6 +316,47 @@ export async function getFinderPageData(
       floorId,
       timeSlotId,
     },
+  };
+}
+
+export async function getFinderPageData(
+  filters: FinderFilters = {},
+): Promise<FinderPageData> {
+  const ctx = await resolveFinderContext(filters);
+  const [rooms, coverage] = await Promise.all([
+    queryActiveFreeClassrooms(ctx.applied),
+    queryFinderCoverage(ctx.applied),
+  ]);
+
+  return {
+    rooms,
+    buildings: ctx.buildings,
+    timeSlots: ctx.timeSlots,
+    currentSlotId: ctx.currentSlotId,
+    applied: ctx.applied,
     coverage,
+  };
+}
+
+/** Poll payload: rooms + coverage only (no building/slot catalogs). */
+export async function getFinderRefreshData(
+  filters: FinderFilters = {},
+): Promise<{
+  rooms: ActiveFreeClassroom[];
+  coverage: FinderCoverage;
+  currentSlotId: string | null;
+  applied: FinderPageData["applied"];
+}> {
+  const ctx = await resolveFinderContext(filters);
+  const [rooms, coverage] = await Promise.all([
+    queryActiveFreeClassrooms(ctx.applied),
+    queryFinderCoverage(ctx.applied),
+  ]);
+
+  return {
+    rooms,
+    coverage,
+    currentSlotId: ctx.currentSlotId,
+    applied: ctx.applied,
   };
 }
