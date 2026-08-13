@@ -17,7 +17,8 @@ datasource db {
 // Enums
 // Confidence is NOT a separate stored column beyond status — "confirmed" is
 // derived from confirmation_count transitions against a trust-weighted
-// threshold (Phase 9 soft-throttle). Badge UI reads status only.
+// threshold (Phase 9 soft-throttle). Badge UI reads status first; V2.2
+// richer labels are derived from count + occupied strikes + timestamps.
 // -----------------------------------------------------------------------------
 
 /// Lifecycle of a free-room report. Expired rows are retained for Stats history.
@@ -34,6 +35,16 @@ enum OccupiedReason {
   class_in_progress
   wrong_info
   duplicate
+}
+
+/// Positive confirmation events only (V2.2).
+/// Occupied strikes stay in occupied_reports; hidden/expired stay on free_reports.status.
+/// Do not duplicate those facts here.
+enum ReportEventType {
+  /// Independent confirmation via Contributor (same room/slot/day, different token)
+  confirmed
+  /// Finder “Still Free” tap
+  still_free
 }
 
 // -----------------------------------------------------------------------------
@@ -146,6 +157,7 @@ model FreeReport {
   classroom       Classroom        @relation(fields: [classroomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   timeSlot        TimeSlot         @relation(fields: [timeSlotId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   occupiedReports OccupiedReport[]
+  reportEvents    ReportEvent[]
 
   /// Natural key: one active claim per room per slot per day.
   @@unique([classroomId, timeSlotId, reportDate])
@@ -171,4 +183,22 @@ model OccupiedReport {
   @@index([freeReportId])
   @@index([reporterToken, createdAt])
   @@map("occupied_reports")
+}
+
+/// Append-only log of independent positive confirmations.
+/// UNIQUE (free_report_id, actor_token) = one Still Free / confirm per device.
+/// actor_token is never selected into Finder/Stats public payloads.
+model ReportEvent {
+  id           String          @id @default(cuid())
+  freeReportId String          @map("free_report_id")
+  eventType    ReportEventType @map("event_type")
+  /// Anonymous confirmer — not exposed in UI or Stats.
+  actorToken   String          @map("actor_token") @db.VarChar(64)
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  freeReport FreeReport @relation(fields: [freeReportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([freeReportId, actorToken])
+  @@index([freeReportId, createdAt])
+  @@map("report_events")
 }

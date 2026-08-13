@@ -221,6 +221,7 @@ npx tsx scripts/seed-stats-data.ts
 | `classrooms`       | Rooms — unique `(building, floor, room_number)` |
 | `free_reports`     | Anonymous free-room claims                      |
 | `occupied_reports` | Strike reports against a free claim             |
+| `report_events`     | Append-only Still Free / confirmations (V2.2)   |
 
 
 Also in migration SQL: CHECK constraints, composite FK (classroom floor ∈ building), indexes on Finder/cron hot paths, and view `active_free_classrooms`.

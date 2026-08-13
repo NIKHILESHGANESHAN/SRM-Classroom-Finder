@@ -15,6 +15,9 @@ export type ActiveFreeClassroom = {
   freeReportId: string;
   status: "unverified" | "confirmed" | "hidden" | "expired";
   confirmationCount: number;
+  occupiedStrikeCount: number;
+  createdAt: string;
+  lastVerifiedAt: string;
   reportDate: string;
   expiresAt: string; // ISO-ish timestamp for client countdown
   classroomId: string;
@@ -80,6 +83,9 @@ type ViewRow = {
   free_report_id: string;
   status: ActiveFreeClassroom["status"];
   confirmation_count: number;
+  occupied_strike_count: number;
+  created_at: Date;
+  last_verified_at: Date;
   report_date: Date;
   expires_at: Date;
   classroom_id: string;
@@ -102,6 +108,15 @@ function mapViewRow(row: ViewRow): ActiveFreeClassroom {
     freeReportId: row.free_report_id,
     status: row.status,
     confirmationCount: row.confirmation_count,
+    occupiedStrikeCount: Number(row.occupied_strike_count ?? 0),
+    createdAt:
+      row.created_at instanceof Date
+        ? row.created_at.toISOString()
+        : new Date(row.created_at).toISOString(),
+    lastVerifiedAt:
+      row.last_verified_at instanceof Date
+        ? row.last_verified_at.toISOString()
+        : new Date(row.last_verified_at).toISOString(),
     reportDate:
       row.report_date instanceof Date
         ? row.report_date.toISOString().slice(0, 10)
@@ -142,6 +157,9 @@ export async function queryActiveFreeClassrooms(
       free_report_id,
       status,
       confirmation_count,
+      occupied_strike_count,
+      created_at,
+      last_verified_at,
       report_date,
       expires_at,
       classroom_id,

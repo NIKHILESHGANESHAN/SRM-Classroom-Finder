@@ -80,6 +80,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
   );
   const [success, setSuccess] = useState<SuccessPayload | null>(null);
   const [roomError, setRoomError] = useState<string | null>(null);
+  const [networkError, setNetworkError] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const building: BuildingOption | undefined = useMemo(
@@ -168,39 +169,48 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
     }
 
     startTransition(async () => {
-      const deviceToken = ensureDeviceToken();
-      const result = await submitFreeReport({
-        buildingId,
-        floorId,
-        classroomId,
-        timeSlotId,
-        deviceToken,
-      });
+      setNetworkError(false);
+      try {
+        const deviceToken = ensureDeviceToken();
+        const result = await submitFreeReport({
+          buildingId,
+          floorId,
+          classroomId,
+          timeSlotId,
+          deviceToken,
+        });
 
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
+        if (!result.ok) {
+          if (result.error === "Couldn't submit your report.") {
+            setNetworkError(true);
+            return;
+          }
+          toast.error(result.error);
+          return;
+        }
+
+        const roomLabel =
+          `${building?.code ?? ""} ${selectedClassroom.roomNumber}`.trim();
+        const slotLabel = selectedSlot
+          ? `Slot ${selectedSlot.slotOrder} · ${selectedSlot.rangeLabel}`
+          : "Selected slot";
+
+        toast.success(
+          result.kind === "confirmed"
+            ? "Confirmation recorded"
+            : result.kind === "already_reported"
+              ? "Already on the board"
+              : "Free room reported",
+        );
+
+        setSuccess({
+          kind: result.kind,
+          roomLabel,
+          slotLabel,
+        });
+      } catch {
+        setNetworkError(true);
       }
-
-      const roomLabel =
-        `${building?.code ?? ""} ${selectedClassroom.roomNumber}`.trim();
-      const slotLabel = selectedSlot
-        ? `Slot ${selectedSlot.slotOrder} · ${selectedSlot.rangeLabel}`
-        : "Selected slot";
-
-      toast.success(
-        result.kind === "confirmed"
-          ? "Confirmation recorded"
-          : result.kind === "already_reported"
-            ? "Already on the board"
-            : "Free room reported",
-      );
-
-      setSuccess({
-        kind: result.kind,
-        roomLabel,
-        slotLabel,
-      });
     });
   }
 
@@ -442,6 +452,12 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                       />
                     )}
 
+                    {networkError ? (
+                      <p className="text-sm text-destructive" role="alert">
+                        Couldn&apos;t submit your report.
+                      </p>
+                    ) : null}
+
                     <Button
                       type="button"
                       className="min-h-11 w-full"
@@ -453,6 +469,8 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Submitting…
                         </>
+                      ) : networkError ? (
+                        "Try again"
                       ) : (
                         "Submit free room"
                       )}

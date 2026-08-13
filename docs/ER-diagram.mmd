@@ -62,12 +62,21 @@ erDiagram
     timestamp created_at
   }
 
+  report_events {
+    text id PK
+    text free_report_id FK
+    ReportEventType event_type
+    varchar actor_token
+    timestamp created_at
+  }
+
   buildings ||--o{ floors : "has"
   buildings ||--o{ classrooms : "contains"
   floors ||--o{ classrooms : "locates"
   time_slots ||--o{ free_reports : "schedules"
   classrooms ||--o{ free_reports : "claimed_free"
   free_reports ||--o{ occupied_reports : "flagged_by"
+  free_reports ||--o{ report_events : "confirmed_by"
 
   %% Notes (not drawable as FK edges in Mermaid):
   %% - UNIQUE (floors.building_id, floors.floor_number)
@@ -75,4 +84,5 @@ erDiagram
   %% - classrooms (floor_id, building_id) → floors (id, building_id)
   %% - UNIQUE free_reports (classroom_id, time_slot_id, report_date)
   %% - UNIQUE occupied_reports (free_report_id, reporter_token)
+  %% - UNIQUE report_events (free_report_id, actor_token)
   %% - classrooms is_active soft-retire (V2.1 inventory)

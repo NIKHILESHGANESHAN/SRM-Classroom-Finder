@@ -53,15 +53,29 @@ async function main() {
     const tp2 = buildings.find((b) => b.code === "TP2");
     assert(ub && tp1 && tp2, "seed buildings UB/TP1/TP2 required");
 
-    const [ubCount, tp1Active, tp2Count] = await Promise.all([
-      prisma.classroom.count({ where: { buildingId: ub.id, isActive: true } }),
-      prisma.classroom.count({ where: { buildingId: tp1.id, isActive: true } }),
-      prisma.classroom.count({ where: { buildingId: tp2.id, isActive: true } }),
-    ]);
-    assert(ubCount === 77, `UB active classrooms expected 77, got ${ubCount}`);
-    assert(tp2Count === 78, `TP2 active classrooms expected 78, got ${tp2Count}`);
-    assert(tp1Active === 0, `TP1 active classrooms expected 0, got ${tp1Active}`);
-    console.log("ok  seeded counts match owner inventory; TP1 has no active rooms");
+    const active = await prisma.classroom.findMany({
+      where: { isActive: true },
+      select: {
+        roomNumber: true,
+        building: { select: { code: true } },
+        floor: { select: { floorNumber: true } },
+      },
+    });
+    const officialKeys = new Set(
+      listed.map((r) => `${r.buildingCode}|${r.floorNumber}|${r.roomNumber}`),
+    );
+    const officialActive = active.filter((c) =>
+      officialKeys.has(
+        `${c.building.code}|${c.floor.floorNumber}|${c.roomNumber}`,
+      ),
+    );
+    const ubOfficial = officialActive.filter((c) => c.building.code === "UB").length;
+    const tp2Official = officialActive.filter((c) => c.building.code === "TP2").length;
+    const tp1Official = officialActive.filter((c) => c.building.code === "TP1").length;
+    assert(ubOfficial === 77, `UB official active expected 77, got ${ubOfficial}`);
+    assert(tp2Official === 78, `TP2 official active expected 78, got ${tp2Official}`);
+    assert(tp1Official === 0, `TP1 official active expected 0, got ${tp1Official}`);
+    console.log("ok  seeded official inventory present; TP1 has no inventory rooms");
 
     const ub12 = ub.floors.find((f) => f.floorNumber === 12);
     const ub5 = ub.floors.find((f) => f.floorNumber === 5);

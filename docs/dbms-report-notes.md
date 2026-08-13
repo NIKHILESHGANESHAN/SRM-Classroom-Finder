@@ -35,6 +35,7 @@ Surrogate keys keep joins stable when natural attributes change (for example ren
 | `free_reports` | `classroom_id` | `classrooms.id` | CASCADE | CASCADE |
 | `free_reports` | `time_slot_id` | `time_slots.id` | RESTRICT | CASCADE |
 | `occupied_reports` | `free_report_id` | `free_reports.id` | CASCADE | CASCADE |
+| `report_events` | `free_report_id` | `free_reports.id` | CASCADE | CASCADE |
 
 **Design notes**
 
@@ -102,8 +103,9 @@ Besides the primary key, these attributes uniquely identify a row and could serv
 
 Two critical write paths use `prisma.$transaction`:
 
-1. **Contribute (free report)** — look up an **active** `classrooms` inventory row (no find-or-create), then create or upsert `free_reports` (increment `confirmation_count`, possibly flip `status` to `confirmed`). Atomic so a crash cannot leave a claim half-applied. Unknown or wrong-floor rooms are rejected.
+1. **Contribute (free report)** — look up an **active** `classrooms` inventory row (no find-or-create), then create or upsert `free_reports`. Independent confirmations insert `report_events` (unique per device) then bump `confirmation_count`. Unknown or wrong-floor rooms are rejected.
 2. **Occupied report** — insert `occupied_reports`; if `COUNT(*)` for that free report reaches 2, set `free_reports.status = 'hidden'` in the **same** transaction. Prevents race conditions where two strikes both see count = 1.
+3. **Still Free** — insert `report_events` (`still_free`); unique `(free_report_id, actor_token)` makes retries idempotent and blocks confirmation spam.
 
 ---
 

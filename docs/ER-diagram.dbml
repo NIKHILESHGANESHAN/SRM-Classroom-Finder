@@ -15,6 +15,11 @@ Enum OccupiedReason {
   duplicate
 }
 
+Enum ReportEventType {
+  confirmed
+  still_free
+}
+
 Table buildings {
   id   varchar [pk, note: 'cuid']
   code varchar(16) [unique, not null, note: 'UB | TP1 | TP2']
@@ -100,6 +105,21 @@ Table occupied_reports {
   Note: '2 distinct tokens → free_reports.status = hidden (app transaction).'
 }
 
+Table report_events {
+  id             varchar [pk]
+  free_report_id varchar [not null, ref: > free_reports.id]
+  event_type     ReportEventType [not null, note: 'confirmed | still_free']
+  actor_token    varchar(64) [not null, note: 'Anonymous; never shown in UI']
+  created_at     timestamp [not null]
+
+  indexes {
+    (free_report_id, created_at)
+    (free_report_id, actor_token) [unique, note: 'One positive confirmation per device']
+  }
+
+  Note: 'Append-only Still Free / Contributor confirmations. Occupied strikes stay in occupied_reports.'
+}
+
 // Cardinality summary:
 // buildings 1—N floors
 // buildings 1—N classrooms
@@ -107,3 +127,4 @@ Table occupied_reports {
 // time_slots 1—N free_reports
 // classrooms 1—N free_reports
 // free_reports 1—N occupied_reports
+// free_reports 1—N report_events

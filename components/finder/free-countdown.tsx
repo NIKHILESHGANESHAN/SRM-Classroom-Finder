@@ -99,6 +99,7 @@ export function FreeCountdown({ reportDate, endMinutes }: CountdownProps) {
   const untilLabel = formatMinutesAsLabel(endMinutes);
   const color = useMemo(() => countdownColor(ms, dark), [ms, dark]);
   const urgent = ms > 0 && ms < 2 * 60 * 1000;
+  const endingSoon = ms > 0 && ms < 5 * 60 * 1000;
 
   if (ms <= 0) {
     return (
@@ -121,6 +122,11 @@ export function FreeCountdown({ reportDate, endMinutes }: CountdownProps) {
       Free until {untilLabel}
       <span className="mx-1.5 opacity-50">·</span>
       <span className="tabular-nums font-semibold">{formatRemaining(ms)}</span>
+      {endingSoon ? (
+        <span className="ml-1.5 font-semibold">
+          {urgent ? "· Ending now" : "· Ending soon"}
+        </span>
+      ) : null}
     </span>
   );
 }

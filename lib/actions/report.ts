@@ -196,7 +196,7 @@ export async function submitOccupiedReport(
     logger.error("report.submit_failed", { error: message });
     return {
       ok: false,
-      error: "Something went wrong submitting your report. Please try again.",
+      error: "Couldn't submit your report.",
     };
   }
 }

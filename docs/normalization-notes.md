@@ -37,6 +37,7 @@ Surrogate `id` PKs are used for most tables. Natural / composite **candidate key
 | `classrooms` | `(building_id, floor_id, room_number)` | Room identity is the whole triple |
 | `free_reports` | `(classroom_id, time_slot_id, report_date)` | Status, counts, tokens describe that full claim |
 | `occupied_reports` | `(free_report_id, reporter_token)` | `reason` / `created_at` describe that strike |
+| `report_events` | `(free_report_id, actor_token)` | `event_type` / `created_at` describe that confirmation |
 
 No attribute like `building_name` is stored on `classrooms` or `free_reports` (that would depend only on `building_id`) → **2NF**.
 

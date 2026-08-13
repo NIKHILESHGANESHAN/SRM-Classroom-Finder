@@ -94,6 +94,7 @@ async function main() {
     "floors",
     "free_reports",
     "occupied_reports",
+    "report_events",
     "time_slots",
   ];
   const got = tables.rows.map((r) => r.table_name);

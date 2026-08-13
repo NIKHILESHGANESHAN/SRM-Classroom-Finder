@@ -107,6 +107,8 @@ export const RATE_LIMITS = {
   contribute: { limit: 20, windowMs: 60_000 },
   /** Occupied-report Server Action */
   report: { limit: 30, windowMs: 60_000 },
+  /** Still Free confirmations — burst cap; uniqueness is enforced in DB */
+  stillFree: { limit: 20, windowMs: 60_000 },
   /** Generic /api/* fallback (middleware) */
   api: { limit: 60, windowMs: 60_000 },
 } as const;

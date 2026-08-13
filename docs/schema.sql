@@ -217,11 +217,40 @@ COMMENT ON TABLE "occupied_reports" IS
   'Occupied/wrong-info strike. Two distinct tokens → free_reports.status=hidden.';
 
 -- -----------------------------------------------------------------------------
--- VIEW: active_free_classrooms
--- Finder read model — excludes hidden/expired and past expires_at.
+-- report_events — append-only independent confirmations (V2.2)
+-- Unique (free_report_id, actor_token): one Still Free / confirm per device
+-- Occupied strikes are NOT copied here (occupied_reports remains source of truth)
 -- -----------------------------------------------------------------------------
 
-CREATE OR REPLACE VIEW "active_free_classrooms" AS
+CREATE TYPE "ReportEventType" AS ENUM ('confirmed', 'still_free');
+
+CREATE TABLE "report_events" (
+  "id"             TEXT NOT NULL,
+  "free_report_id" TEXT NOT NULL,
+  "event_type"     "ReportEventType" NOT NULL,
+  "actor_token"    VARCHAR(64) NOT NULL,
+  "created_at"     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "report_events_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "report_events_actor_token_not_blank"
+    CHECK (LENGTH(TRIM("actor_token")) > 0)
+);
+
+CREATE UNIQUE INDEX "report_events_free_report_id_actor_token_key"
+  ON "report_events" ("free_report_id", "actor_token");
+CREATE INDEX "report_events_free_report_id_created_at_idx"
+  ON "report_events" ("free_report_id", "created_at");
+
+ALTER TABLE "report_events"
+  ADD CONSTRAINT "report_events_free_report_id_fkey"
+  FOREIGN KEY ("free_report_id") REFERENCES "free_reports" ("id")
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+COMMENT ON TABLE "report_events" IS
+  'Append-only positive confirmations. Tokens are never exposed publicly.';
+
+DROP VIEW IF EXISTS "active_free_classrooms";
+
+CREATE VIEW "active_free_classrooms" AS
 SELECT
   fr.id AS free_report_id,
   fr.status,
@@ -229,6 +258,19 @@ SELECT
   fr.report_date,
   fr.expires_at,
   fr.created_at,
+  GREATEST(
+    fr.created_at,
+    COALESCE((
+      SELECT MAX(re.created_at)
+      FROM "report_events" re
+      WHERE re.free_report_id = fr.id
+    ), fr.created_at)
+  ) AS last_verified_at,
+  (
+    SELECT COUNT(*)::int
+    FROM "occupied_reports" o
+    WHERE o.free_report_id = fr.id
+  ) AS occupied_strike_count,
   c.id AS classroom_id,
   c.room_number,
   b.id AS building_id,

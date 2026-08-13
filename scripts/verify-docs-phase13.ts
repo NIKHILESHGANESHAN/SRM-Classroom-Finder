@@ -45,6 +45,8 @@ const tables = [
   "occupied_reports",
 ] as const;
 
+const v2Tables = ["report_events"] as const;
+
 section("Required docs files");
 for (const rel of [
   "docs/schema.sql",
@@ -60,14 +62,22 @@ for (const rel of [
 }
 
 section("schema.sql ↔ migration tables / enums / view");
-mustInclude(schemaSql, [...tables], "schema.sql tables");
-mustInclude(schemaSql, ["FreeReportStatus", "OccupiedReason"], "schema.sql enums");
-mustInclude(schemaSql, ["active_free_classrooms", "is_active"], "schema.sql view / inventory");
+mustInclude(schemaSql, [...tables, ...v2Tables], "schema.sql tables");
+mustInclude(schemaSql, ["FreeReportStatus", "OccupiedReason", "ReportEventType"], "schema.sql enums");
+mustInclude(schemaSql, ["active_free_classrooms", "is_active", "last_verified_at"], "schema.sql view / inventory");
 mustInclude(migration, [...tables, "active_free_classrooms"], "migration");
 const inventoryMigration = load(
   "prisma/migrations/20260813154500_classroom_inventory/migration.sql",
 );
 mustInclude(inventoryMigration, ["is_active", "classrooms_building_id_floor_id_is_active_idx"], "V2.1 inventory migration");
+const eventsMigration = load(
+  "prisma/migrations/20260813184500_report_events/migration.sql",
+);
+mustInclude(
+  eventsMigration,
+  ["report_events", "report_events_free_report_id_actor_token_key", "still_free"],
+  "V2.2 report_events migration",
+);
 console.log("ok  tables, enums, view aligned");
 
 section("schema.sql ↔ migration constraints / indexes");
@@ -93,11 +103,12 @@ mustInclude(prisma, [
   '@@map("classrooms")',
   '@@map("free_reports")',
   '@@map("occupied_reports")',
+  '@@map("report_events")',
 ], "prisma @@map");
 console.log("ok  Prisma @@map names match docs tables");
 
 section("ER diagrams cover every table + cardinalities");
-mustInclude(erMmd, [...tables], "ER-diagram.mmd");
+mustInclude(erMmd, [...tables, ...v2Tables], "ER-diagram.mmd");
 mustInclude(erMmd, [
   "buildings ||--o{ floors",
   "buildings ||--o{ classrooms",
@@ -105,8 +116,9 @@ mustInclude(erMmd, [
   "time_slots ||--o{ free_reports",
   "classrooms ||--o{ free_reports",
   "free_reports ||--o{ occupied_reports",
+  "free_reports ||--o{ report_events",
 ], "ER-diagram.mmd relationships");
-mustInclude(erDbml, [...tables, "ref: >"], "ER-diagram.dbml");
+mustInclude(erDbml, [...tables, ...v2Tables, "ref: >"], "ER-diagram.dbml");
 console.log("ok  Mermaid + DBML cover tables and relationships");
 
 section("README completeness");

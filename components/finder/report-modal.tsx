@@ -53,6 +53,7 @@ function ReportFormBody({
   onReasonChange,
   error,
   pending,
+  retry,
   onCancel,
   onSubmit,
 }: {
@@ -60,6 +61,7 @@ function ReportFormBody({
   onReasonChange: (value: ReportReason) => void;
   error: string | null;
   pending: boolean;
+  retry: boolean;
   onCancel: () => void;
   onSubmit: () => void;
 }) {
@@ -107,7 +109,7 @@ function ReportFormBody({
           onClick={onSubmit}
           disabled={pending || !reason}
         >
-          {pending ? "Submitting…" : "Submit report"}
+          {pending ? "Submitting…" : retry ? "Try again" : "Submit occupied report"}
         </Button>
       </div>
     </div>
@@ -128,53 +130,63 @@ export function ReportModal({
   const deviceToken = useDeviceToken();
   const [reason, setReason] = useState<ReportReason | "">("");
   const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function resetAndClose() {
     setReason("");
     setError(null);
+    setRetry(false);
     onOpenChange(false);
   }
 
   function handleSubmit() {
     if (!reason) {
       setError("Pick a reason before submitting.");
+      setRetry(false);
       return;
     }
 
     setError(null);
+    setRetry(false);
     startTransition(async () => {
-      const result = await submitOccupiedReport({
-        freeReportId,
-        reason,
-        deviceToken: deviceToken ?? undefined,
-      });
+      try {
+        const result = await submitOccupiedReport({
+          freeReportId,
+          reason,
+          deviceToken: deviceToken ?? undefined,
+        });
 
-      if (!result.ok) {
-        setError(result.error);
-        return;
+        if (!result.ok) {
+          setError(result.error);
+          setRetry(result.error === "Couldn't submit your report.");
+          return;
+        }
+
+        resetAndClose();
+
+        if (result.kind === "already_reported") {
+          showReportToast("already_reported", roomLabel);
+          if (result.hidden) onHidden();
+          return;
+        }
+
+        if (result.hidden) {
+          showReportToast("hidden", roomLabel);
+          onHidden();
+          return;
+        }
+
+        showReportToast("created", roomLabel);
+      } catch {
+        setError("Couldn't submit your report.");
+        setRetry(true);
       }
-
-      resetAndClose();
-
-      if (result.kind === "already_reported") {
-        showReportToast("already_reported", roomLabel);
-        if (result.hidden) onHidden();
-        return;
-      }
-
-      if (result.hidden) {
-        showReportToast("hidden", roomLabel);
-        onHidden();
-        return;
-      }
-
-      showReportToast("created", roomLabel);
     });
   }
 
-  const title = "Report free room";
-  const description = `Flag ${roomLabel} if it isn’t actually free. Your device token is used anonymously — one report per room.`;
+  const title = "Report occupied";
+  const description = `Flag ${roomLabel} if it isn’t actually free. Your device token is used anonymously — one occupied report per room.`;
 
   const form = (
     <ReportFormBody
@@ -182,6 +194,7 @@ export function ReportModal({
       onReasonChange={setReason}
       error={error}
       pending={pending}
+      retry={retry}
       onCancel={resetAndClose}
       onSubmit={handleSubmit}
     />
@@ -195,6 +208,7 @@ export function ReportModal({
           if (!next) {
             setReason("");
             setError(null);
+            setRetry(false);
           }
           onOpenChange(next);
         }}
@@ -217,6 +231,7 @@ export function ReportModal({
         if (!next) {
           setReason("");
           setError(null);
+          setRetry(false);
         }
         onOpenChange(next);
       }}

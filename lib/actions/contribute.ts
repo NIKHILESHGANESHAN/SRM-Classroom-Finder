@@ -15,6 +15,7 @@
 import { lookupActiveClassroom } from "@/lib/classroom-lookup";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { applyIndependentConfirmation } from "@/lib/record-confirmation";
 import {
   RATE_LIMITS,
   rateLimit,
@@ -28,10 +29,6 @@ import {
 } from "@/lib/slots";
 import { isValidDeviceToken } from "@/lib/token";
 import { getDeviceTokenFromCookies } from "@/lib/token-server";
-import {
-  getConfirmationThresholdForToken,
-  nextStatusAfterConfirmation,
-} from "@/lib/token-trust";
 
 const DAILY_CONTRIBUTION_CAP = 15;
 
@@ -198,33 +195,20 @@ export async function submitFreeReport(
         };
       }
 
-      const threshold = await getConfirmationThresholdForToken(
-        tx,
-        existing.contributorToken,
-        reportDate,
-      );
-
-      const nextCount = existing.confirmationCount + 1;
-      const nextStatus = nextStatusAfterConfirmation({
-        currentStatus: existing.status,
-        nextConfirmationCount: nextCount,
-        threshold,
+      const confirmation = await applyIndependentConfirmation(tx, {
+        freeReportId: existing.id,
+        actorToken: token,
+        eventType: "confirmed",
       });
-
-      const updated = await tx.freeReport.update({
-        where: { id: existing.id },
-        data: {
-          confirmationCount: nextCount,
-          status: nextStatus,
-        },
-      });
-
+      if (!confirmation.ok) {
+        return { ok: false as const, error: confirmation.error };
+      }
       return {
         ok: true as const,
-        kind: "confirmed" as const,
-        freeReportId: updated.id,
-        confirmationCount: updated.confirmationCount,
-        status: updated.status,
+        kind: confirmation.kind,
+        freeReportId: confirmation.freeReportId,
+        confirmationCount: confirmation.confirmationCount,
+        status: confirmation.status,
       };
     });
   } catch (error) {
@@ -233,7 +217,7 @@ export async function submitFreeReport(
     logger.error("contribute.submit_failed", { error: message });
     return {
       ok: false,
-      error: "Something went wrong saving your report. Please try again.",
+      error: "Couldn't submit your report.",
     };
   }
 }
