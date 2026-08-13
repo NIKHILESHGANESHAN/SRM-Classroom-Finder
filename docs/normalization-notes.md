@@ -40,6 +40,8 @@ Surrogate `id` PKs are used for most tables. Natural / composite **candidate key
 
 No attribute like `building_name` is stored on `classrooms` or `free_reports` (that would depend only on `building_id`) → **2NF**.
 
+From V2.1, `classrooms` is **master inventory** (seeded, `is_active` for soft-retire). Students do not create classroom rows. `is_active` depends on the classroom entity key, not on reports — still 3NF.
+
 ---
 
 ## 3NF — Third Normal Form

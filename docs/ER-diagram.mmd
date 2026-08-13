@@ -39,6 +39,7 @@ erDiagram
     text building_id FK
     text floor_id FK
     varchar room_number
+    boolean is_active
   }
 
   free_reports {
@@ -74,4 +75,4 @@ erDiagram
   %% - classrooms (floor_id, building_id) → floors (id, building_id)
   %% - UNIQUE free_reports (classroom_id, time_slot_id, report_date)
   %% - UNIQUE occupied_reports (free_report_id, reporter_token)
-  %% - VIEW active_free_classrooms joins free_reports + dimensions
+  %% - classrooms is_active soft-retire (V2.1 inventory)

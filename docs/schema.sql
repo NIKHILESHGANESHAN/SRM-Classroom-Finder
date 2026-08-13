@@ -108,6 +108,7 @@ CREATE TABLE "classrooms" (
   "building_id" TEXT NOT NULL,
   "floor_id"    TEXT NOT NULL,
   "room_number" VARCHAR(32) NOT NULL,
+  "is_active"   BOOLEAN NOT NULL DEFAULT TRUE,
   CONSTRAINT "classrooms_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "classrooms_room_number_not_blank"
     CHECK (LENGTH(TRIM("room_number")) > 0)
@@ -115,6 +116,8 @@ CREATE TABLE "classrooms" (
 
 CREATE INDEX "classrooms_building_id_idx" ON "classrooms" ("building_id");
 CREATE INDEX "classrooms_floor_id_idx" ON "classrooms" ("floor_id");
+CREATE INDEX "classrooms_building_id_floor_id_is_active_idx"
+  ON "classrooms" ("building_id", "floor_id", "is_active");
 CREATE UNIQUE INDEX "classrooms_building_id_floor_id_room_number_key"
   ON "classrooms" ("building_id", "floor_id", "room_number");
 
@@ -131,7 +134,7 @@ ALTER TABLE "classrooms"
   ON DELETE RESTRICT ON UPDATE CASCADE;
 
 COMMENT ON TABLE "classrooms" IS
-  'Physical classroom. Natural key is (building, floor, room_number).';
+  'Authoritative classroom inventory. Natural key is (building, floor, room_number). is_active retires rooms without DELETE.';
 
 -- -----------------------------------------------------------------------------
 -- free_reports — anonymous free-room claims (fact table)
@@ -243,7 +246,8 @@ INNER JOIN "buildings" b ON b.id = c.building_id
 INNER JOIN "floors" f ON f.id = c.floor_id
 INNER JOIN "time_slots" ts ON ts.id = fr.time_slot_id
 WHERE fr.status NOT IN ('hidden', 'expired')
-  AND fr.expires_at > NOW();
+  AND fr.expires_at > NOW()
+  AND c.is_active = TRUE;
 
 COMMENT ON VIEW "active_free_classrooms" IS
   'Denormalized read model for Class Finder. Not a base table.';

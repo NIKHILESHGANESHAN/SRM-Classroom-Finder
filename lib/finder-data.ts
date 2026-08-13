@@ -52,6 +52,17 @@ export type FinderFilters = {
   timeSlotId?: string | null;
 };
 
+export type FinderCoverageKind =
+  | "none_free"
+  | "insufficient_reports"
+  | "inventory_gap";
+
+export type FinderCoverage = {
+  activeClassroomCount: number;
+  historicalReportCount: number;
+  kind: FinderCoverageKind;
+};
+
 export type FinderPageData = {
   rooms: ActiveFreeClassroom[];
   buildings: FinderBuilding[];
@@ -62,6 +73,7 @@ export type FinderPageData = {
     floorId: string | null;
     timeSlotId: string | null;
   };
+  coverage: FinderCoverage;
 };
 
 type ViewRow = {
@@ -154,6 +166,52 @@ export async function queryActiveFreeClassrooms(
   return rows.map(mapViewRow);
 }
 
+function coverageKind(
+  activeClassroomCount: number,
+  historicalReportCount: number,
+): FinderCoverageKind {
+  if (activeClassroomCount === 0) return "inventory_gap";
+  if (historicalReportCount === 0) return "insufficient_reports";
+  return "none_free";
+}
+
+/** Inventory vs report history for honest empty states (V2.1). */
+export async function queryFinderCoverage(
+  filters: FinderFilters,
+): Promise<FinderCoverage> {
+  const buildingId = filters.buildingId ?? null;
+  const floorId = filters.floorId ?? null;
+  const timeSlotId = filters.timeSlotId ?? null;
+
+  const [classroomRows, reportRows] = await Promise.all([
+    prisma.$queryRaw<[{ n: bigint | number }]>`
+      SELECT COUNT(*)::int AS n
+      FROM classrooms c
+      WHERE c.is_active = TRUE
+        AND (${buildingId}::text IS NULL OR c.building_id = ${buildingId})
+        AND (${floorId}::text IS NULL OR c.floor_id = ${floorId})
+    `,
+    prisma.$queryRaw<[{ n: bigint | number }]>`
+      SELECT COUNT(*)::int AS n
+      FROM free_reports fr
+      INNER JOIN classrooms c ON c.id = fr.classroom_id
+      WHERE c.is_active = TRUE
+        AND (${buildingId}::text IS NULL OR c.building_id = ${buildingId})
+        AND (${floorId}::text IS NULL OR c.floor_id = ${floorId})
+        AND (${timeSlotId}::text IS NULL OR fr.time_slot_id = ${timeSlotId})
+    `,
+  ]);
+
+  const activeClassroomCount = Number(classroomRows[0]?.n ?? 0);
+  const historicalReportCount = Number(reportRows[0]?.n ?? 0);
+
+  return {
+    activeClassroomCount,
+    historicalReportCount,
+    kind: coverageKind(activeClassroomCount, historicalReportCount),
+  };
+}
+
 export async function getFinderPageData(
   filters: FinderFilters = {},
 ): Promise<FinderPageData> {
@@ -206,11 +264,18 @@ export async function getFinderPageData(
     floorId = null;
   }
 
-  const rooms = await queryActiveFreeClassrooms({
-    buildingId,
-    floorId,
-    timeSlotId,
-  });
+  const [rooms, coverage] = await Promise.all([
+    queryActiveFreeClassrooms({
+      buildingId,
+      floorId,
+      timeSlotId,
+    }),
+    queryFinderCoverage({
+      buildingId,
+      floorId,
+      timeSlotId,
+    }),
+  ]);
 
   return {
     rooms,
@@ -233,5 +298,6 @@ export async function getFinderPageData(
       floorId,
       timeSlotId,
     },
+    coverage,
   };
 }

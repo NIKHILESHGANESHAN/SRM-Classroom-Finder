@@ -9,8 +9,6 @@ import { ProgressIndicator } from "@/components/contribute/progress-indicator";
 import { SlotPicker } from "@/components/contribute/slot-picker";
 import { SuccessState } from "@/components/contribute/success-state";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { submitFreeReport } from "@/lib/actions/contribute";
 import type {
   BuildingOption,
@@ -76,7 +74,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
   const [direction, setDirection] = useState(1);
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [floorId, setFloorId] = useState<string | null>(null);
-  const [roomNumber, setRoomNumber] = useState("");
+  const [classroomId, setClassroomId] = useState<string | null>(null);
   const [timeSlotId, setTimeSlotId] = useState<string | null>(
     () => data.currentSlotId,
   );
@@ -90,6 +88,9 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
   );
 
   const floors = building?.floors ?? [];
+  const selectedFloor = floors.find((f) => f.id === floorId);
+  const classrooms = selectedFloor?.classrooms ?? [];
+  const selectedClassroom = classrooms.find((c) => c.id === classroomId);
 
   const selectedSlot: TimeSlotOption | undefined = useMemo(
     () => data.timeSlots.find((s) => s.id === timeSlotId),
@@ -98,7 +99,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
 
   const selectableSlots = data.timeSlots.filter((s) => s.selectable);
   const canSubmit =
-    Boolean(buildingId && floorId && timeSlotId && roomNumber.trim()) &&
+    Boolean(buildingId && floorId && classroomId && timeSlotId) &&
     Boolean(selectedSlot?.selectable) &&
     !isPending;
 
@@ -110,23 +111,31 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
   function selectBuilding(id: string) {
     setBuildingId(id);
     setFloorId(null);
+    setClassroomId(null);
+    setRoomError(null);
     setDirection(1);
     setStep(1);
   }
 
   function selectFloor(id: string) {
     setFloorId(id);
+    setClassroomId(null);
+    setRoomError(null);
     goTo(2);
   }
 
+  function selectClassroom(id: string) {
+    setClassroomId(id);
+    setRoomError(null);
+  }
+
   function continueFromRoom() {
-    const trimmed = roomNumber.trim();
-    if (!trimmed) {
-      setRoomError("Enter the room number (e.g. 504).");
+    if (!classroomId || !selectedClassroom) {
+      setRoomError("Select a classroom from the list.");
       return;
     }
-    if (!/^[A-Za-z0-9][A-Za-z0-9\-./]*$/.test(trimmed)) {
-      setRoomError("Use letters, numbers, and - . / only.");
+    if (classrooms.length === 0) {
+      setRoomError("No classrooms are listed for this floor yet.");
       return;
     }
     setRoomError(null);
@@ -145,16 +154,15 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
     setDirection(1);
     setBuildingId(null);
     setFloorId(null);
-    setRoomNumber("");
+    setClassroomId(null);
     setRoomError(null);
     setTimeSlotId(data.currentSlotId);
   }
 
   function handleSubmit() {
-    if (!buildingId || !floorId || !timeSlotId) return;
-    const trimmed = roomNumber.trim();
-    if (!trimmed) {
-      setRoomError("Enter the room number.");
+    if (!buildingId || !floorId || !timeSlotId || !classroomId) return;
+    if (!selectedClassroom) {
+      setRoomError("Select a classroom from the list.");
       goTo(2);
       return;
     }
@@ -164,7 +172,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
       const result = await submitFreeReport({
         buildingId,
         floorId,
-        roomNumber: trimmed,
+        classroomId,
         timeSlotId,
         deviceToken,
       });
@@ -174,7 +182,8 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
         return;
       }
 
-      const roomLabel = `${building?.code ?? ""} ${trimmed}`.trim();
+      const roomLabel =
+        `${building?.code ?? ""} ${selectedClassroom.roomNumber}`.trim();
       const slotLabel = selectedSlot
         ? `Slot ${selectedSlot.slotOrder} · ${selectedSlot.rangeLabel}`
         : "Selected slot";
@@ -314,13 +323,13 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                 )}
 
                 {step === 2 && (
-                  <section className="space-y-4" aria-label="Enter room number">
+                  <section className="space-y-4" aria-label="Select classroom">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-lg font-semibold">Room number</h2>
+                        <h2 className="text-lg font-semibold">Which classroom?</h2>
                         <p className="text-sm text-muted-foreground">
                           {building?.code} · Floor{" "}
-                          {floors.find((f) => f.id === floorId)?.floorNumber}
+                          {selectedFloor?.floorNumber}
                         </p>
                       </div>
                       <Button
@@ -334,41 +343,58 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                         Back
                       </Button>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="room-number">Room</Label>
-                      <Input
-                        id="room-number"
-                        inputMode="text"
-                        autoComplete="off"
-                        autoCapitalize="characters"
-                        placeholder="e.g. 504"
-                        value={roomNumber}
-                        onChange={(e) => {
-                          setRoomNumber(e.target.value);
-                          if (roomError) setRoomError(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            continueFromRoom();
-                          }
-                        }}
-                        className="min-h-11 text-base"
-                        aria-invalid={Boolean(roomError)}
-                      />
-                      {roomError ? (
-                        <p className="text-sm text-destructive" role="alert">
-                          {roomError}
+                    {classrooms.length === 0 ? (
+                      <div
+                        role="status"
+                        className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center"
+                      >
+                        <p className="font-medium text-foreground">
+                          No classrooms listed for this floor yet
                         </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          Use the number on the door — no building prefix needed.
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          We don&apos;t have a verified room list for{" "}
+                          {building?.code} Floor {selectedFloor?.floorNumber}.
+                          That does not mean every room is occupied.
                         </p>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="grid grid-cols-3 gap-2 sm:grid-cols-4"
+                        role="listbox"
+                        aria-label="Classrooms on this floor"
+                      >
+                        {classrooms.map((room) => (
+                          <button
+                            key={room.id}
+                            type="button"
+                            role="option"
+                            aria-selected={classroomId === room.id}
+                            onClick={() => selectClassroom(room.id)}
+                            className={cn(
+                              "flex min-h-11 items-center justify-center rounded-xl border text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              classroomId === room.id
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-background hover:border-primary/40",
+                            )}
+                          >
+                            {room.roomNumber}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {roomError ? (
+                      <p className="text-sm text-destructive" role="alert">
+                        {roomError}
+                      </p>
+                    ) : classrooms.length > 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Choose a room from the verified inventory for this floor.
+                      </p>
+                    ) : null}
                     <Button
                       type="button"
                       className="min-h-11 w-full"
+                      disabled={classrooms.length === 0}
                       onClick={continueFromRoom}
                     >
                       Continue
@@ -383,8 +409,8 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                         <h2 className="text-lg font-semibold">Time slot</h2>
                         <p className="text-sm text-muted-foreground">
                           {building?.code} · Floor{" "}
-                          {floors.find((f) => f.id === floorId)?.floorNumber} ·{" "}
-                          {roomNumber.trim().toUpperCase() || "Room"}
+                          {selectedFloor?.floorNumber} ·{" "}
+                          {selectedClassroom?.roomNumber ?? "Room"}
                         </p>
                       </div>
                       <Button

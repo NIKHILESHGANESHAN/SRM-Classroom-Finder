@@ -8,11 +8,20 @@ import {
   type SlotTimeFields,
 } from "@/lib/slots";
 
+export type ClassroomOption = {
+  id: string;
+  roomNumber: string;
+};
+
 export type BuildingOption = {
   id: string;
   code: string;
   name: string;
-  floors: { id: string; floorNumber: number }[];
+  floors: {
+    id: string;
+    floorNumber: number;
+    classrooms: ClassroomOption[];
+  }[];
 };
 
 export type TimeSlotOption = {
@@ -40,7 +49,15 @@ export async function getContributePageData(): Promise<ContributePageData> {
       include: {
         floors: {
           orderBy: { floorNumber: "asc" },
-          select: { id: true, floorNumber: true },
+          select: {
+            id: true,
+            floorNumber: true,
+            classrooms: {
+              where: { isActive: true },
+              orderBy: { roomNumber: "asc" },
+              select: { id: true, roomNumber: true },
+            },
+          },
         },
       },
     }),
@@ -73,7 +90,11 @@ export async function getContributePageData(): Promise<ContributePageData> {
       id: b.id,
       code: b.code,
       name: b.name,
-      floors: b.floors,
+      floors: b.floors.map((f) => ({
+        id: f.id,
+        floorNumber: f.floorNumber,
+        classrooms: f.classrooms,
+      })),
     })),
     timeSlots,
     currentSlotId: getCurrentSlotId(slotFields, nowMinutes),

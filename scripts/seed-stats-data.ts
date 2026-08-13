@@ -110,15 +110,15 @@ async function main() {
     { buildingCode: "UB", floorNumber: 5, roomNumber: "501", slotOrder: 6, reportYmd: today, status: "confirmed", confirmationCount: 3 },
     { buildingCode: "UB", floorNumber: 5, roomNumber: "502", slotOrder: 6, reportYmd: today, status: "unverified", confirmationCount: 1 },
     { buildingCode: "UB", floorNumber: 6, roomNumber: "601", slotOrder: 7, reportYmd: today, status: "confirmed", confirmationCount: 2 },
-    { buildingCode: "TP1", floorNumber: 3, roomNumber: "301", slotOrder: 6, reportYmd: today, status: "unverified", confirmationCount: 1 },
-    { buildingCode: "TP2", floorNumber: 4, roomNumber: "401", slotOrder: 8, reportYmd: today, status: "hidden", confirmationCount: 1 },
+    { buildingCode: "TP2", floorNumber: 3, roomNumber: "304", slotOrder: 6, reportYmd: today, status: "unverified", confirmationCount: 1 },
+    { buildingCode: "TP2", floorNumber: 5, roomNumber: "504", slotOrder: 8, reportYmd: today, status: "hidden", confirmationCount: 1 },
     // Earlier this week — slot 6 popular; room 501 reported again for HAVING
     { buildingCode: "UB", floorNumber: 5, roomNumber: "501", slotOrder: 5, reportYmd: d1, status: "confirmed", confirmationCount: 2 },
     { buildingCode: "UB", floorNumber: 5, roomNumber: "501", slotOrder: 6, reportYmd: d1, status: "expired", confirmationCount: 2 },
-    { buildingCode: "TP1", floorNumber: 3, roomNumber: "302", slotOrder: 6, reportYmd: d1, status: "confirmed", confirmationCount: 2 },
-    { buildingCode: "TP1", floorNumber: 4, roomNumber: "401", slotOrder: 6, reportYmd: d2, status: "unverified", confirmationCount: 1 },
-    { buildingCode: "TP2", floorNumber: 5, roomNumber: "502", slotOrder: 7, reportYmd: d2, status: "confirmed", confirmationCount: 4 },
-    { buildingCode: "UB", floorNumber: 7, roomNumber: "701", slotOrder: 6, reportYmd: d2, status: "confirmed", confirmationCount: 2 },
+    { buildingCode: "TP2", floorNumber: 3, roomNumber: "305", slotOrder: 6, reportYmd: d1, status: "confirmed", confirmationCount: 2 },
+    { buildingCode: "TP2", floorNumber: 3, roomNumber: "306", slotOrder: 6, reportYmd: d2, status: "unverified", confirmationCount: 1 },
+    { buildingCode: "TP2", floorNumber: 5, roomNumber: "505", slotOrder: 7, reportYmd: d2, status: "confirmed", confirmationCount: 4 },
+    { buildingCode: "UB", floorNumber: 7, roomNumber: "702", slotOrder: 6, reportYmd: d2, status: "confirmed", confirmationCount: 2 },
   ];
 
   for (const row of plan) {

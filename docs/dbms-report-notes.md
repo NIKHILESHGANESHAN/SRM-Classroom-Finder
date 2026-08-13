@@ -102,7 +102,7 @@ Besides the primary key, these attributes uniquely identify a row and could serv
 
 Two critical write paths use `prisma.$transaction`:
 
-1. **Contribute (free report)** — find-or-create `classrooms`, then create or upsert `free_reports` (increment `confirmation_count`, possibly flip `status` to `confirmed`). Atomic so a crash cannot leave a classroom without its claim logic half-applied.
+1. **Contribute (free report)** — look up an **active** `classrooms` inventory row (no find-or-create), then create or upsert `free_reports` (increment `confirmation_count`, possibly flip `status` to `confirmed`). Atomic so a crash cannot leave a claim half-applied. Unknown or wrong-floor rooms are rejected.
 2. **Occupied report** — insert `occupied_reports`; if `COUNT(*)` for that free report reaches 2, set `free_reports.status = 'hidden'` in the **same** transaction. Prevents race conditions where two strikes both see count = 1.
 
 ---

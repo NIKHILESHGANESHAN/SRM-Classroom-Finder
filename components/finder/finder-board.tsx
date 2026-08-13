@@ -144,6 +144,8 @@ export function FinderBoard({ data }: FinderBoardProps) {
               ? `“${deferredSearch}” in ${slotLabel}`
               : slotLabel
           }
+          coverageKind={data.coverage.kind}
+          searchMiss={Boolean(deferredSearch) && data.rooms.length > 0}
         />
       ) : (
         <LayoutGroup>

@@ -4,13 +4,15 @@
  * Contributor Server Action — creates / confirms a free_report.
  *
  * DBMS concepts demonstrated:
- *   - TRANSACTION (prisma.$transaction) for classroom find-or-create + upsert
+ *   - TRANSACTION (prisma.$transaction) for report upsert
  *   - Natural-key uniqueness on (classroom_id, time_slot_id, report_date)
+ *   - Authoritative classroom lookup (no find-or-create) — V2.1
  *   - Soft rate limit keyed by anonymous device token (~15 / day)
  *   - Soft-throttle (Phase 9): COUNT(hidden reports today) ≥ 3 raises the
  *     confirmation_count needed before status becomes "confirmed"
  */
 
+import { lookupActiveClassroom } from "@/lib/classroom-lookup";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
@@ -36,7 +38,8 @@ const DAILY_CONTRIBUTION_CAP = 15;
 export type ContributeInput = {
   buildingId: string;
   floorId: string;
-  roomNumber: string;
+  /** Must be an active classrooms.id that belongs to buildingId + floorId */
+  classroomId: string;
   timeSlotId: string;
   /** Client may pass token as fallback if cookie not yet visible to the server */
   deviceToken?: string;
@@ -83,21 +86,9 @@ export async function submitFreeReport(
     };
   }
 
-  const roomNumber = input.roomNumber.trim().toUpperCase();
-  if (!roomNumber || roomNumber.length > 32) {
-    return { ok: false, error: "Enter a valid room number." };
-  }
-  if (!/^[A-Z0-9][A-Z0-9\-./]*$/i.test(roomNumber)) {
-    return {
-      ok: false,
-      error: "Room number can only include letters, numbers, and - . /",
-    };
-  }
-
-  const [building, floor, timeSlot] = await Promise.all([
+  const [building, floor] = await Promise.all([
     prisma.building.findUnique({ where: { id: input.buildingId } }),
     prisma.floor.findUnique({ where: { id: input.floorId } }),
-    prisma.timeSlot.findUnique({ where: { id: input.timeSlotId } }),
   ]);
 
   if (!building) return { ok: false, error: "Unknown building." };
@@ -107,6 +98,20 @@ export async function submitFreeReport(
       error: "That floor does not belong to the selected building.",
     };
   }
+
+  const classroomResult = await lookupActiveClassroom({
+    buildingId: building.id,
+    floorId: floor.id,
+    classroomId: input.classroomId,
+  });
+  if (!classroomResult.ok) {
+    return { ok: false, error: classroomResult.error };
+  }
+  const classroom = classroomResult.classroom;
+
+  const timeSlot = await prisma.timeSlot.findUnique({
+    where: { id: input.timeSlotId },
+  });
   if (!timeSlot) return { ok: false, error: "Unknown time slot." };
 
   const startMinutes = timeToMinutes(timeSlot.startTime);
@@ -134,22 +139,6 @@ export async function submitFreeReport(
 
   try {
     return await prisma.$transaction(async (tx) => {
-      const classroom = await tx.classroom.upsert({
-        where: {
-          buildingId_floorId_roomNumber: {
-            buildingId: building.id,
-            floorId: floor.id,
-            roomNumber,
-          },
-        },
-        create: {
-          buildingId: building.id,
-          floorId: floor.id,
-          roomNumber,
-        },
-        update: {},
-      });
-
       const existing = await tx.freeReport.findUnique({
         where: {
           classroomId_timeSlotId_reportDate: {
@@ -169,7 +158,6 @@ export async function submitFreeReport(
       }
 
       if (!existing) {
-        // First report is always Unverified (trusted or soft-throttled).
         const created = await tx.freeReport.create({
           data: {
             classroomId: classroom.id,
@@ -210,7 +198,6 @@ export async function submitFreeReport(
         };
       }
 
-      // Trust weight follows the ORIGINAL contributor, not the confirmer.
       const threshold = await getConfirmationThresholdForToken(
         tx,
         existing.contributorToken,

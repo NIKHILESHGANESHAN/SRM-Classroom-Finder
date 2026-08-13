@@ -1,18 +1,25 @@
 /**
- * Prisma seed — reference / dimension data only (Phase 3).
+ * Prisma seed — reference / dimension data (Phase 3) + classroom inventory (V2.1).
  *
  * Seeds:
  *   - buildings (UB, TP1, TP2)
  *   - floors (per-building ranges from the project spec)
  *   - time_slots (slots 1–10 with official start/end times)
+ *   - classrooms (owner-verified UB + TP2 list only — no TP1 rooms)
  *
  * Idempotent: safe to run repeatedly via upserts on natural keys
- * (building.code, floor.(buildingId, floorNumber), time_slot.slotOrder).
+ * (building.code, floor.(buildingId, floorNumber), time_slot.slotOrder,
+ *  classroom.(buildingId, floorId, roomNumber)).
  *
  * Run: `npx prisma db seed` or `npm run db:seed`
  */
 
 import { PrismaClient } from "@prisma/client";
+import {
+  CLASSROOM_INVENTORY,
+  flattenClassroomInventory,
+  type InventoryBuildingCode,
+} from "./data/classroom-inventory";
 
 const prisma = new PrismaClient();
 
@@ -117,12 +124,104 @@ async function seedTimeSlots(): Promise<void> {
   console.log(`✓ Time slots 1–${TIME_SLOTS.length} upserted`);
 }
 
+async function seedClassrooms(): Promise<void> {
+  const rows = flattenClassroomInventory();
+  const buildingCache = new Map<string, { id: string }>();
+
+  for (const row of rows) {
+    let building = buildingCache.get(row.buildingCode);
+    if (!building) {
+      const found = await prisma.building.findUnique({
+        where: { code: row.buildingCode },
+      });
+      if (!found) {
+        throw new Error(
+          `Cannot seed classrooms: missing building ${row.buildingCode}`,
+        );
+      }
+      building = found;
+      buildingCache.set(row.buildingCode, found);
+    }
+
+    const floor = await prisma.floor.findUnique({
+      where: {
+        buildingId_floorNumber: {
+          buildingId: building.id,
+          floorNumber: row.floorNumber,
+        },
+      },
+    });
+    if (!floor) {
+      throw new Error(
+        `Cannot seed classrooms: missing ${row.buildingCode} floor ${row.floorNumber}`,
+      );
+    }
+
+    await prisma.classroom.upsert({
+      where: {
+        buildingId_floorId_roomNumber: {
+          buildingId: building.id,
+          floorId: floor.id,
+          roomNumber: row.roomNumber,
+        },
+      },
+      create: {
+        buildingId: building.id,
+        floorId: floor.id,
+        roomNumber: row.roomNumber,
+        isActive: true,
+      },
+      update: { isActive: true },
+    });
+  }
+
+  const officialKeys = new Set(
+    rows.map((r) => `${r.buildingCode}|${r.floorNumber}|${r.roomNumber}`),
+  );
+
+  const extras = await prisma.classroom.findMany({
+    select: {
+      id: true,
+      isActive: true,
+      roomNumber: true,
+      building: { select: { code: true } },
+      floor: { select: { floorNumber: true } },
+    },
+  });
+
+  let deactivated = 0;
+  for (const row of extras) {
+    const key = `${row.building.code}|${row.floor.floorNumber}|${row.roomNumber}`;
+    const shouldBeActive = officialKeys.has(key);
+    if (row.isActive !== shouldBeActive) {
+      await prisma.classroom.update({
+        where: { id: row.id },
+        data: { isActive: shouldBeActive },
+      });
+      if (!shouldBeActive) deactivated += 1;
+    }
+  }
+
+  if (deactivated > 0) {
+    console.log(
+      `✓ Soft-retired ${deactivated} classroom(s) not on the V2.1 inventory (kept for history)`,
+    );
+  }
+
+  console.log(
+    `✓ Classrooms — ${rows.length} owner-verified rooms (UB + TP2; no TP1)`,
+  );
+}
+
 async function printSummary(): Promise<void> {
-  const [buildingCount, floorCount, slotCount] = await Promise.all([
-    prisma.building.count(),
-    prisma.floor.count(),
-    prisma.timeSlot.count(),
-  ]);
+  const [buildingCount, floorCount, slotCount, classroomCount, activeClassroomCount] =
+    await Promise.all([
+      prisma.building.count(),
+      prisma.floor.count(),
+      prisma.timeSlot.count(),
+      prisma.classroom.count(),
+      prisma.classroom.count({ where: { isActive: true } }),
+    ]);
 
   const floorsByBuilding = await prisma.building.findMany({
     orderBy: { code: "asc" },
@@ -141,17 +240,29 @@ async function printSummary(): Promise<void> {
   console.log(`buildings:   ${buildingCount}`);
   console.log(`floors:      ${floorCount}`);
   console.log(`time_slots:  ${slotCount}`);
+  console.log(`classrooms:  ${classroomCount} (${activeClassroomCount} active)`);
 
   for (const b of floorsByBuilding) {
     const nums = b.floors.map((f) => f.floorNumber).join(", ");
     console.log(`  ${b.code}: floors [${nums}] (${b._count.floors})`);
   }
+
+  const codes: InventoryBuildingCode[] = ["UB", "TP2"];
+  for (const code of codes) {
+    const listed = Object.values(CLASSROOM_INVENTORY[code]).reduce(
+      (sum, rooms) => sum + rooms.length,
+      0,
+    );
+    console.log(`  ${code} inventory rooms: ${listed}`);
+  }
+  console.log("  TP1 inventory rooms: 0 (deferred to V3)");
 }
 
 async function main(): Promise<void> {
   console.log("Seeding SRM KTR Classroom Finder reference data…\n");
   await seedBuildingsAndFloors();
   await seedTimeSlots();
+  await seedClassrooms();
   await printSummary();
 }
 

@@ -93,15 +93,19 @@ model TimeSlot {
 // Classrooms — the physical room entity students search for
 // -----------------------------------------------------------------------------
 
+/// Authoritative campus inventory (master data), not a user-typed string.
 /// A room is uniquely identified by (building, floor, room_number).
 /// buildingId is stored alongside floorId for query convenience; integrity is
 /// enforced by a composite FK to floors(id, building_id) so a room cannot
 /// reference a floor from a different building (3NF + referential integrity).
+/// is_active retires a room without DELETE (historical free_reports stay).
 model Classroom {
-  id         String @id @default(cuid())
-  buildingId String @map("building_id")
-  floorId    String @map("floor_id")
-  roomNumber String @map("room_number") @db.VarChar(32)
+  id         String  @id @default(cuid())
+  buildingId String  @map("building_id")
+  floorId    String  @map("floor_id")
+  roomNumber String  @map("room_number") @db.VarChar(32)
+  /// Soft-retire flag. Contributor/Finder only use active rows; reports remain.
+  isActive   Boolean @default(true) @map("is_active")
 
   building    Building     @relation(fields: [buildingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   floor       Floor        @relation(fields: [floorId, buildingId], references: [id, buildingId], onDelete: Restrict, onUpdate: Cascade)
@@ -110,6 +114,8 @@ model Classroom {
   @@unique([buildingId, floorId, roomNumber])
   @@index([buildingId])
   @@index([floorId])
+  /// Contributor + coverage: list/count active rooms for a building+floor.
+  @@index([buildingId, floorId, isActive])
   @@map("classrooms")
 }
 

@@ -199,6 +199,7 @@ npm run db:seed
 | Buildings  | 3     | UB, TP1, TP2                |
 | Floors     | 35    | UB 5–12, TP1 1–15, TP2 2–13 |
 | Time slots | 10    | Campus periods 08:00–16:50  |
+| Classrooms | 155   | Owner-verified UB (77) + TP2 (78). TP1 inventory deferred to V3. |
 
 
 Optional demo data for Stats charts:

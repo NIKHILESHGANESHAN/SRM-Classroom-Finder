@@ -62,8 +62,12 @@ for (const rel of [
 section("schema.sql ↔ migration tables / enums / view");
 mustInclude(schemaSql, [...tables], "schema.sql tables");
 mustInclude(schemaSql, ["FreeReportStatus", "OccupiedReason"], "schema.sql enums");
-mustInclude(schemaSql, ["active_free_classrooms"], "schema.sql view");
+mustInclude(schemaSql, ["active_free_classrooms", "is_active"], "schema.sql view / inventory");
 mustInclude(migration, [...tables, "active_free_classrooms"], "migration");
+const inventoryMigration = load(
+  "prisma/migrations/20260813154500_classroom_inventory/migration.sql",
+);
+mustInclude(inventoryMigration, ["is_active", "classrooms_building_id_floor_id_is_active_idx"], "V2.1 inventory migration");
 console.log("ok  tables, enums, view aligned");
 
 section("schema.sql ↔ migration constraints / indexes");

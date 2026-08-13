@@ -51,14 +51,16 @@ Table classrooms {
   building_id varchar [not null, ref: > buildings.id]
   floor_id    varchar [not null]
   room_number varchar(32) [not null]
+  is_active   boolean [not null, default: true, note: 'Soft-retire without DELETE']
 
   indexes {
     (building_id)
     (floor_id)
+    (building_id, floor_id, is_active) [note: 'Contributor / coverage lookups']
     (building_id, floor_id, room_number) [unique]
   }
 
-  Note: 'Physical room. Composite FK (floor_id, building_id) → floors(id, building_id).'
+  Note: 'Authoritative inventory. Composite FK (floor_id, building_id) → floors(id, building_id).'
 }
 
 Table free_reports {
