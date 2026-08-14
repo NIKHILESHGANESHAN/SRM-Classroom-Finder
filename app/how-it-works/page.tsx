@@ -9,6 +9,7 @@ import {
   Timer,
   Users,
 } from "lucide-react";
+import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -77,9 +78,12 @@ export default function HowItWorksPage() {
       />
       <div className="relative z-10 mx-auto w-full max-w-2xl space-y-8">
         <header className="space-y-3">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent">
-            About 30 seconds
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent">
+              About 30 seconds
+            </p>
+            <MoreOptionsMenu />
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">
             How SRM KTR Classroom Finder works
           </h1>

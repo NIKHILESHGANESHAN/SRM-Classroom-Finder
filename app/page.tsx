@@ -1,4 +1,5 @@
 import { LandingCards } from "@/components/landing-cards";
+import { MoreOptionsMenu } from "@/components/more-options-menu";
 
 export default function HomePage() {
   return (
@@ -8,6 +9,10 @@ export default function HomePage() {
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(214_71%_20%_/_0.08),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_hsl(38_92%_50%_/_0.12),_transparent_45%)]"
       />
+
+      <div className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4">
+        <MoreOptionsMenu />
+      </div>
 
       <div className="relative z-10 flex w-full max-w-2xl flex-col items-center gap-10 text-center">
         <header className="space-y-3">

@@ -10,6 +10,7 @@ import { FinderFiltersBar } from "@/components/finder/finder-filters";
 import { FinderLiveStatus } from "@/components/finder/finder-live-status";
 import { FinderRecentRooms } from "@/components/finder/finder-recent-rooms";
 import { HowItWorksLink } from "@/components/how-it-works-link";
+import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFinderPoll } from "@/hooks/use-finder-poll";
@@ -229,7 +230,10 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
             {isCurrentSlot ? "Free right now" : "Browsing slots"} · {slotLabel}
           </p>
         </div>
-        <HowItWorksLink className="shrink-0" />
+        <div className="flex shrink-0 items-center gap-1">
+          <HowItWorksLink className="shrink-0" />
+          <MoreOptionsMenu />
+        </div>
       </div>
 
       <FinderFiltersBar

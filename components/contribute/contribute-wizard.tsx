@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ProgressIndicator } from "@/components/contribute/progress-indicator";
 import { SlotPicker } from "@/components/contribute/slot-picker";
 import { SuccessState } from "@/components/contribute/success-state";
+import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import { submitFreeReport } from "@/lib/actions/contribute";
 import type {
@@ -222,7 +223,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold tracking-tight text-primary">
             Contributor
           </h1>
@@ -230,6 +231,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
             Report a free classroom — no login needed.
           </p>
         </div>
+        <MoreOptionsMenu />
       </div>
 
       {success ? (

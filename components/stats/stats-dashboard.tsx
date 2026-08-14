@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, BarChart3, Building2, Clock3, DoorOpen } from "lucide-react";
 import { CountUp } from "@/components/stats/count-up";
+import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -328,12 +329,13 @@ function StatsHeader({
           <ArrowLeft className="h-5 w-5" />
         </Link>
       </Button>
-      <div>
+      <div className="min-w-0 flex-1">
         <h1 className="text-2xl font-bold tracking-tight text-primary">Stats</h1>
         <p className="text-sm text-muted-foreground">
           Aggregate SQL showcase · {weekStart} → {campusToday}
         </p>
       </div>
+      <MoreOptionsMenu />
     </div>
   );
 }
