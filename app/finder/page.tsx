@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { FinderBoard } from "@/components/finder/finder-board";
-import { getFinderPageData } from "@/lib/finder-data";
+import {
+  getFinderPageData,
+  resolveFinderDeepLink,
+} from "@/lib/finder-data";
 import { parseFinderFocus } from "@/lib/finder-realtime";
 
 export const metadata: Metadata = {
@@ -43,6 +46,11 @@ export default async function FinderPage({ searchParams }: FinderPageProps) {
   });
 
   const focus = parseFinderFocus(first(params.focus));
+  const deepLink = await resolveFinderDeepLink({
+    buildings: data.buildings,
+    applied: data.applied,
+    roomRaw: first(params.room),
+  });
 
   return (
     <main className="relative min-h-screen px-4 py-8 sm:py-12">
@@ -51,7 +59,7 @@ export default async function FinderPage({ searchParams }: FinderPageProps) {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(214_71%_20%_/_0.06),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_hsl(38_92%_50%_/_0.1),_transparent_40%)]"
       />
       <div className="relative z-10">
-        <FinderBoard data={data} focus={focus} />
+        <FinderBoard data={data} focus={focus} deepLink={deepLink} />
       </div>
     </main>
   );

@@ -51,3 +51,40 @@ export async function lookupActiveClassroom(args: {
 
   return { ok: true, classroom };
 }
+
+/** Same integrity rule using public place (code is resolved to IDs by caller). */
+export async function lookupActiveClassroomByPlace(args: {
+  buildingId: string;
+  floorId: string;
+  roomNumber: string;
+}): Promise<ClassroomLookupResult> {
+  const roomNumber = args.roomNumber.trim();
+  if (!roomNumber) {
+    return { ok: false, error: "Select a classroom from the list." };
+  }
+
+  const classroom = await prisma.classroom.findFirst({
+    where: {
+      buildingId: args.buildingId,
+      floorId: args.floorId,
+      roomNumber,
+      isActive: true,
+    },
+    select: {
+      id: true,
+      roomNumber: true,
+      buildingId: true,
+      floorId: true,
+    },
+  });
+
+  if (!classroom) {
+    return {
+      ok: false,
+      error:
+        "That classroom is not in the inventory for the selected building and floor.",
+    };
+  }
+
+  return { ok: true, classroom };
+}

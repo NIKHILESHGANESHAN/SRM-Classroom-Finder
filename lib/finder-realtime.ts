@@ -281,7 +281,8 @@ export type FinderEmptyReason =
   | "insufficient_reports"
   | "none_free"
   | "no_recent"
-  | "no_ending";
+  | "no_ending"
+  | "my_buildings";
 
 export function resolveFinderEmptyReason(args: {
   searchQuery: string;
@@ -290,8 +291,10 @@ export function resolveFinderEmptyReason(args: {
   roomsAfterFocus: number;
   roomsAfterSearch: number;
   coverageKind: FinderCoverage["kind"];
+  myBuildingsEmpty?: boolean;
 }): FinderEmptyReason | null {
   if (args.roomsAfterSearch > 0) return null;
+  if (args.myBuildingsEmpty) return "my_buildings";
   if (args.searchQuery.trim() && args.roomsAfterFocus > 0) return "search_miss";
   if (args.roomsFromServer === 0) return args.coverageKind;
   if (args.focus === "recent") return "no_recent";

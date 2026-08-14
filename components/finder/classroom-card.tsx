@@ -1,8 +1,8 @@
 "use client";
 
-import { memo, useState, useTransition } from "react";
+import { memo, useEffect, useRef, useState, useTransition } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Flag, ThumbsUp } from "lucide-react";
+import { Flag, Share2, ThumbsUp } from "lucide-react";
 import { ConfidenceBadge } from "@/components/finder/confidence-badge";
 import { FreeCountdown } from "@/components/finder/free-countdown";
 import { FreshnessLabel } from "@/components/finder/freshness-label";
@@ -11,8 +11,14 @@ import { Button } from "@/components/ui/button";
 import { useDeviceToken } from "@/hooks/use-device-token";
 import { submitStillFree } from "@/lib/actions/still-free";
 import type { ActiveFreeClassroom } from "@/lib/finder-data";
+import {
+  browserShareAdapters,
+  shareClassroomLink,
+} from "@/lib/classroom-share";
 import { roomUpdateSignature } from "@/lib/finder-realtime";
+import type { RecentRoom } from "@/lib/local-preferences";
 import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ClassroomCardProps = {
@@ -20,6 +26,8 @@ type ClassroomCardProps = {
   index: number;
   onRemove: (freeReportId: string) => void;
   onNeedRefresh?: () => void;
+  onShared?: (room: Omit<RecentRoom, "savedAt">) => void;
+  emphasized?: boolean;
 };
 
 function isNetworkFailure(error: unknown, serverMessage?: string): boolean {
@@ -34,15 +42,57 @@ function ClassroomCardInner({
   index,
   onRemove,
   onNeedRefresh,
+  onShared,
+  emphasized = false,
 }: ClassroomCardProps) {
   const reduceMotion = useReducedMotion();
   const deviceToken = useDeviceToken();
+  const articleRef = useRef<HTMLElement | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [stillFreeError, setStillFreeError] = useState<string | null>(null);
   const [stillFreeRetry, setStillFreeRetry] = useState(false);
+  const [sharePending, setSharePending] = useState(false);
   const [stillFreePending, startStillFree] = useTransition();
 
   const roomLabel = `${room.buildingCode} ${room.roomNumber}`;
+
+  useEffect(() => {
+    if (!emphasized || !articleRef.current) return;
+    articleRef.current.scrollIntoView({
+      block: "nearest",
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
+  }, [emphasized, reduceMotion]);
+
+  async function handleShare() {
+    if (sharePending) return;
+    setSharePending(true);
+    try {
+      const outcome = await shareClassroomLink(
+        {
+          origin: window.location.origin,
+          buildingCode: room.buildingCode,
+          floorNumber: room.floorNumber,
+          roomNumber: room.roomNumber,
+        },
+        browserShareAdapters(),
+      );
+      if (outcome === "shared" || outcome === "copied") {
+        onShared?.({
+          buildingCode: room.buildingCode,
+          floorNumber: room.floorNumber,
+          roomNumber: room.roomNumber,
+        });
+      }
+      if (outcome === "copied") {
+        toast.success("Classroom link copied.");
+      } else if (outcome === "failed") {
+        toast.error("Unable to copy the link. Please copy it manually.");
+      }
+    } finally {
+      setSharePending(false);
+    }
+  }
 
   function handleStillFree() {
     setStillFreeError(null);
@@ -82,6 +132,7 @@ function ClassroomCardInner({
 
   return (
     <motion.article
+      ref={articleRef}
       layout={!reduceMotion}
       initial={reduceMotion ? false : { opacity: 0, y: 14 }}
       animate={{
@@ -111,13 +162,20 @@ function ClassroomCardInner({
               },
             }
       }
-      className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5 dark:shadow-black/30"
+      className={cn(
+        "rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5 dark:shadow-black/30",
+        emphasized && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+      )}
+      data-shared-room={emphasized ? "true" : undefined}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold tracking-tight text-primary">
             {room.roomNumber}
           </h3>
+          {emphasized ? (
+            <p className="sr-only">Shared classroom</p>
+          ) : null}
           <p className="mt-0.5 text-sm text-muted-foreground">
             {room.buildingCode} · {room.buildingName} · Floor {room.floorNumber}
           </p>
@@ -162,6 +220,19 @@ function ClassroomCardInner({
           <Flag className="h-4 w-4" aria-hidden />
           Report Occupied
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="min-h-11 gap-1.5 sm:col-span-2"
+          onClick={() => {
+            void handleShare();
+          }}
+          disabled={sharePending}
+          aria-label={`Share ${roomLabel}`}
+        >
+          <Share2 className="h-4 w-4" aria-hidden />
+          {sharePending ? "Sharing…" : "Share"}
+        </Button>
       </div>
 
       {stillFreeRetry ? (
@@ -201,8 +272,10 @@ export const ClassroomCard = memo(ClassroomCardInner, (prev, next) => {
     roomUpdateSignature(prev.room) === roomUpdateSignature(next.room) &&
     prev.room.roomNumber === next.room.roomNumber &&
     prev.index === next.index &&
+    prev.emphasized === next.emphasized &&
     prev.onRemove === next.onRemove &&
-    prev.onNeedRefresh === next.onNeedRefresh
+    prev.onNeedRefresh === next.onNeedRefresh &&
+    prev.onShared === next.onShared
   );
 });
 ClassroomCard.displayName = "ClassroomCard";

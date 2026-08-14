@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ClipboardList, Clock, DoorOpen, MapPinOff, Sparkles } from "lucide-react";
+import { ClipboardList, Clock, DoorOpen, MapPinOff, Sparkles, Star } from "lucide-react";
 import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
 import type { FinderEmptyReason } from "@/lib/finder-realtime";
 
@@ -44,6 +44,12 @@ function copyFor(
       body: "Nothing is due to expire in the next 10 minutes. That does not mean other rooms are occupied — try All free to see the full list.",
     };
   }
+  if (reason === "my_buildings") {
+    return {
+      title: "No free rooms in My buildings",
+      body: "Star one or more buildings to use this list. Other buildings are still available under All free — they are not hidden.",
+    };
+  }
   return {
     title: "No rooms are currently reported free",
     body: `Nothing showing for ${slotLabel}. Rooms may be in class, or earlier reports may have expired — try another filter or report a room you find empty.`,
@@ -57,6 +63,7 @@ const ICONS = {
   search_miss: DoorOpen,
   no_recent: Sparkles,
   no_ending: Clock,
+  my_buildings: Star,
 } as const;
 
 /** Honest empty state: inventory gap ≠ all occupied ≠ none free right now. */

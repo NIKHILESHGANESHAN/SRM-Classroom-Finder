@@ -277,32 +277,19 @@ export async function resolveFinderContext(
         ? null
         : filters.timeSlotId;
 
-  const buildingId =
-    !filters.buildingId || filters.buildingId === "all"
-      ? null
-      : filters.buildingId;
+  const mappedBuildings = buildings.map((b) => ({
+    id: b.id,
+    code: b.code,
+    name: b.name,
+    floors: b.floors,
+  }));
 
-  let floorId =
-    !filters.floorId || filters.floorId === "all" ? null : filters.floorId;
-
-  // Dependent floor: ignore floor filter if it doesn't belong to selected building
-  if (buildingId && floorId) {
-    const building = buildings.find((b) => b.id === buildingId);
-    if (!building?.floors.some((f) => f.id === floorId)) {
-      floorId = null;
-    }
-  }
-  if (!buildingId) {
-    floorId = null;
-  }
+  const building = resolveBuildingParam(mappedBuildings, filters.buildingId);
+  const buildingId = building?.id ?? null;
+  const floorId = resolveFloorParam(building, filters.floorId);
 
   return {
-    buildings: buildings.map((b) => ({
-      id: b.id,
-      code: b.code,
-      name: b.name,
-      floors: b.floors,
-    })),
+    buildings: mappedBuildings,
     timeSlots: slotFields.map((s) => ({
       id: s.id,
       slotOrder: s.slotOrder,
@@ -316,6 +303,78 @@ export async function resolveFinderContext(
       floorId,
       timeSlotId,
     },
+  };
+}
+
+function resolveBuildingParam(
+  buildings: FinderBuilding[],
+  raw: string | null | undefined,
+): FinderBuilding | null {
+  if (!raw || raw === "all") return null;
+  const codeMatch = buildings.find(
+    (b) => b.code.toLowerCase() === raw.toLowerCase(),
+  );
+  if (codeMatch) return codeMatch;
+  return buildings.find((b) => b.id === raw) ?? null;
+}
+
+function resolveFloorParam(
+  building: FinderBuilding | null,
+  raw: string | null | undefined,
+): string | null {
+  if (!building || !raw || raw === "all") return null;
+  if (/^\d+$/.test(raw)) {
+    const n = Number(raw);
+    return building.floors.find((f) => f.floorNumber === n)?.id ?? null;
+  }
+  return building.floors.some((f) => f.id === raw) ? raw : null;
+}
+
+export type FinderDeepLink = {
+  roomNumber: string;
+  buildingLabel: string;
+  floorLabel: string;
+  inventoryOk: boolean;
+};
+
+/** Validate a shared room against active inventory. Never invents classrooms. */
+export async function resolveFinderDeepLink(args: {
+  buildings: FinderBuilding[];
+  applied: FinderPageData["applied"];
+  roomRaw: string | null | undefined;
+}): Promise<FinderDeepLink | null> {
+  const roomNumber = args.roomRaw?.trim() ?? "";
+  if (!roomNumber) return null;
+
+  const building = args.buildings.find((b) => b.id === args.applied.buildingId);
+  const floor = building?.floors.find((f) => f.id === args.applied.floorId);
+  const buildingLabel = building?.code ?? "Unknown building";
+  const floorLabel = floor ? `Floor ${floor.floorNumber}` : "unknown floor";
+
+  if (!args.applied.buildingId || !args.applied.floorId) {
+    return {
+      roomNumber,
+      buildingLabel,
+      floorLabel,
+      inventoryOk: false,
+    };
+  }
+
+  const classroom = await prisma.classroom.findFirst({
+    where: {
+      buildingId: args.applied.buildingId,
+      floorId: args.applied.floorId,
+      roomNumber,
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  return {
+    roomNumber,
+    buildingLabel,
+    floorLabel,
+    inventoryOk: Boolean(classroom),
   };
 }
 

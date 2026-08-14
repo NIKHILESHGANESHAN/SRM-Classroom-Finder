@@ -92,13 +92,21 @@ export function LandingCards() {
           ease: EASE_OUT_EXPO,
         }}
       >
-        <Link
-          href="/stats"
-          className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <BarChart3 className="h-4 w-4" aria-hidden />
-          Stats
-        </Link>
+        <div className="flex flex-col items-center gap-1 sm:flex-row sm:gap-4">
+          <Link
+            href="/stats"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <BarChart3 className="h-4 w-4" aria-hidden />
+            Stats
+          </Link>
+          <Link
+            href="/how-it-works"
+            className="inline-flex min-h-11 items-center rounded-md px-2 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            How it works
+          </Link>
+        </div>
       </motion.div>
     </div>
   );

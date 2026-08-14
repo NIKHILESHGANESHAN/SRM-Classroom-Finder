@@ -8,22 +8,30 @@ import { ClassroomCard } from "@/components/finder/classroom-card";
 import { FinderEmptyState } from "@/components/finder/finder-empty-state";
 import { FinderFiltersBar } from "@/components/finder/finder-filters";
 import { FinderLiveStatus } from "@/components/finder/finder-live-status";
+import { FinderRecentRooms } from "@/components/finder/finder-recent-rooms";
+import { HowItWorksLink } from "@/components/how-it-works-link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFinderPoll } from "@/hooks/use-finder-poll";
-import type { FinderPageData } from "@/lib/finder-data";
+import {
+  useFavoriteBuildings,
+  useRecentRooms,
+} from "@/hooks/use-local-preferences";
+import type { FinderDeepLink, FinderPageData } from "@/lib/finder-data";
 import {
   applyFinderFocus,
   applyRoomSearch,
   resolveFinderEmptyReason,
   type FinderFocus,
 } from "@/lib/finder-realtime";
+import { prioritizeFavoriteBuildings } from "@/lib/local-preferences";
 
 const SEARCH_DEBOUNCE_MS = 200;
 
 type FinderBoardProps = {
   data: FinderPageData;
   focus: FinderFocus;
+  deepLink: FinderDeepLink | null;
 };
 
 /**
@@ -32,12 +40,21 @@ type FinderBoardProps = {
  * (focus is applied client-side on the polled room list).
  * Local `hiddenIds` lets 2-strike reports collapse cards without a full reload.
  */
-export function FinderBoard({ data, focus }: FinderBoardProps) {
+export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
   const [listReady, setListReady] = useState(false);
+  const [mineOnly, setMineOnly] = useState(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rememberedLink = useRef(false);
+
+  const allowedCodes = useMemo(
+    () => data.buildings.map((b) => b.code),
+    [data.buildings],
+  );
+  const { favoriteCodes, toggleFavorite } = useFavoriteBuildings(allowedCodes);
+  const { recentRooms, rememberRoom, clearRecentRooms } = useRecentRooms();
 
   const {
     rooms,
@@ -67,6 +84,19 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
       if (debounceTimer.current) window.clearTimeout(debounceTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (rememberedLink.current || !deepLink?.inventoryOk) return;
+    const building = data.buildings.find((b) => b.id === data.applied.buildingId);
+    const floor = building?.floors.find((f) => f.id === data.applied.floorId);
+    if (!building || !floor) return;
+    rememberedLink.current = true;
+    rememberRoom({
+      buildingCode: building.code,
+      floorNumber: floor.floorNumber,
+      roomNumber: deepLink.roomNumber,
+    });
+  }, [deepLink, data.applied, data.buildings, rememberRoom]);
 
   useEffect(() => {
     setHiddenIds((prev) => {
@@ -100,17 +130,50 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
 
   const deferredSearch = useDeferredValue(debouncedSearch);
 
+  const matchesDeepLink = useCallback(
+    (room: (typeof rooms)[number]) => {
+      if (!deepLink?.inventoryOk) return false;
+      return (
+        room.roomNumber === deepLink.roomNumber &&
+        room.buildingCode === deepLink.buildingLabel &&
+        `Floor ${room.floorNumber}` === deepLink.floorLabel
+      );
+    },
+    [deepLink],
+  );
+
   const visibleRooms = useMemo(() => {
     const nowMs = Date.now();
     const withoutHidden = rooms.filter((r) => !hiddenIds.has(r.freeReportId));
-    const focused = applyFinderFocus(withoutHidden, focus, nowMs);
-    return applyRoomSearch(focused, deferredSearch);
-  }, [rooms, deferredSearch, hiddenIds, focus]);
+    const scoped = mineOnly
+      ? withoutHidden.filter((r) => favoriteCodes.includes(r.buildingCode))
+      : withoutHidden;
+    const focused = applyFinderFocus(scoped, focus, nowMs);
+    const searched = applyRoomSearch(focused, deferredSearch);
+    return prioritizeFavoriteBuildings(
+      searched,
+      mineOnly ? [] : favoriteCodes,
+    );
+  }, [
+    rooms,
+    deferredSearch,
+    hiddenIds,
+    focus,
+    mineOnly,
+    favoriteCodes,
+  ]);
 
   const emptyReason = useMemo(() => {
     const nowMs = Date.now();
     const withoutHidden = rooms.filter((r) => !hiddenIds.has(r.freeReportId));
-    const focused = applyFinderFocus(withoutHidden, focus, nowMs);
+    const scoped = mineOnly
+      ? withoutHidden.filter((r) => favoriteCodes.includes(r.buildingCode))
+      : withoutHidden;
+    const focused = applyFinderFocus(scoped, focus, nowMs);
+    const myBuildingsEmpty =
+      mineOnly &&
+      (favoriteCodes.length === 0 ||
+        (withoutHidden.length > 0 && scoped.length === 0));
     return resolveFinderEmptyReason({
       searchQuery: deferredSearch,
       focus,
@@ -118,8 +181,20 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
       roomsAfterFocus: focused.length,
       roomsAfterSearch: visibleRooms.length,
       coverageKind: coverage.kind,
+      myBuildingsEmpty,
     });
-  }, [rooms, hiddenIds, focus, deferredSearch, visibleRooms.length, coverage.kind]);
+  }, [
+    rooms,
+    hiddenIds,
+    focus,
+    deferredSearch,
+    visibleRooms.length,
+    coverage.kind,
+    mineOnly,
+    favoriteCodes,
+  ]);
+
+  const sharedIsFree = rooms.some(matchesDeepLink);
 
   const slotLabel = useMemo(() => {
     if (!data.applied.timeSlotId) return "all slots";
@@ -146,7 +221,7 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold tracking-tight text-primary">
             Class Finder
           </h1>
@@ -154,6 +229,7 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
             {isCurrentSlot ? "Free right now" : "Browsing slots"} · {slotLabel}
           </p>
         </div>
+        <HowItWorksLink className="shrink-0" />
       </div>
 
       <FinderFiltersBar
@@ -162,6 +238,10 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
         currentSlotId={currentSlotId}
         applied={data.applied}
         focus={focus}
+        favoriteCodes={favoriteCodes}
+        onToggleFavorite={toggleFavorite}
+        mineOnly={mineOnly}
+        onMineOnlyChange={setMineOnly}
       />
 
       <div className="relative">
@@ -182,6 +262,28 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
           inputMode="search"
         />
       </div>
+
+      <FinderRecentRooms rooms={recentRooms} onClear={clearRecentRooms} />
+
+      {deepLink && !deepLink.inventoryOk ? (
+        <p
+          role="status"
+          className="rounded-xl border border-border bg-muted/40 px-3 py-3 text-sm"
+        >
+          This link doesn’t match a listed classroom for {deepLink.buildingLabel}{" "}
+          {deepLink.floorLabel}.
+        </p>
+      ) : null}
+
+      {deepLink?.inventoryOk && !sharedIsFree ? (
+        <p
+          role="status"
+          className="rounded-xl border border-border bg-muted/40 px-3 py-3 text-sm"
+        >
+          {deepLink.buildingLabel} {deepLink.roomNumber} is no longer reported
+          free.
+        </p>
+      ) : null}
 
       <FinderLiveStatus
         lastUpdatedAt={lastUpdatedAt}
@@ -238,6 +340,8 @@ export function FinderBoard({ data, focus }: FinderBoardProps) {
                   index={listReady ? 0 : index}
                   onRemove={handleRemove}
                   onNeedRefresh={refreshNow}
+                  emphasized={matchesDeepLink(room)}
+                  onShared={rememberRoom}
                 />
               ))}
             </AnimatePresence>

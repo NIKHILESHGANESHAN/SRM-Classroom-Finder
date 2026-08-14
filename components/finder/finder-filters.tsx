@@ -2,6 +2,7 @@
 
 import { useMemo, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -27,6 +28,10 @@ type FinderFiltersBarProps = {
     timeSlotId: string | null;
   };
   focus: FinderFocus;
+  favoriteCodes: readonly string[];
+  onToggleFavorite: (code: string) => void;
+  mineOnly: boolean;
+  onMineOnlyChange: (value: boolean) => void;
 };
 
 const FOCUS_OPTIONS: { value: FinderFocus; label: string }[] = [
@@ -41,6 +46,10 @@ export function FinderFiltersBar({
   currentSlotId,
   applied,
   focus,
+  favoriteCodes,
+  onToggleFavorite,
+  mineOnly,
+  onMineOnlyChange,
 }: FinderFiltersBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -52,6 +61,16 @@ export function FinderFiltersBar({
       buildings.find((b) => b.id === applied.buildingId)?.floors ?? []
     );
   }, [buildings, applied.buildingId]);
+
+  const orderedBuildings = useMemo(() => {
+    const fav = new Set(favoriteCodes);
+    return [...buildings].sort((a, b) => {
+      const da = fav.has(a.code) ? 0 : 1;
+      const db = fav.has(b.code) ? 0 : 1;
+      if (da !== db) return da - db;
+      return a.code.localeCompare(b.code);
+    });
+  }, [buildings, favoriteCodes]);
 
   function navigate(next: {
     buildingId: string | null;
@@ -101,8 +120,9 @@ export function FinderFiltersBar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All buildings</SelectItem>
-              {buildings.map((b) => (
+              {orderedBuildings.map((b) => (
                 <SelectItem key={b.id} value={b.id}>
+                  {favoriteCodes.includes(b.code) ? "★ " : ""}
                   {b.code} — {b.name}
                 </SelectItem>
               ))}
@@ -178,6 +198,66 @@ export function FinderFiltersBar({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <p id="finder-favorites-label" className="text-xs text-muted-foreground">
+          My buildings
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Saved on this device only. Other buildings stay visible unless you
+          choose My buildings.
+        </p>
+        <div
+          role="group"
+          aria-labelledby="finder-favorites-label"
+          className="flex flex-wrap gap-2"
+        >
+          {buildings.map((b) => {
+            const favorited = favoriteCodes.includes(b.code);
+            return (
+              <button
+                key={b.id}
+                type="button"
+                aria-pressed={favorited}
+                aria-label={
+                  favorited
+                    ? `${b.code} — Favorited`
+                    : `Add ${b.code} to My buildings`
+                }
+                className={cn(
+                  "inline-flex min-h-11 min-w-11 items-center gap-1.5 rounded-xl border px-3 text-sm font-medium",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  favorited
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted/60",
+                )}
+                onClick={() => onToggleFavorite(b.code)}
+              >
+                <Star
+                  className="h-4 w-4"
+                  aria-hidden
+                  fill={favorited ? "currentColor" : "none"}
+                />
+                {b.code}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            aria-pressed={mineOnly}
+            className={cn(
+              "inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-medium",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              mineOnly
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background text-muted-foreground hover:bg-muted/60",
+            )}
+            onClick={() => onMineOnlyChange(!mineOnly)}
+          >
+            Show My buildings
+          </button>
         </div>
       </div>
 
