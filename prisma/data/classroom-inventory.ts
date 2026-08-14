@@ -107,6 +107,19 @@ export function flattenClassroomInventory(): ClassroomInventoryRow[] {
   return rows;
 }
 
+/** True only for owner-verified UB/TP2 rooms. Admin must not invent UB 12 / 504. */
+export function isOfficialInventoryRoom(
+  buildingCode: string,
+  floorNumber: number,
+  roomNumber: string,
+): boolean {
+  const code = buildingCode.trim().toUpperCase();
+  if (code !== "UB" && code !== "TP2") return false;
+  const rooms = CLASSROOM_INVENTORY[code][floorNumber];
+  if (!rooms) return false;
+  return rooms.includes(roomNumber.trim());
+}
+
 export function countInventoryRooms(
   buildingCode: InventoryBuildingCode,
 ): number {

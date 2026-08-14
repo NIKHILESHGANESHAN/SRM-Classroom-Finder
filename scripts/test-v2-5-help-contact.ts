@@ -186,7 +186,8 @@ function main() {
   section("Mailto construction");
   const href = buildFeedbackMailtoHref();
   assert(href.startsWith("mailto:"), href);
-  assert(href.includes(encodeURIComponent(FEEDBACK_RECIPIENT)), "recipient");
+    assert(href.startsWith(`mailto:${FEEDBACK_RECIPIENT}?`), "recipient");
+    assert(!href.slice(0, href.indexOf("?")).includes("%40"), "raw @ in address");
   assert(href.includes(encodeURIComponent(FEEDBACK_SUBJECT)), "subject");
   assert(href.includes("body="), "body");
   assert(

@@ -6,7 +6,7 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CHAT_QUICK_PROMPTS } from "@/lib/help/knowledge";
-import { answerHelpQuestion } from "@/lib/help/scope";
+import { askHelpAssistant } from "@/lib/actions/help";
 import { cn } from "@/lib/utils";
 
 type ChatRole = "user" | "assistant";
@@ -52,24 +52,26 @@ export function HelpChat() {
     ]);
     setInput("");
 
-    const delay = reduceMotion ? 0 : 180;
+    const delay = reduceMotion ? 0 : 120;
     window.setTimeout(() => {
-      try {
-        const reply = answerHelpQuestion(trimmed);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `a-${Date.now()}`,
-            role: "assistant",
-            text: reply.text,
-          },
-        ]);
-      } catch {
-        setError("Couldn't answer just now. Try again.");
-      } finally {
-        setPending(false);
-        inputRef.current?.focus();
-      }
+      void (async () => {
+        try {
+          const reply = await askHelpAssistant(trimmed);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: "assistant",
+              text: reply.text,
+            },
+          ]);
+        } catch {
+          setError("Couldn't answer just now. Try again.");
+        } finally {
+          setPending(false);
+          inputRef.current?.focus();
+        }
+      })();
     }, delay);
   }
 

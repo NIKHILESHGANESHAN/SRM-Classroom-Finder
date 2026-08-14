@@ -653,6 +653,7 @@ export const CHAT_QUICK_PROMPTS: readonly {
   label: string;
   question: string;
 }[] = [
+  { label: "Any free rooms in UB?", question: "Are there any free classrooms in UB?" },
   { label: "How do I find a free room?", question: "How do I find a free room?" },
   { label: "How do I report a room?", question: "How do I report a room?" },
   { label: "What does Confirmed mean?", question: "What does Confirmed mean?" },

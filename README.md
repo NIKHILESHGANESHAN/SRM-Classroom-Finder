@@ -20,6 +20,8 @@ See the [QA Report](docs/QA-REPORT.md) for the complete verification checklist.
 - **Auto-expiry** — Vercel Cron hits `/api/cron/expire` every 5 minutes to mark past-due free reports as `expired` (history retained)
 - **PWA** — installable web app (manifest, icons, service worker)
 - **Hardening** — Zod env validation, API rate limiting, structured JSON logging, error/loading/404 pages, SEO + Open Graph
+- **Help** — Contact, deterministic Classroom Finder assistant (including live Finder answers), Community FAQ, mailto feedback
+- **Admin** — private `/admin` inventory + report inspection (separate `ADMIN_SECRET`; public app stays anonymous)
 - **Polish** — Framer Motion animations with `prefers-reduced-motion` support, dark mode via `next-themes`
 
 ---
@@ -143,6 +145,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | --------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`        | Yes      | PostgreSQL URL (`postgresql://` or `postgres://`). Validated at startup by Zod (`lib/env.ts`).                                    |
 | `CRON_SECRET`         | Yes      | Bearer secret for `/api/cron/expire` (min 8 characters). Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`.                 |
+| `ADMIN_SECRET`        | Yes      | Server-only password for `/admin` (min 16 characters). **Not** `CRON_SECRET`. Never use `NEXT_PUBLIC_`.                            |
 | `NEXT_PUBLIC_APP_URL` | No       | Canonical site origin for Open Graph / `metadataBase`. Defaults to `http://localhost:3000`. Set on Vercel to your production URL. |
 
 
@@ -202,11 +205,17 @@ npm run db:seed
 | Classrooms | 155   | Owner-verified UB (77) + TP2 (78). TP1 inventory deferred to V3. |
 
 
-Optional demo data for Stats charts:
+The seed writes **reference data only** (buildings, floors, slots, classroom inventory). It does **not** create free reports. Inventory means a room exists; Finder still requires a student `free_report`.
+
+**DEVELOPMENT / DEMO ONLY** — synthetic Stats/Finder reports:
 
 ```bash
 npx tsx scripts/seed-stats-data.ts
 ```
+
+Never run that script against production. It is blocked when `NODE_ENV` or `VERCEL_ENV` is `production` unless you set `ALLOW_DEMO_STATS_SEED=true`. Demo rows are real database records and **will appear on Finder** while they remain active.
+
+`npm run db:seed` does not invoke the demo script.
 
 
 
@@ -255,6 +264,26 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 ---
 
+## Admin (V2.6)
+
+`/admin` is a private console. Public users stay anonymous — there is no student login.
+
+- Set `ADMIN_SECRET` (min 16 characters, **not** `CRON_SECRET`, never `NEXT_PUBLIC_`).
+- Sign-in sets an HttpOnly `SameSite=Lax` cookie (Secure in production, 8 hour expiry).
+- Unauthenticated visits to `/admin`, `/admin/inventory`, and `/admin/reports` are redirected to `/admin/login` (middleware + server `requireAdmin()`).
+- Inventory: activate / deactivate official classrooms only. Reports are not deleted.
+- Report list shows one-way token fingerprints (`Token 7f3a91…`), never raw anonymous tokens.
+
+---
+
+## Help chat (live Finder)
+
+The Contact assistant is deterministic (no LLM). Availability questions reuse `getFinderRefreshData` / `active_free_classrooms`. Secret probes (`CRON_SECRET`, `ADMIN_SECRET`, …) are refused without leaking values. Live questions are rate-limited.
+
+Send feedback is a real `mailto:` link to `arthurknox007@gmail.com` (subject/body encoded; `@` in the address is not encoded). The browser may or may not open an OS mail client.
+
+---
+
 
 
 ## Deployment (Vercel + Neon / Supabase)
@@ -263,6 +292,7 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 2. **Vercel** — Import this repo; set env vars:
   - `DATABASE_URL`
   - `CRON_SECRET` (long random string)
+  - `ADMIN_SECRET` (separate long random string for `/admin`)
   - `NEXT_PUBLIC_APP_URL` = `https://<your-vercel-domain>`
 3. **Build** — Vercel runs `next build`. Ensure migrations run once against production:
   - Add a build/release step: `npx prisma migrate deploy && npx prisma generate`, **or**
@@ -343,7 +373,6 @@ Coursework write-ups:
 - Redis/Upstash-backed rate limiting for multi-region Vercel isolates
 - Optional campus map overlay for room locations
 - Push notifications when a watched building gets a new free report
-- Admin moderation tools (still without end-user accounts)
 - pg_cron on managed Postgres as an alternative to Vercel Cron
 
 ---

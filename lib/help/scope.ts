@@ -172,6 +172,7 @@ const UNKNOWN_FEATURE_PATTERNS: readonly RegExp[] = [
 const SECRET_PATTERNS: readonly RegExp[] = [
   /\bdatabase[_ ]url\b/,
   /\bcron[_ ]secret\b/,
+  /\badmin[_ ]secret\b/,
   /\b\.env\b/,
   /\benv file\b/,
   /\benvironment variables?\b/,

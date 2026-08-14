@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,10 +11,16 @@ type MoreOptionsMenuProps = {
   className?: string;
 };
 
+function isContactPath(pathname: string | null): boolean {
+  return Boolean(pathname?.startsWith("/contact"));
+}
+
 /**
- * Compact overflow menu (V2.5). Keyboard + pointer; no extra UI library.
+ * Compact overflow menu (V2.5/V2.6). Keyboard + pointer; pathname-aware.
  */
 export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
+  const pathname = usePathname();
+  const onContact = isContactPath(pathname);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const itemRef = useRef<HTMLAnchorElement | null>(null);
@@ -45,6 +52,9 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
     };
   }, [open]);
 
+  const itemHref = onContact ? "/" : "/contact";
+  const itemLabel = onContact ? "Home" : "Contact us";
+
   return (
     <div ref={wrapRef} className={cn("relative", className)}>
       <Button
@@ -73,11 +83,12 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
             <Link
               ref={itemRef}
               role="menuitem"
-              href="/contact"
+              href={itemHref}
+              aria-current={onContact && itemHref === pathname ? "page" : undefined}
               className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setOpen(false)}
             >
-              Contact us
+              {itemLabel}
             </Link>
           </li>
         </ul>

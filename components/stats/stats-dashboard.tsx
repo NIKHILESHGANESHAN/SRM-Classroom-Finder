@@ -91,10 +91,13 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
         <Card className="border-border/80 shadow-sm">
           <CardContent className="flex flex-col items-center gap-3 px-6 py-14 text-center">
             <DoorOpen className="h-10 w-10 text-muted-foreground" aria-hidden />
-            <h2 className="text-lg font-semibold text-primary">No reports yet</h2>
+            <h2 className="text-lg font-semibold text-primary">
+              Not enough activity yet
+            </h2>
             <p className="max-w-sm text-sm text-muted-foreground">
-              Aggregate stats will appear once classmates start reporting free rooms.
-              Try Contributor, then refresh this page.
+              Statistics will appear as students begin reporting classrooms.
+              Zeroes are not invented — there are no free reports for this campus
+              week yet.
             </p>
             <Button asChild className="mt-2 min-h-11">
               <Link href="/contribute">Report a room</Link>

@@ -29,11 +29,15 @@ export function buildMailtoHref(args: {
   body: string;
 }): string {
   const to = args.to.trim();
+  // Leave `@` unencoded in the address — some OS mail handlers ignore mailto:%40…
+  if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(to)) {
+    throw new Error("Invalid feedback recipient.");
+  }
   const query = [
     `subject=${encodeURIComponent(args.subject)}`,
     `body=${encodeURIComponent(args.body)}`,
   ].join("&");
-  return `mailto:${encodeURIComponent(to)}?${query}`;
+  return `mailto:${to}?${query}`;
 }
 
 export function buildFeedbackMailtoHref(): string {

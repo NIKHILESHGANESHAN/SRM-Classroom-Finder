@@ -7,6 +7,9 @@
  *   - time_slots (slots 1–10 with official start/end times)
  *   - classrooms (owner-verified UB + TP2 list only — no TP1 rooms)
  *
+ * Never writes free_reports. Demo reports live in scripts/seed-stats-data.ts
+ * (DEVELOPMENT/DEMO ONLY — not invoked here).
+ *
  * Idempotent: safe to run repeatedly via upserts on natural keys
  * (building.code, floor.(buildingId, floorNumber), time_slot.slotOrder,
  *  classroom.(buildingId, floorId, roomNumber)).

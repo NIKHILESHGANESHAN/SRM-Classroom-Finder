@@ -56,6 +56,11 @@ export function ContactOptions() {
               </CardTitle>
               <CardDescription className="text-sm leading-relaxed">
                 {option.description}
+                {option.external ? (
+                  <span className="mt-1 block text-xs">
+                    Opens your email app.
+                  </span>
+                ) : null}
               </CardDescription>
             </CardHeader>
           </Card>

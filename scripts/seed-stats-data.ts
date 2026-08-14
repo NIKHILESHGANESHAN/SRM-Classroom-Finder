@@ -1,9 +1,22 @@
 /**
- * Seed varied free_reports for Stats aggregates (Phase 10).
- * Run: npx tsx scripts/seed-stats-data.ts
+ * DEVELOPMENT / DEMO ONLY
+ *
+ * Inserts synthetic `free_reports` so Stats charts have sample rows on a
+ * local database. Those rows are real SQL records: Finder will show them if
+ * they are still active (not expired/hidden).
+ *
+ * NEVER run this against production.
+ * `npm run db:seed` / `prisma/seed.ts` does NOT call this file.
+ *
+ * Guard: lib/demo-stats-seed-guard.ts (blocks NODE_ENV/VERCEL_ENV production).
+ * Override (unsafe): ALLOW_DEMO_STATS_SEED=true
+ *
+ * Run locally: npx tsx scripts/seed-stats-data.ts
  */
+
 import { PrismaClient, type FreeReportStatus } from "@prisma/client";
 import { randomUUID } from "node:crypto";
+import { shouldRefuseDemoStatsSeed } from "../lib/demo-stats-seed-guard";
 
 const prisma = new PrismaClient();
 
@@ -48,21 +61,19 @@ async function upsertReport(args: {
   });
   if (!slot) throw new Error("missing slot");
 
-  const classroom = await prisma.classroom.upsert({
+  const classroom = await prisma.classroom.findFirst({
     where: {
-      buildingId_floorId_roomNumber: {
-        buildingId: building.id,
-        floorId: floor.id,
-        roomNumber: args.roomNumber,
-      },
-    },
-    create: {
       buildingId: building.id,
       floorId: floor.id,
       roomNumber: args.roomNumber,
+      isActive: true,
     },
-    update: {},
   });
+  if (!classroom) {
+    throw new Error(
+      `Demo seed will not create classrooms. Missing inventory room ${args.buildingCode} ${args.roomNumber} floor ${args.floorNumber}.`,
+    );
+  }
 
   const reportDate = new Date(`${args.reportYmd}T00:00:00.000Z`);
   const expiresAt = new Date(Date.now() + 86_400_000);
@@ -93,6 +104,16 @@ async function upsertReport(args: {
 }
 
 async function main() {
+  const refused = shouldRefuseDemoStatsSeed(process.env);
+  if (refused) {
+    console.error(refused);
+    process.exit(1);
+  }
+
+  console.warn(
+    "\n*** DEVELOPMENT / DEMO ONLY — synthetic free_reports. Do not run in production. ***\n",
+  );
+
   const today = campusToday();
   const d1 = daysAgoYmd(1);
   const d2 = daysAgoYmd(2);
@@ -106,13 +127,11 @@ async function main() {
     status: FreeReportStatus;
     confirmationCount: number;
   }> = [
-    // Today — UB busy
     { buildingCode: "UB", floorNumber: 5, roomNumber: "501", slotOrder: 6, reportYmd: today, status: "confirmed", confirmationCount: 3 },
     { buildingCode: "UB", floorNumber: 5, roomNumber: "502", slotOrder: 6, reportYmd: today, status: "unverified", confirmationCount: 1 },
     { buildingCode: "UB", floorNumber: 6, roomNumber: "601", slotOrder: 7, reportYmd: today, status: "confirmed", confirmationCount: 2 },
     { buildingCode: "TP2", floorNumber: 3, roomNumber: "304", slotOrder: 6, reportYmd: today, status: "unverified", confirmationCount: 1 },
     { buildingCode: "TP2", floorNumber: 5, roomNumber: "504", slotOrder: 8, reportYmd: today, status: "hidden", confirmationCount: 1 },
-    // Earlier this week — slot 6 popular; room 501 reported again for HAVING
     { buildingCode: "UB", floorNumber: 5, roomNumber: "501", slotOrder: 5, reportYmd: d1, status: "confirmed", confirmationCount: 2 },
     { buildingCode: "UB", floorNumber: 5, roomNumber: "501", slotOrder: 6, reportYmd: d1, status: "expired", confirmationCount: 2 },
     { buildingCode: "TP2", floorNumber: 3, roomNumber: "305", slotOrder: 6, reportYmd: d1, status: "confirmed", confirmationCount: 2 },
@@ -125,7 +144,7 @@ async function main() {
     await upsertReport(row);
   }
 
-  console.log(`Seeded ${plan.length} free_reports for Stats (today=${today})`);
+  console.log(`Seeded ${plan.length} demo free_reports (today=${today})`);
 }
 
 main()

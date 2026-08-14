@@ -40,6 +40,17 @@ const envSchema = z.object({
     .min(8, "CRON_SECRET must be at least 8 characters."),
 
   /**
+   * Admin console password (`/admin`). Server-only — never NEXT_PUBLIC.
+   * Distinct from CRON_SECRET. Min 16 characters.
+   */
+  ADMIN_SECRET: z
+    .string({
+      required_error:
+        "ADMIN_SECRET is missing. Copy .env.example → .env and set a long random string.",
+    })
+    .min(16, "ADMIN_SECRET must be at least 16 characters."),
+
+  /**
    * Canonical site origin for metadataBase / Open Graph absolute URLs.
    * Optional locally — defaults to http://localhost:3000.
    */
@@ -78,6 +89,7 @@ function loadEnv(): Env {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
     CRON_SECRET: process.env.CRON_SECRET,
+    ADMIN_SECRET: process.env.ADMIN_SECRET,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   });
 

@@ -6,6 +6,23 @@
 
 ---
 
+## V2.6 addendum (Admin, live help data, demo-seed hygiene)
+
+- Finder still reads only `active_free_classrooms` (active, unexpired, non-hidden, `classrooms.is_active`).
+- Stats still aggregate real `free_reports`. Empty week → honest empty state. `scripts/seed-stats-data.ts` is **DEVELOPMENT/DEMO ONLY** and is not part of `npm run db:seed`.
+- Help chat can answer current Finder questions via the existing query layer (no LLM). Unrelated questions and secret probes are refused.
+- Contact overflow menu is pathname-aware. Feedback `mailto:` leaves `@` unencoded in the address.
+- `/admin` uses `ADMIN_SECRET` + HttpOnly session cookie. Middleware redirects unauthenticated `/admin` (except `/admin/login`). Pages also call `requireAdmin()` before loading data. Raw device tokens are never shown.
+- No Prisma migration in V2.6.
+
+---
+
+**Project:** SRM KTR Classroom Finder  
+**Date:** 2026-08-09  
+**Verdict:** **Production-ready** (all Phase 14 gates passed)
+
+---
+
 ## 1. Summary
 
 End-to-end audit of functional flows, database integrity, performance, accessibility, responsive behavior, deployment readiness, code quality, and documentation. No new features were added. Several bugs and hardening fixes were applied (listed below). Production `npm run build` succeeds; `tsc` and ESLint are clean; Phase 14 automated QA harness passes.

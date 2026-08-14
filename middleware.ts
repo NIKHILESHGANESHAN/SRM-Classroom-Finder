@@ -5,18 +5,35 @@ import {
   getClientIp,
   rateLimit,
 } from "@/lib/rate-limit";
+import {
+  ADMIN_COOKIE,
+  isAdminProtectedPath,
+  verifyAdminSessionEdge,
+} from "@/lib/admin/edge-session";
 
 /**
- * Edge middleware — basic rate limiting for `/api/*` (Phase 11).
- * Returns 429 with Retry-After when the fixed window is exhausted.
+ * Edge middleware — API rate limits (Phase 11) + admin cookie gate (V2.6).
  */
-export function middleware(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith("/api/")) {
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  if (isAdminProtectedPath(pathname)) {
+    const secret = process.env.ADMIN_SECRET ?? "";
+    const cookie = request.cookies.get(ADMIN_COOKIE)?.value;
+    const ok = await verifyAdminSessionEdge(cookie, secret);
+    if (!ok) {
+      const login = new URL("/admin/login", request.url);
+      return NextResponse.redirect(login);
+    }
+    return NextResponse.next();
+  }
+
+  if (!pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
   const ip = getClientIp(request);
-  const key = `api:${ip}:${request.nextUrl.pathname}`;
+  const key = `api:${ip}:${pathname}`;
   const { limit, windowMs } = RATE_LIMITS.api;
   const result = rateLimit(key, limit, windowMs);
 
@@ -53,5 +70,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: ["/api/:path*", "/admin", "/admin/:path*"],
 };

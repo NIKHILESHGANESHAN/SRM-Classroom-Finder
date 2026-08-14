@@ -88,7 +88,9 @@ export function resetRateLimits(): void {
 }
 
 /** Client IP from standard proxy headers (Vercel / reverse proxies). */
-export function getClientIp(request: Request): string {
+export function getClientIp(request: {
+  headers: { get(name: string): string | null };
+}): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
     const first = forwarded.split(",")[0]?.trim();
@@ -111,4 +113,8 @@ export const RATE_LIMITS = {
   stillFree: { limit: 20, windowMs: 60_000 },
   /** Generic /api/* fallback (middleware) */
   api: { limit: 60, windowMs: 60_000 },
+  /** Admin login — slow brute-force of ADMIN_SECRET */
+  adminLogin: { limit: 5, windowMs: 15 * 60_000 },
+  /** Live classroom answers in Help chat */
+  helpLive: { limit: 20, windowMs: 60_000 },
 } as const;
