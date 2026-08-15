@@ -7,8 +7,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { env } from "@/lib/env";
 import { ADMIN_COOKIE } from "@/lib/admin/edge-session";
+import { secretsMatch } from "@/lib/timing-safe";
 
-export { ADMIN_COOKIE };
+export { secretsMatch, ADMIN_COOKIE };
 export const ADMIN_SESSION_MS = 8 * 60 * 60 * 1000;
 
 function hmac(payload: string, secret: string): string {
@@ -18,13 +19,6 @@ function hmac(payload: string, secret: string): string {
 function safeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
   const right = Buffer.from(b);
-  if (left.length !== right.length) return false;
-  return timingSafeEqual(left, right);
-}
-
-export function secretsMatch(provided: string, expected: string): boolean {
-  const left = Buffer.from(provided);
-  const right = Buffer.from(expected);
   if (left.length !== right.length) return false;
   return timingSafeEqual(left, right);
 }

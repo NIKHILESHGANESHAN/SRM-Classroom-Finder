@@ -20,6 +20,7 @@ Every base table has a surrogate primary key `id` (`TEXT`, application-generated
 | `classrooms` | `id` |
 | `free_reports` | `id` |
 | `occupied_reports` | `id` |
+| `report_events` | `id` |
 
 Surrogate keys keep joins stable when natural attributes change (for example renaming a building code is rare, but slot times can be updated without rewriting FKs on historical reports).
 

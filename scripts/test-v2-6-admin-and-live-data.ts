@@ -282,7 +282,6 @@ async function main() {
     });
     const finderUb = await getFinderRefreshData({
       buildingId: "UB",
-      timeSlotId: "all",
     });
     const chatUb = await answerLiveHelpIntent({
       kind: "building",

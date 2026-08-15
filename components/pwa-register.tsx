@@ -13,7 +13,9 @@ export function PwaRegister() {
     }
 
     const register = () => {
-      navigator.serviceWorker.register("/sw.js").catch((error) => {
+      navigator.serviceWorker
+        .register("/sw.js", { updateViaCache: "none" })
+        .catch((error) => {
         console.warn("[pwa] service worker registration failed", error);
       });
     };

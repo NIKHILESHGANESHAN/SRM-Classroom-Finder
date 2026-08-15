@@ -1,9 +1,9 @@
 /**
- * Minimal service worker for PWA installability.
- * Precaches the app shell (offline fallback to cached `/`).
- * Bump CACHE_VERSION when changing precache URLs.
+ * Minimal service worker for PWA installability (V2.7).
+ * Bump CACHE_VERSION whenever this file’s caching rules change.
+ * Never cache /sw.js — browsers must be able to fetch a new worker.
  */
-const CACHE_VERSION = "srm-classroom-finder-v1";
+const CACHE_VERSION = "srm-classroom-finder-v2.7";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -33,13 +33,21 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Network-first for navigations; cache fallback for offline
+  // Always hit the network for the worker script so deploys can replace it.
+  if (url.pathname === "/sw.js") {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Network-first for navigations; cache fallback for offline only.
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+          }
           return response;
         })
         .catch(() =>
@@ -49,22 +57,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for static icons / manifest
+  // Network-first for icons / manifest (update when online; cache for offline).
   if (
     url.pathname.startsWith("/icons/") ||
-    url.pathname === "/manifest.webmanifest" ||
-    url.pathname === "/sw.js"
+    url.pathname === "/manifest.webmanifest"
   ) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
             const copy = response.clone();
             caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
-            return response;
-          }),
-      ),
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || fetch(request))),
     );
   }
 });

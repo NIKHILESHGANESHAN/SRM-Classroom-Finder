@@ -1,10 +1,10 @@
 # SRM KTR Classroom Finder
 
-Find free classrooms at **SRM Institute of Science and Technology, Kattankulathur (KTR)** between lecture periods. Students anonymously report empty rooms in UB, Tech Park 1 (TP1), and Tech Park 2 (TP2). Classmates discover them in real time — **no accounts, no OTP, no login**.
+Find free classrooms at **SRM Institute of Science and Technology, Kattankulathur (KTR)** between lecture periods. Students anonymously report empty rooms in **UB** and **Tech Park 2 (TP2)**. Tech Park 1 (TP1) exists as a campus building in the schema; classroom inventory for TP1 is deferred to V3. Classmates discover reports in real time — **no accounts, no OTP, no login**.
 
 This repository is a DBMS coursework project: a production-style Next.js app on top of a **normalized PostgreSQL schema** with primary/foreign keys, CHECK constraints, composite keys, indexes, a SQL view, transactions, and aggregate queries.
 
-> **Status:** Production Ready (Phase 14 Complete)
+> **Status:** Version 2 complete (V2.7 final QA). Production-ready with known limitations documented in [docs/QA-REPORT.md](docs/QA-REPORT.md).
 
 See the [QA Report](docs/QA-REPORT.md) for the complete verification checklist.
 
@@ -18,9 +18,9 @@ See the [QA Report](docs/QA-REPORT.md) for the complete verification checklist.
 - **Contributor** — multi-step wizard to report a free room; anonymous device token; daily soft caps and trust-weighted confirmation thresholds
 - **Stats** — public dashboard of raw SQL aggregates (`GROUP BY`, `COUNT`, `AVG`, `HAVING`, `FILTER`, joins)
 - **Auto-expiry** — Vercel Cron hits `/api/cron/expire` every 5 minutes to mark past-due free reports as `expired` (history retained)
-- **PWA** — installable web app (manifest, icons, service worker)
+- **PWA** — manifest, icons, and a versioned service worker (offline fallback; new deploys bump the cache name)
 - **Hardening** — Zod env validation, API rate limiting, structured JSON logging, error/loading/404 pages, SEO + Open Graph
-- **Help** — Contact, deterministic Classroom Finder assistant (including live Finder answers), Community FAQ, mailto feedback
+- **Help** — Contact, deterministic Classroom Finder assistant (live answers use the **same current-slot Finder query** unless the user asks about all slots), Community FAQ, mailto feedback
 - **Admin** — private `/admin` inventory + report inspection (separate `ADMIN_SECRET`; public app stays anonymous)
 - **Polish** — Framer Motion animations with `prefers-reduced-motion` support, dark mode via `next-themes`
 
@@ -278,7 +278,7 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 ## Help chat (live Finder)
 
-The Contact assistant is deterministic (no LLM). Availability questions reuse `getFinderRefreshData` / `active_free_classrooms`. Secret probes (`CRON_SECRET`, `ADMIN_SECRET`, …) are refused without leaking values. Live questions are rate-limited.
+The Contact assistant is deterministic (no LLM). Availability questions reuse `getFinderRefreshData` with the **same default as Class Finder** (current campus slot). Ask about “all slots” only when you want every active report. Secret probes (`CRON_SECRET`, `ADMIN_SECRET`, …) are refused without leaking values. Live questions are rate-limited.
 
 Send feedback is a real `mailto:` link to `arthurknox007@gmail.com` (subject/body encoded; `@` in the address is not encoded). The browser may or may not open an OS mail client.
 
@@ -298,7 +298,13 @@ Send feedback is a real `mailto:` link to `arthurknox007@gmail.com` (subject/bod
   - Add a build/release step: `npx prisma migrate deploy && npx prisma generate`, **or**
   - Run `migrate deploy` + `db seed` locally against the production URL once.
 4. **Cron** — `vercel.json` schedules `*/5 * * * `* on `/api/cron/expire`. Vercel injects the Authorization header using `CRON_SECRET` when configured for Cron Jobs.
-5. **Seed** — Run `npx prisma db seed` against production once so buildings/floors/slots exist.
+Never run `scripts/seed-stats-data.ts` against production. It is **DEVELOPMENT / DEMO ONLY** and is blocked when `NODE_ENV` or `VERCEL_ENV` is `production`.
+
+Local automated tests may leave fixture classrooms (`V22-…`, `V23-…`). Those are **not** official inventory. Reset them only on localhost:
+
+```bash
+npx tsx scripts/cleanup-local-test-fixtures.ts --yes
+```
 
 ---
 
@@ -308,8 +314,9 @@ Send feedback is a real `mailto:` link to `arthurknox007@gmail.com` (subject/bod
 
 - Manifest: `/manifest.webmanifest` (`app/manifest.ts`)
 - Icons: `/public/icons/` (192, 512, maskable, Apple touch)
-- Service worker: `/public/sw.js` (registered by `PwaRegister`)
-- Installable on **HTTPS** (production) or **localhost**
+- Service worker: `/public/sw.js` (cache name `srm-classroom-finder-v2.7`; network-first navigations; `/sw.js` is never cache-first; old caches deleted on activate)
+- Register with `updateViaCache: "none"` so a new deploy can replace the worker
+- Served over **HTTPS** (production) or **localhost**. Add-to-Home-Screen install prompts were not re-verified in this QA pass.
 
 ---
 
@@ -362,11 +369,25 @@ Coursework write-ups:
 - [docs/ER-diagram.dbml](docs/ER-diagram.dbml) — DBML for [dbdiagram.io](https://dbdiagram.io)
 - [docs/normalization-notes.md](docs/normalization-notes.md)
 - [docs/dbms-report-notes.md](docs/dbms-report-notes.md)
-- [docs/QA-REPORT.md](docs/QA-REPORT.md) — Phase 14 final QA sign-off
+- [docs/QA-REPORT.md](docs/QA-REPORT.md) — QA history including V2.7 final pass
 
 ---
 
+## Version 2
 
+| Release | What shipped |
+|---------|----------------|
+| **V2.1** | Authoritative classroom inventory; server-side building/floor/room validation; `is_active`; coverage-aware empty states. Inventory ≠ availability. TP1 rooms deferred. |
+| **V2.2** | `report_events`; derived freshness/confidence; Still Free; separate Report Occupied; 2-strike hide; duplicate protection. |
+| **V2.3** | Visibility-aware Finder polling (~20s / ~10s near expiry); Recently Reported; Ending Soon. |
+| **V2.4** | Share + clipboard; human-readable deep links; local favorite buildings and recent rooms; How It Works. |
+| **V2.5** | More Options; Contact; deterministic Chat; Community FAQ; mailto feedback. |
+| **V2.6** | Demo-seed safeguards; live Finder answers in Chat; private `/admin` (`ADMIN_SECRET`); inventory activate/deactivate; token fingerprints. |
+| **V2.7** | Chat uses Finder’s current-slot default; PWA cache versioning; timing-safe cron compare; skip link; documentation/QA freeze. |
+
+Anonymous architecture is unchanged: no student accounts, OTP, or public login.
+
+---
 
 ## Future improvements
 

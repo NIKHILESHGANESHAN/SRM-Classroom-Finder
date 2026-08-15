@@ -140,6 +140,7 @@ mustInclude(readme, [
   "## License",
   "DATABASE_URL",
   "CRON_SECRET",
+  "ADMIN_SECRET",
   "NEXT_PUBLIC_APP_URL",
 ], "README");
 console.log("ok  README sections present");

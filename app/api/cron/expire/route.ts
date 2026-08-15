@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { expireFreeReports } from "@/lib/expire-free-reports";
+import { authorizeCronRequest } from "@/lib/cron-auth";
 import { logger } from "@/lib/logger";
 import {
   RATE_LIMITS,
@@ -21,19 +22,6 @@ export const runtime = "nodejs";
  *   curl -H "Authorization: Bearer $CRON_SECRET" \
  *     http://localhost:3000/api/cron/expire
  */
-
-function authorize(request: Request): boolean {
-  const secret = env.CRON_SECRET;
-
-  const header = request.headers.get("authorization");
-  if (header === `Bearer ${secret}`) return true;
-
-  // Vercel Cron may also send the secret via this header on some plans
-  const cronHeader = request.headers.get("x-vercel-cron-secret");
-  if (cronHeader === secret) return true;
-
-  return false;
-}
 
 async function handleExpire(request: Request): Promise<NextResponse> {
   const ip = getClientIp(request);
@@ -62,7 +50,7 @@ async function handleExpire(request: Request): Promise<NextResponse> {
     );
   }
 
-  if (!authorize(request)) {
+  if (!authorizeCronRequest(request, env.CRON_SECRET)) {
     logger.warn("cron.expire", {
       ok: false,
       error: "unauthorized",

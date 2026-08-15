@@ -5,13 +5,42 @@
 
 import { normalizeHelpText } from "@/lib/help/scope";
 
+/** Matches Finder: omit slot → current campus slot; `all` → every active report. */
+export type LiveSlotScope = "current" | "all";
+
 export type LiveHelpIntent =
-  | { kind: "building"; buildingCode: string }
-  | { kind: "floor"; buildingCode: string; floorNumber: number }
-  | { kind: "room"; buildingCode: string; roomNumber: string; floorNumber?: number }
-  | { kind: "ending_soon" }
-  | { kind: "recent" }
-  | { kind: "general" };
+  | {
+      kind: "building";
+      buildingCode: string;
+      slotScope?: LiveSlotScope;
+    }
+  | {
+      kind: "floor";
+      buildingCode: string;
+      floorNumber: number;
+      slotScope?: LiveSlotScope;
+    }
+  | {
+      kind: "room";
+      buildingCode: string;
+      roomNumber: string;
+      floorNumber?: number;
+      slotScope?: LiveSlotScope;
+    }
+  | { kind: "ending_soon"; slotScope?: LiveSlotScope }
+  | { kind: "recent"; slotScope?: LiveSlotScope }
+  | { kind: "general"; slotScope?: LiveSlotScope };
+
+function slotScopeFromText(n: string): LiveSlotScope {
+  if (
+    /\b(all slots?|any slot|every slot|across (all )?slots|all (active )?reports)\b/.test(
+      n,
+    )
+  ) {
+    return "all";
+  }
+  return "current";
+}
 
 const BUILDING = "(ub|tp1|tp2)";
 
@@ -22,6 +51,7 @@ function parseBuilding(raw: string): string {
 export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
   const n = normalizeHelpText(input);
   if (!n) return null;
+  const slotScope = slotScopeFromText(n);
 
   if (
     /\b(how (do|does|to)|what does|explain|why can't|why cant|do i need)\b/.test(
@@ -33,10 +63,10 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
   }
 
   if (/\b(ending soon|expiring soon|about to expire)\b/.test(n)) {
-    return { kind: "ending_soon" };
+    return { kind: "ending_soon", slotScope };
   }
   if (/\b(recently (verified|reported)|just (verified|reported))\b/.test(n)) {
-    return { kind: "recent" };
+    return { kind: "recent", slotScope };
   }
 
   const roomFloor = n.match(
@@ -48,6 +78,7 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
       buildingCode: parseBuilding(roomFloor[1]!),
       floorNumber: Number(roomFloor[2]),
       roomNumber: roomFloor[3]!.toUpperCase(),
+      slotScope,
     };
   }
 
@@ -59,6 +90,7 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
       kind: "room",
       buildingCode: parseBuilding(isRoom[1]!),
       roomNumber: isRoom[2]!.toUpperCase(),
+      slotScope,
     };
   }
 
@@ -72,6 +104,7 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
       kind: "floor",
       buildingCode: parseBuilding(floor[1]!),
       floorNumber: Number(floor[2]),
+      slotScope,
     };
   }
 
@@ -81,6 +114,7 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
       kind: "floor",
       buildingCode: parseBuilding(floorAlt[1]!),
       floorNumber: Number(floorAlt[2]),
+      slotScope,
     };
   }
 
@@ -90,7 +124,11 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
     ),
   );
   if (building) {
-    return { kind: "building", buildingCode: parseBuilding(building[1]!) };
+    return {
+      kind: "building",
+      buildingCode: parseBuilding(building[1]!),
+      slotScope,
+    };
   }
 
   const inBuilding = n.match(
@@ -98,7 +136,13 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
   );
   if (inBuilding) {
     const code = n.match(new RegExp(`\\b${BUILDING}\\b`));
-    if (code) return { kind: "building", buildingCode: parseBuilding(code[1]!) };
+    if (code) {
+      return {
+        kind: "building",
+        buildingCode: parseBuilding(code[1]!),
+        slotScope,
+      };
+    }
   }
 
   if (
@@ -106,7 +150,7 @@ export function parseLiveHelpIntent(input: string): LiveHelpIntent | null {
     /\b(free|available)\b/.test(n) &&
     /\b(room|rooms|classroom|classrooms)\b/.test(n)
   ) {
-    return { kind: "general" };
+    return { kind: "general", slotScope };
   }
 
   return null;
