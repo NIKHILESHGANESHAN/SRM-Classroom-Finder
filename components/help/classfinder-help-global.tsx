@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { MessageCircle, X } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -54,6 +55,11 @@ export function ClassFinderHelpGlobal() {
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [panelMounted, setPanelMounted] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   const handleClose = useCallback(() => {
     setOpen(false);
@@ -85,11 +91,11 @@ export function ClassFinderHelpGlobal() {
     closeBtn?.focus();
   }, [open, panelMounted]);
 
-  if (isAdminPath(pathname)) {
+  if (isAdminPath(pathname) || !portalReady) {
     return null;
   }
 
-  return (
+  return createPortal(
     <>
       <button
         ref={launcherRef}
@@ -99,7 +105,7 @@ export function ClassFinderHelpGlobal() {
         aria-haspopup="dialog"
         aria-expanded={open}
         className={cn(
-          "btn-press fixed z-[120] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-token-lg transition-standard",
+          "btn-press fixed z-[120] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-token-lg transition-standard motion-reduce:transition-none",
           "bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "sm:h-[3.75rem] sm:w-[3.75rem]",
@@ -177,6 +183,7 @@ export function ClassFinderHelpGlobal() {
           </motion.div>
         </>
       ) : null}
-    </>
+    </>,
+    document.body,
   );
 }

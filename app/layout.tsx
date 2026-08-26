@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { ClassFinderHelpDeferred } from "@/components/help/classfinder-help-deferred";
 import { PwaRegister } from "@/components/pwa-register";
 import { PRODUCT_DESCRIPTOR, PRODUCT_NAME } from "@/lib/design-tokens";
 import { getAppUrl } from "@/lib/env";
@@ -105,7 +104,6 @@ export default function RootLayout({
             Skip to main content
           </a>
           <div id="main-content">{children}</div>
-          <ClassFinderHelpDeferred />
         </Providers>
       </body>
     </html>

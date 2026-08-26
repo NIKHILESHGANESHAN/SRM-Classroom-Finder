@@ -4,22 +4,18 @@ import { useEffect, useState } from "react";
 import { ClassFinderHelpLazy } from "@/components/help/classfinder-help-lazy";
 
 /**
- * Defers the global Help launcher chunk until the browser is idle.
- * Keeps first-route hydration focused on page content.
+ * Client-only mount gate for the global Help launcher.
+ * The heavy chat panel stays lazy inside ClassFinderHelpGlobal; this only
+ * waits for hydration — not requestIdleCallback (unreliable in preview
+ * iframes / busy main threads and was leaving the launcher absent for seconds).
  */
 export function ClassFinderHelpDeferred() {
-  const [mount, setMount] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(() => setMount(true), {
-        timeout: 2000,
-      });
-      return () => window.cancelIdleCallback(id);
-    }
-    const timer = window.setTimeout(() => setMount(true), 1200);
-    return () => window.clearTimeout(timer);
+    setMounted(true);
   }, []);
 
-  return mount ? <ClassFinderHelpLazy /> : null;
+  if (!mounted) return null;
+  return <ClassFinderHelpLazy />;
 }

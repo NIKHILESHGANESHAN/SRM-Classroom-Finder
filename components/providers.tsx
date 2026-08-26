@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ThemeProvider } from "next-themes";
 import { AppToaster } from "@/components/app-toaster";
 import { ClassFinderLoading } from "@/components/classfinder-loading";
+import { ClassFinderHelpDeferred } from "@/components/help/classfinder-help-deferred";
 import { DeviceTokenBootstrap } from "@/components/device-token-bootstrap";
 import { PageTransition } from "@/components/page-transition";
 import { EASE_OUT_EXPO, MOTION_MICRO } from "@/lib/motion";
@@ -54,6 +55,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <DeviceTokenBootstrap />
       <PageTransition>{children}</PageTransition>
+      <ClassFinderHelpDeferred />
       <AppToaster />
       <AnimatePresence>
         {showBoot ? (
