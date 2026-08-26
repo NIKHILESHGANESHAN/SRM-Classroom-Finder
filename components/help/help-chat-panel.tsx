@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { glassSurfaceClasses } from "@/lib/glass";
 import type { HelpChatWelcome } from "@/components/help/use-help-chat";
 import { useHelpChat } from "@/components/help/use-help-chat";
+import {
+  CHAT_PAGE_QUICK_PROMPTS,
+  CHAT_QUICK_PROMPTS,
+} from "@/lib/help/knowledge";
 import { EASE_OUT_EXPO, MOTION_STANDARD } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +24,7 @@ export type HelpQuickPrompt = {
 type HelpChatPanelProps = {
   variant: "page" | "floating";
   welcome: HelpChatWelcome;
-  quickPrompts: readonly HelpQuickPrompt[];
+  quickPrompts?: readonly HelpQuickPrompt[];
   className?: string;
   autoFocusInput?: boolean;
   composerId?: string;
@@ -29,11 +33,14 @@ type HelpChatPanelProps = {
 export function HelpChatPanel({
   variant,
   welcome,
-  quickPrompts,
+  quickPrompts: quickPromptsProp,
   className,
   autoFocusInput = false,
   composerId: composerIdProp,
 }: HelpChatPanelProps) {
+  const quickPrompts =
+    quickPromptsProp ??
+    (variant === "floating" ? CHAT_QUICK_PROMPTS : CHAT_PAGE_QUICK_PROMPTS);
   const reduceMotion = useReducedMotion();
   const listId = useId();
   const generatedComposerId = useId();

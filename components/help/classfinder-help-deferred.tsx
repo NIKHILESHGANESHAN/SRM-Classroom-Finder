@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ClassFinderHelpLazy } from "@/components/help/classfinder-help-lazy";
+import { ClassFinderHelpGlobal } from "@/components/help/classfinder-help-global";
 
 /**
  * Client-only mount gate for the global Help launcher.
- * The heavy chat panel stays lazy inside ClassFinderHelpGlobal; this only
- * waits for hydration — not requestIdleCallback (unreliable in preview
- * iframes / busy main threads and was leaving the launcher absent for seconds).
+ * The shell renders synchronously after hydration — no nested next/dynamic
+ * boundary (that silently rendered nothing when async chunks failed on Netlify).
+ * The chat panel stays lazy inside ClassFinderHelpGlobal.
  */
 export function ClassFinderHelpDeferred() {
   const [mounted, setMounted] = useState(false);
@@ -17,5 +17,5 @@ export function ClassFinderHelpDeferred() {
   }, []);
 
   if (!mounted) return null;
-  return <ClassFinderHelpLazy />;
+  return <ClassFinderHelpGlobal />;
 }

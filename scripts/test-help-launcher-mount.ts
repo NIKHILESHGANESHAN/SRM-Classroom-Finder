@@ -68,35 +68,45 @@ function main() {
   );
   console.log("ok  help is sibling of PageTransition");
 
-  section("Deferred mount — no requestIdleCallback");
+  section("Deferred mount — no requestIdleCallback, no nested dynamic");
   const deferred = read("components/help/classfinder-help-deferred.tsx");
   assert(
     !deferred.includes("window.requestIdleCallback"),
     "idle callback removed",
   );
-  assert(deferred.includes("ClassFinderHelpLazy"), "still lazy-loads global shell");
-  console.log("ok  client hydration gate only");
+  assert(
+    deferred.includes("ClassFinderHelpGlobal"),
+    "imports global shell directly after hydration",
+  );
+  assert(
+    !deferred.includes('from "next/dynamic"'),
+    "no nested dynamic boundary on launcher shell",
+  );
+  console.log("ok  client hydration gate only, synchronous shell");
 
   section("Launcher shell — portal + a11y + positioning");
   const global = read("components/help/classfinder-help-global.tsx");
   assert(global.includes("createPortal"), "portals to document.body");
+  assert(global.includes('data-cf-help-launcher'), "launcher data attribute");
   assert(global.includes('aria-label={open ? "Close ClassFinder Help"'), "aria-label");
   assert(global.includes("aria-expanded={open}"), "aria-expanded");
   assert(global.includes("fixed z-[120]"), "fixed z-index below boot overlay");
   assert(global.includes("h-14 w-14"), "56px touch target");
   assert(global.includes("safe-area-inset-bottom"), "mobile safe area");
   assert(global.includes("LazyHelpChatPanel"), "chat panel stays lazy");
+  assert(
+    !global.includes("CHAT_QUICK_PROMPTS"),
+    "knowledge prompts deferred to lazy chat panel",
+  );
   assert(global.includes("motion-reduce:transition-none"), "reduced motion");
   console.log("ok  launcher markup contract");
 
-  section("Lazy boundary preserved");
-  const lazy = read("components/help/classfinder-help-lazy.tsx");
-  assert(lazy.includes("ssr: false"), "global shell ssr:false");
-  assert(
-    lazy.includes("classfinder-help-global"),
-    "dynamic import global shell",
-  );
-  console.log("ok  lazy loading unchanged");
+  section("Chat panel lazy boundary preserved");
+  const panel = read("components/help/help-chat-panel.tsx");
+  assert(panel.includes("CHAT_QUICK_PROMPTS"), "prompts load with chat panel");
+  const globalFile = read("components/help/classfinder-help-global.tsx");
+  assert(globalFile.includes("dynamic("), "chat panel dynamic import");
+  console.log("ok  chat panel lazy loading unchanged");
 
   console.log("\nHelp launcher mount tests passed.\n");
 }

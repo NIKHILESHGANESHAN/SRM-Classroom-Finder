@@ -15,10 +15,7 @@ import { MessageCircle, X } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { glassSurfaceClasses } from "@/lib/glass";
-import {
-  CHAT_QUICK_PROMPTS,
-  HELP_FLOATING_WELCOME,
-} from "@/lib/help/help-ui";
+import { HELP_FLOATING_WELCOME } from "@/lib/help/help-ui";
 import { EASE_OUT_EXPO, MOTION_STANDARD } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -55,11 +52,6 @@ export function ClassFinderHelpGlobal() {
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [panelMounted, setPanelMounted] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
-
-  useEffect(() => {
-    setPortalReady(true);
-  }, []);
 
   const handleClose = useCallback(() => {
     setOpen(false);
@@ -91,7 +83,7 @@ export function ClassFinderHelpGlobal() {
     closeBtn?.focus();
   }, [open, panelMounted]);
 
-  if (isAdminPath(pathname) || !portalReady) {
+  if (isAdminPath(pathname)) {
     return null;
   }
 
@@ -100,6 +92,7 @@ export function ClassFinderHelpGlobal() {
       <button
         ref={launcherRef}
         type="button"
+        data-cf-help-launcher=""
         onClick={() => (open ? handleClose() : handleOpen())}
         aria-label={open ? "Close ClassFinder Help" : "Open ClassFinder Help"}
         aria-haspopup="dialog"
@@ -175,7 +168,6 @@ export function ClassFinderHelpGlobal() {
               <LazyHelpChatPanel
                 variant="floating"
                 welcome={HELP_FLOATING_WELCOME}
-                quickPrompts={CHAT_QUICK_PROMPTS}
                 autoFocusInput
                 composerId={composerId}
               />
