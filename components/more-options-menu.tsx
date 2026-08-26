@@ -24,6 +24,7 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const itemRef = useRef<HTMLAnchorElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuId = useId();
   const buttonId = useId();
 
@@ -40,6 +41,7 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
       if (event.key === "Escape") {
         event.preventDefault();
         setOpen(false);
+        buttonRef.current?.focus();
       }
     }
 
@@ -58,6 +60,7 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
   return (
     <div ref={wrapRef} className={cn("relative", className)}>
       <Button
+        ref={buttonRef}
         type="button"
         id={buttonId}
         variant="ghost"

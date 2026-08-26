@@ -6,16 +6,16 @@
 import { KNOWLEDGE, type KnowledgeEntry } from "@/lib/help/knowledge";
 
 export const SCOPE_REDIRECT =
-  "I'm here to help with SRM KTR Classroom Finder. Please ask something related to using the website, finding classrooms, reporting rooms, or understanding how Classroom Finder works.";
+  "I'm here to help with ClassFinder. Please ask something related to using the site, finding classrooms, reporting rooms, or understanding how ClassFinder works.";
 
 export const MATCH_FALLBACK =
-  "I'm here to help with SRM KTR Classroom Finder. Please ask me about finding classrooms, reporting rooms, confirmations, availability, privacy, or using the website.";
+  "I'm here to help with ClassFinder. Please ask about finding classrooms, reporting rooms, confirmations, availability, privacy, or using the site.";
 
 export const UNKNOWN_FEATURE =
-  "That feature is not currently available in SRM KTR Classroom Finder.";
+  "That feature is not currently available in ClassFinder.";
 
 export const SECRET_REFUSAL =
-  "I can't share server secrets, environment variables, or internal credentials. Ask about using Classroom Finder, reporting rooms, privacy, or how the public features work.";
+  "I can't share server secrets, environment variables, or internal credentials. Ask about using ClassFinder, reporting rooms, privacy, or how the public features work.";
 
 export type HelpReplyKind =
   | "answer"
@@ -112,6 +112,16 @@ const IN_SCOPE_TERMS = [
   "feedback",
   "chat",
   "how it works",
+  "built",
+  "made",
+  "creator",
+  "created",
+  "developed",
+  "behind",
+  "own",
+  "owned",
+  "ownership",
+  "classfinder",
   "dbms",
   "postgres",
   "prisma",

@@ -251,7 +251,7 @@ async function main() {
       }
 
       const home = await (await fetch(`${BASE}/`)).text();
-      assert(home.includes("Classroom Finder"), "landing brand missing");
+      assert(home.includes("ClassFinder"), "landing brand missing");
       assert(
         home.includes("og:title") || home.includes("property=\"og:"),
         "OG tags missing",
@@ -260,7 +260,7 @@ async function main() {
 
       const finder = await (await fetch(`${BASE}/finder`)).text();
       assert(
-        finder.includes("Class Finder") || finder.includes("finder"),
+        finder.includes("ClassFinder") || finder.includes("finder"),
         "finder markup missing",
       );
       console.log("ok  finder renders");

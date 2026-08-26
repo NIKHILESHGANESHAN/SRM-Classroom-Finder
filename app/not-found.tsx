@@ -21,15 +21,15 @@ export default function NotFound() {
           Page not found
         </h1>
         <p className="text-pretty text-muted-foreground">
-          That URL doesn’t exist in Classroom Finder. Head home to open Class
-          Finder or Contributor.
+          That URL doesn&apos;t exist in ClassFinder. Head home to open Finder
+          or Contributor.
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <Button className="min-h-11" asChild>
             <Link href="/">Back home</Link>
           </Button>
           <Button variant="outline" className="min-h-11" asChild>
-            <Link href="/finder">Class Finder</Link>
+            <Link href="/finder">Find a classroom</Link>
           </Button>
         </div>
       </div>

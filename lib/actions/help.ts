@@ -20,9 +20,14 @@ import {
 } from "@/lib/help/scope";
 import { getClientIp, RATE_LIMITS, rateLimit } from "@/lib/rate-limit";
 
+import type { HelpSessionContext } from "@/lib/help/session-context";
+
 export type AskHelpResult = HelpReply & { live: boolean };
 
-export async function askHelpAssistant(raw: string): Promise<AskHelpResult> {
+export async function askHelpAssistant(
+  raw: string,
+  context: HelpSessionContext = {},
+): Promise<AskHelpResult> {
   const text = clampUserMessage(raw);
   if (!text) {
     return { kind: "empty", text: MATCH_FALLBACK, entryId: null, live: false };
@@ -46,7 +51,7 @@ export async function askHelpAssistant(raw: string): Promise<AskHelpResult> {
     };
   }
 
-  const liveIntent = parseLiveHelpIntent(text);
+  const liveIntent = parseLiveHelpIntent(text, context);
   if (liveIntent) {
     const ip = getClientIp({ headers: headers() });
     const rl = rateLimit(
@@ -57,7 +62,7 @@ export async function askHelpAssistant(raw: string): Promise<AskHelpResult> {
     if (!rl.success) {
       return {
         kind: "no_match",
-        text: "Too many availability questions. Please wait a moment, or open Class Finder.",
+        text: "Too many availability questions. Please wait a moment, or open ClassFinder.",
         entryId: null,
         live: true,
       };
@@ -68,7 +73,7 @@ export async function askHelpAssistant(raw: string): Promise<AskHelpResult> {
     } catch {
       return {
         kind: "no_match",
-        text: "I couldn't read live classroom data just now. Try Class Finder, or ask a how-to question.",
+        text: "I couldn't read live classroom data just now. Try ClassFinder, or ask a how-to question.",
         entryId: null,
         live: true,
       };

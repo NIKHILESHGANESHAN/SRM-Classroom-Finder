@@ -11,6 +11,8 @@
  * The opener gets normal current-slot logic (omit `slot`).
  */
 
+import { PRODUCT_NAME } from "@/lib/design-tokens";
+
 export type ShareClassroomInput = {
   buildingCode: string;
   floorNumber: number;
@@ -42,8 +44,8 @@ export function shareCopy(input: ShareClassroomInput): {
 } {
   const label = `${input.buildingCode.trim().toUpperCase()} ${input.roomNumber.trim()}`;
   return {
-    title: "SRM KTR Classroom Finder",
-    text: `${label} is currently reported free.\n\nFloor ${input.floorNumber}\nSRM KTR Classroom Finder`,
+    title: PRODUCT_NAME,
+    text: `${label} is currently reported free.\n\nFloor ${input.floorNumber}\n${PRODUCT_NAME}`,
   };
 }
 

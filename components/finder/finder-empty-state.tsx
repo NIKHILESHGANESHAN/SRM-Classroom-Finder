@@ -1,8 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ClipboardList, Clock, DoorOpen, MapPinOff, Sparkles, Star } from "lucide-react";
-import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
+import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 import type { FinderEmptyReason } from "@/lib/finder-realtime";
 
 type FinderEmptyStateProps = {
@@ -16,14 +15,14 @@ function copyFor(
 ): { title: string; body: string } {
   if (reason === "inventory_gap") {
     return {
-      title: "We don't have classroom listings here yet",
-      body: `No verified rooms are on file for ${slotLabel}. That does not mean every room is occupied — inventory for this area is still being added.`,
+      title: "No rooms listed here yet",
+      body: `We don't have classroom inventory for ${slotLabel}. That doesn't mean every room is taken — listings for this area may still be added.`,
     };
   }
   if (reason === "insufficient_reports") {
     return {
-      title: "We don't have enough reports for this floor yet",
-      body: `Classrooms exist, but nobody has reported a free room for ${slotLabel}. Check back later, or be the first via Contributor.`,
+      title: "Not enough reports for this floor",
+      body: `Rooms exist, but nobody has reported one free for ${slotLabel}. Try another filter, or report a room you find empty.`,
     };
   }
   if (reason === "search_miss") {
@@ -34,66 +33,46 @@ function copyFor(
   }
   if (reason === "no_recent") {
     return {
-      title: "No recently reported rooms",
-      body: "No free reports or Still Free confirmations in the last 10 minutes. Other rooms may still be free — try All free, or check back shortly.",
+      title: "Nothing recent",
+      body: "No reports or confirmations in the last 10 minutes. Other rooms may still be free — try All, or check again shortly.",
     };
   }
   if (reason === "no_ending") {
     return {
-      title: "No rooms ending soon",
-      body: "Nothing is due to expire in the next 10 minutes. That does not mean other rooms are occupied — try All free to see the full list.",
+      title: "Nothing ending soon",
+      body: "No rooms expire in the next 10 minutes. Try All to see everything that's free.",
     };
   }
   if (reason === "my_buildings") {
     return {
-      title: "No free rooms in My buildings",
-      body: "Star one or more buildings to use this list. Other buildings are still available under All free — they are not hidden.",
+      title: "Nothing in My buildings",
+      body: "Star a building to use this filter. Other buildings are still available under All.",
     };
   }
   return {
-    title: "No rooms are currently reported free",
-    body: `Nothing showing for ${slotLabel}. Rooms may be in class, or earlier reports may have expired — try another filter or report a room you find empty.`,
+    title: "Nothing free right now",
+    body: `No active reports for ${slotLabel}. Rooms may be in class, or earlier reports may have expired. Check again in a moment, or report a room you find empty.`,
   };
 }
 
-const ICONS = {
-  inventory_gap: MapPinOff,
-  insufficient_reports: ClipboardList,
-  none_free: DoorOpen,
-  search_miss: DoorOpen,
-  no_recent: Sparkles,
-  no_ending: Clock,
-  my_buildings: Star,
-} as const;
-
-/** Honest empty state: inventory gap ≠ all occupied ≠ none free right now. */
+/** Honest empty state — inventory gap ≠ all occupied ≠ none free globally. */
 export function FinderEmptyState({
   slotLabel,
   reason = "none_free",
 }: FinderEmptyStateProps) {
   const reduceMotion = useReducedMotion();
   const { title, body } = copyFor(reason, slotLabel);
-  const Icon = ICONS[reason];
 
   return (
     <motion.div
       role="status"
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: DURATION_UI, ease: EASE_OUT_EXPO }}
-      className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center dark:bg-muted/20"
+      transition={{ duration: MOTION_STANDARD, ease: EASE_OUT_EXPO }}
+      className="rounded-surface border border-dashed border-border bg-muted/30 px-5 py-10 text-left sm:py-12"
     >
-      <div className="relative mb-5">
-        <div
-          aria-hidden
-          className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-primary/10 via-accent/10 to-transparent blur-sm"
-        />
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm dark:bg-primary/20">
-          <Icon className="h-8 w-8" aria-hidden />
-        </div>
-      </div>
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      <p className="mt-2 max-w-sm text-pretty text-sm text-muted-foreground">
+      <p className="mt-2 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground">
         {body}
       </p>
     </motion.div>

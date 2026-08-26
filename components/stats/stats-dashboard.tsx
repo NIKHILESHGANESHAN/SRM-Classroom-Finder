@@ -3,21 +3,16 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, BarChart3, Building2, Clock3, DoorOpen } from "lucide-react";
-import { CountUp } from "@/components/stats/count-up";
+import { ArrowLeft } from "lucide-react";
+import { GlassNavigation } from "@/components/glass";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import type { StatsPageData } from "@/lib/stats-data";
-import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
+import { PRODUCT_NAME } from "@/lib/design-tokens";
+import { EASE_OUT_EXPO, MOTION_STANDARD } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
-/** Lazy-load Recharts — keeps /stats first-load JS smaller without changing UI. */
+/** Lazy-load Recharts — keeps /stats first-load JS smaller. */
 const ReportsBarChart = dynamic(
   () =>
     import("@/components/stats/reports-bar-chart").then(
@@ -27,7 +22,7 @@ const ReportsBarChart = dynamic(
     ssr: false,
     loading: () => (
       <div
-        className="h-64 w-full animate-pulse rounded-xl bg-muted/50 sm:h-72"
+        className="h-52 w-full rounded-surface bg-muted/40 motion-reduce:animate-none sm:h-60"
         aria-hidden
       />
     ),
@@ -53,292 +48,362 @@ function statusLabel(status: string): string {
   }
 }
 
-function InViewBlock({
+function formatCount(value: number, decimals = 0): string {
+  return decimals > 0
+    ? value.toFixed(decimals)
+    : value.toLocaleString("en-IN");
+}
+
+function PageSection({
+  title,
+  description,
   children,
-  delay = 0,
+  className,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn("space-y-3", className)}>
+      <div className="space-y-1">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        {description ? (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SolidPanel({
+  children,
   className,
 }: {
   children: React.ReactNode;
-  delay?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-surface border border-border bg-card px-4 py-4 shadow-token-sm sm:px-5 sm:py-5",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function FadeIn({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
   className?: string;
 }) {
   const reduceMotion = useReducedMotion();
   return (
     <motion.div
       className={className}
-      initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{
-        duration: DURATION_UI,
-        delay: reduceMotion ? 0 : delay,
-        ease: EASE_OUT_EXPO,
-      }}
+      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: MOTION_STANDARD, ease: EASE_OUT_EXPO }}
     >
       {children}
     </motion.div>
   );
 }
 
-/**
- * Client Stats shell — count-ups, chart animation, reduced-motion aware entrance.
- */
 export function StatsDashboard({ data }: StatsDashboardProps) {
+  const weekRangeLabel = `${data.weekStart} → ${data.campusToday}`;
+  const buildingChartHasData = data.reportsPerBuilding.some(
+    (row) => row.reportCount > 0,
+  );
+
   if (!data.hasAnyData) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <StatsHeader weekStart={data.weekStart} campusToday={data.campusToday} />
-        <Card className="border-border/80 shadow-sm">
-          <CardContent className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-            <DoorOpen className="h-10 w-10 text-muted-foreground" aria-hidden />
-            <h2 className="text-lg font-semibold text-primary">
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-6 sm:max-w-2xl sm:gap-7">
+        <StatsNavigation />
+        <FadeIn className="space-y-4">
+          <header className="space-y-2 px-1">
+            <h1 className="type-title text-foreground">ClassFinder activity</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              A look at real classroom reports at SRM KTR. Week of{" "}
+              {weekRangeLabel}.
+            </p>
+          </header>
+          <SolidPanel className="text-center">
+            <h2 className="text-lg font-semibold text-foreground">
               Not enough activity yet
             </h2>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Statistics will appear as students begin reporting classrooms.
-              Zeroes are not invented — there are no free reports for this campus
-              week yet.
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Stats will become more useful as students report and confirm
+              classrooms. Nothing is shown until real reports exist.
             </p>
-            <Button asChild className="mt-2 min-h-11">
+            <Button asChild className="btn-press mt-5 min-h-11">
               <Link href="/contribute">Report a room</Link>
             </Button>
-          </CardContent>
-        </Card>
+          </SolidPanel>
+        </FadeIn>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <StatsHeader weekStart={data.weekStart} campusToday={data.campusToday} />
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 sm:max-w-2xl sm:gap-7">
+      <StatsNavigation />
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <InViewBlock>
-          <Card className="h-full border-border/80 shadow-sm dark:shadow-black/30">
-            <CardHeader className="pb-2">
-              <CardDescription>Reports today</CardDescription>
-              <CardTitle className="text-3xl tabular-nums text-primary sm:text-4xl">
-                <CountUp value={data.totals.today} />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Campus date {data.campusToday}
-            </CardContent>
-          </Card>
-        </InViewBlock>
+      <FadeIn className="space-y-6 sm:space-y-8">
+        <header className="space-y-2 px-1">
+          <h1 className="type-title text-foreground">ClassFinder activity</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Real classroom reports at SRM KTR. Campus week {weekRangeLabel}.
+          </p>
+        </header>
 
-        <InViewBlock delay={0.06}>
-          <Card className="h-full border-border/80 shadow-sm dark:shadow-black/30">
-            <CardHeader className="pb-2">
-              <CardDescription>Reports this week</CardDescription>
-              <CardTitle className="text-3xl tabular-nums text-primary sm:text-4xl">
-                <CountUp value={data.totals.thisWeek} />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Week of {data.weekStart} → {data.campusToday}
-            </CardContent>
-          </Card>
-        </InViewBlock>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <InViewBlock delay={0.04}>
-          <Card className="border-border/80 shadow-sm dark:shadow-black/30">
-            <CardHeader>
-              <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Building2 className="h-4 w-4" aria-hidden />
-              </div>
-              <CardTitle className="text-base">Busiest building today</CardTitle>
-              <CardDescription>GROUP BY building · COUNT · LIMIT 1</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.busiestBuildingToday ? (
-                <div>
-                  <p className="text-2xl font-bold text-primary">
-                    {data.busiestBuildingToday.code}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.busiestBuildingToday.name}
-                  </p>
-                  <p className="mt-2 text-sm font-medium tabular-nums">
-                    <CountUp value={data.busiestBuildingToday.reportCount} /> reports
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No reports today yet.</p>
-              )}
-            </CardContent>
-          </Card>
-        </InViewBlock>
-
-        <InViewBlock delay={0.08}>
-          <Card className="border-border/80 shadow-sm dark:shadow-black/30">
-            <CardHeader>
-              <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent/20 text-accent-foreground">
-                <Clock3 className="h-4 w-4" aria-hidden />
-              </div>
-              <CardTitle className="text-base">Most active slot this week</CardTitle>
-              <CardDescription>GROUP BY time_slot · week range</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.mostActiveSlotThisWeek ? (
-                <div>
-                  <p className="text-2xl font-bold text-primary">
-                    Slot {data.mostActiveSlotThisWeek.slotOrder}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.mostActiveSlotThisWeek.rangeLabel}
-                  </p>
-                  <p className="mt-2 text-sm font-medium tabular-nums">
-                    <CountUp value={data.mostActiveSlotThisWeek.reportCount} /> reports
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No reports this week yet.</p>
-              )}
-            </CardContent>
-          </Card>
-        </InViewBlock>
-      </div>
-
-      <InViewBlock>
-        <Card className="border-border/80 shadow-sm dark:shadow-black/30">
-          <CardHeader>
-            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <BarChart3 className="h-4 w-4" aria-hidden />
+        <div className="space-y-4 border-b border-border pb-6 sm:pb-8">
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <dt className="text-sm text-muted-foreground">Reports today</dt>
+              <dd className="text-3xl font-semibold tabular-nums text-foreground sm:text-4xl">
+                {formatCount(data.totals.today)}
+              </dd>
+              <dd className="text-xs text-muted-foreground">
+                Campus date {data.campusToday}
+              </dd>
             </div>
-            <CardTitle className="text-base">Reports per building</CardTitle>
-            <CardDescription>
-              LEFT JOIN buildings · GROUP BY · this week
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ReportsBarChart data={data.reportsPerBuilding} />
-          </CardContent>
-        </Card>
-      </InViewBlock>
+            <div className="space-y-1">
+              <dt className="text-sm text-muted-foreground">
+                Reports this week
+              </dt>
+              <dd className="text-3xl font-semibold tabular-nums text-foreground sm:text-4xl">
+                {formatCount(data.totals.thisWeek)}
+              </dd>
+              <dd className="text-xs text-muted-foreground">{weekRangeLabel}</dd>
+            </div>
+          </dl>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <InViewBlock>
-          <Card className="border-border/80 shadow-sm dark:shadow-black/30">
-            <CardHeader>
-              <CardTitle className="text-base">Avg confirmations</CardTitle>
-              <CardDescription>AVG(confirmation_count) this week</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.avgConfirmationsThisWeek !== null ? (
-                <p className="text-3xl font-bold tabular-nums text-primary">
-                  <CountUp
-                    value={data.avgConfirmationsThisWeek}
-                    decimals={1}
-                    durationMs={700}
-                  />
-                </p>
+          {(data.busiestBuildingToday || data.mostActiveSlotThisWeek) && (
+            <ul className="space-y-2 border-t border-border/70 pt-4 text-sm">
+              {data.busiestBuildingToday ? (
+                <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="text-muted-foreground">
+                    Busiest building today
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {data.busiestBuildingToday.code}
+                    <span className="ml-2 font-normal tabular-nums text-muted-foreground">
+                      {formatCount(data.busiestBuildingToday.reportCount)} reports
+                    </span>
+                  </span>
+                </li>
               ) : (
-                <p className="text-sm text-muted-foreground">—</p>
+                <li className="text-muted-foreground">
+                  No building reports today yet.
+                </li>
               )}
-            </CardContent>
-          </Card>
-        </InViewBlock>
+              {data.mostActiveSlotThisWeek ? (
+                <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="text-muted-foreground">
+                    Busiest slot this week
+                  </span>
+                  <span className="font-medium text-foreground">
+                    Slot {data.mostActiveSlotThisWeek.slotOrder}
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      · {data.mostActiveSlotThisWeek.rangeLabel}
+                    </span>
+                    <span className="ml-2 font-normal tabular-nums text-muted-foreground">
+                      {formatCount(data.mostActiveSlotThisWeek.reportCount)} reports
+                    </span>
+                  </span>
+                </li>
+              ) : null}
+            </ul>
+          )}
+        </div>
 
-        <InViewBlock delay={0.06}>
-          <Card className="border-border/80 shadow-sm dark:shadow-black/30">
-            <CardHeader>
-              <CardTitle className="text-base">Status mix this week</CardTitle>
-              <CardDescription>GROUP BY status · COUNT</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.statusBreakdownThisWeek.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No data</p>
-              ) : (
-                <ul className="space-y-2">
-                  {data.statusBreakdownThisWeek.map((row) => (
-                    <li
-                      key={row.status}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-muted-foreground">
-                        {statusLabel(row.status)}
-                      </span>
-                      <span className="font-semibold tabular-nums">
-                        <CountUp value={row.reportCount} durationMs={600} />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </InViewBlock>
-      </div>
+        <PageSection
+          title="Reports by building"
+          description="Free classroom reports submitted this week."
+        >
+          {buildingChartHasData ? (
+            <SolidPanel className="space-y-4">
+              <ReportsBarChart data={data.reportsPerBuilding} />
+              <BuildingReportsTable data={data.reportsPerBuilding} />
+            </SolidPanel>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No building reports this week yet.
+            </p>
+          )}
+        </PageSection>
 
-      <InViewBlock>
-        <Card className="border-border/80 shadow-sm dark:shadow-black/30">
-          <CardHeader>
-            <CardTitle className="text-base">Top classrooms this week</CardTitle>
-            <CardDescription>
-              HAVING COUNT(*) ≥ 2 · ORDER BY · LIMIT 5
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.topClassroomsThisWeek.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No classroom was reported more than once this week.
-              </p>
-            ) : (
-              <ol className="space-y-3">
-                {data.topClassroomsThisWeek.map((room, i) => (
+        <PageSection
+          title="Report status this week"
+          description="How submitted reports are classified."
+        >
+          {data.statusBreakdownThisWeek.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No status breakdown available yet.
+            </p>
+          ) : (
+            <SolidPanel>
+              <ul className="divide-y divide-border/70">
+                {data.statusBreakdownThisWeek.map((row) => (
                   <li
-                    key={room.classroomId}
-                    className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-2 last:border-0 last:pb-0"
+                    key={row.status}
+                    className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
                   >
-                    <div>
-                      <span className="mr-2 text-xs text-muted-foreground">
-                        #{i + 1}
-                      </span>
-                      <span className="font-semibold text-primary">
-                        {room.buildingCode} {room.roomNumber}
-                      </span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        Floor {room.floorNumber}
-                      </span>
-                    </div>
-                    <span className="tabular-nums text-sm font-medium">
-                      <CountUp value={room.reportCount} durationMs={500} />×
+                    <span className="text-sm text-muted-foreground">
+                      {statusLabel(row.status)}
+                    </span>
+                    <span className="text-sm font-medium tabular-nums text-foreground">
+                      {formatCount(row.reportCount)}
                     </span>
                   </li>
                 ))}
-              </ol>
-            )}
-          </CardContent>
-        </Card>
-      </InViewBlock>
+              </ul>
+            </SolidPanel>
+          )}
+        </PageSection>
+
+        <PageSection
+          title="Frequently reported rooms"
+          description="Rooms reported more than once this week."
+        >
+          {data.topClassroomsThisWeek.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No room was reported more than once this week.
+            </p>
+          ) : (
+            <SolidPanel className="overflow-x-auto">
+              <table className="w-full min-w-[16rem] text-left text-sm">
+                <caption className="sr-only">
+                  Rooms reported more than once this week
+                </caption>
+                <thead>
+                  <tr className="border-b border-border/70 text-muted-foreground">
+                    <th scope="col" className="pb-2 pr-4 font-medium">
+                      Room
+                    </th>
+                    <th scope="col" className="pb-2 text-right font-medium">
+                      Reports
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.topClassroomsThisWeek.map((room) => (
+                    <tr
+                      key={room.classroomId}
+                      className="border-b border-border/50 last:border-0"
+                    >
+                      <td className="py-2.5 pr-4 font-medium text-foreground">
+                        {room.buildingCode} {room.roomNumber}
+                        <span className="ml-2 text-xs font-normal text-muted-foreground">
+                          Floor {room.floorNumber}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-right tabular-nums text-foreground">
+                        {formatCount(room.reportCount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </SolidPanel>
+          )}
+        </PageSection>
+
+        <PageSection
+          title="Student confirmations"
+          description="Average confirmations per report this week."
+        >
+          {data.avgConfirmationsThisWeek !== null ? (
+            <p className="text-2xl font-semibold tabular-nums text-foreground">
+              {formatCount(data.avgConfirmationsThisWeek, 1)}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                per report
+              </span>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Not enough confirmations to calculate an average yet.
+            </p>
+          )}
+        </PageSection>
+      </FadeIn>
     </div>
   );
 }
 
-function StatsHeader({
-  weekStart,
-  campusToday,
+function BuildingReportsTable({
+  data,
 }: {
-  weekStart: string;
-  campusToday: string;
+  data: StatsPageData["reportsPerBuilding"];
 }) {
+  const sorted = [...data].sort((a, b) => b.reportCount - a.reportCount);
+
   return (
-    <div className="flex items-center gap-3">
-      <Button variant="ghost" size="icon" className="min-h-11 min-w-11" asChild>
+    <div>
+      <h3 className="sr-only">Building report counts this week</h3>
+      <table className="w-full text-left text-sm">
+        <caption className="sr-only">
+          Reports submitted per building this week
+        </caption>
+        <thead>
+          <tr className="border-b border-border/70 text-muted-foreground">
+            <th scope="col" className="pb-2 pr-4 font-medium">
+              Building
+            </th>
+            <th scope="col" className="pb-2 text-right font-medium">
+              Reports
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((row) => (
+            <tr
+              key={row.buildingId}
+              className="border-b border-border/50 last:border-0"
+            >
+              <td className="py-2 pr-4">
+                <span className="font-medium text-foreground">{row.code}</span>
+                <span className="ml-2 text-muted-foreground">{row.name}</span>
+              </td>
+              <td className="py-2 text-right tabular-nums text-foreground">
+                {formatCount(row.reportCount)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function StatsNavigation() {
+  return (
+    <GlassNavigation
+      aria-label="Stats navigation"
+      className="flex items-center gap-2 px-2 py-2 sm:px-3"
+    >
+      <Button variant="ghost" size="icon" className="btn-press min-h-11 min-w-11" asChild>
         <Link href="/" aria-label="Back to home">
           <ArrowLeft className="h-5 w-5" />
         </Link>
       </Button>
       <div className="min-w-0 flex-1">
-        <h1 className="text-2xl font-bold tracking-tight text-primary">Stats</h1>
-        <p className="text-sm text-muted-foreground">
-          Aggregate SQL showcase · {weekStart} → {campusToday}
+        <p className="truncate text-base font-semibold text-foreground sm:text-lg">
+          {PRODUCT_NAME}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
+          See how students are using ClassFinder.
         </p>
       </div>
-      <MoreOptionsMenu />
-    </div>
+      <MoreOptionsMenu className="shrink-0" />
+    </GlassNavigation>
   );
 }

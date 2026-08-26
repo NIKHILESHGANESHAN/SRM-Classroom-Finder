@@ -28,8 +28,8 @@ export default function GlobalError({
           justifyContent: "center",
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
-          background: "#f8fafc",
-          color: "#0F2C59",
+          background: "#F5F6F8",
+          color: "#141820",
           padding: "1.5rem",
           textAlign: "center",
         }}
@@ -38,7 +38,13 @@ export default function GlobalError({
           <h1 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>
             Something went wrong
           </h1>
-          <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.25rem" }}>
+          <p
+            style={{
+              color: "#5C6570",
+              fontSize: "0.875rem",
+              marginBottom: "1.25rem",
+            }}
+          >
             The app hit an unexpected error. Please try again.
           </p>
           <button
@@ -47,10 +53,10 @@ export default function GlobalError({
             style={{
               minHeight: "2.75rem",
               padding: "0 1.25rem",
-              borderRadius: "0.75rem",
+              borderRadius: "0.5rem",
               border: "none",
-              background: "#0F2C59",
-              color: "#f8fafc",
+              background: "#007AFF",
+              color: "#ffffff",
               fontWeight: 600,
               cursor: "pointer",
             }}

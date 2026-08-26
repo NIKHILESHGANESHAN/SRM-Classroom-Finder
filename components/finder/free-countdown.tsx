@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { formatMinutesAsLabel } from "@/lib/slots";
@@ -41,114 +41,62 @@ function formatRemaining(ms: number): string {
   return `${secs}s left`;
 }
 
-/** Linear interpolate channel 0–255 */
-function lerp(a: number, b: number, t: number): number {
-  return Math.round(a + (b - a) * t);
-}
-
 /**
- * Smooth green → amber (under 5 min) → red (under 2 min) via RGB blend.
- * Avoids hard class cutovers while still using CSS transition as a safety net.
- */
-function countdownColor(ms: number, dark: boolean): string {
-  if (ms <= 0) return dark ? "rgb(148, 163, 184)" : "rgb(100, 116, 139)";
-
-  const green = dark ? [52, 211, 153] : [5, 150, 105];
-  const amber = dark ? [251, 191, 36] : [217, 119, 6];
-  const red = dark ? [248, 113, 113] : [220, 38, 38];
-
-  const five = 5 * 60 * 1000;
-  const two = 2 * 60 * 1000;
-
-  if (ms >= five) {
-    return `rgb(${green[0]}, ${green[1]}, ${green[2]})`;
-  }
-  if (ms >= two) {
-    // 5 min → 2 min: green → amber
-    const t = 1 - (ms - two) / (five - two);
-    return `rgb(${lerp(green[0], amber[0], t)}, ${lerp(green[1], amber[1], t)}, ${lerp(green[2], amber[2], t)})`;
-  }
-  // 2 min → 0: amber → red
-  const t = 1 - ms / two;
-  return `rgb(${lerp(amber[0], red[0], t)}, ${lerp(amber[1], red[1], t)}, ${lerp(amber[2], red[2], t)})`;
-}
-
-/**
- * Live “Free until … · X min left” badge.
- * Tabular numbers; smooth color blend; pulse under 2 minutes (reduced-motion safe).
+ * Live availability countdown — accurate wall-clock, text-first (not color-only).
  */
 export function FreeCountdown({ reportDate, endMinutes }: CountdownProps) {
   const reduceMotion = useReducedMotion();
   const [now, setNow] = useState(() => Date.now());
-  const [dark, setDark] = useState(false);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    const sync = () => setDark(root.classList.contains("dark"));
-    sync();
-    const observer = new MutationObserver(sync);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
   const ms = remainingMs(reportDate, endMinutes, now);
   const untilLabel = formatMinutesAsLabel(endMinutes);
-  const color = useMemo(() => countdownColor(ms, dark), [ms, dark]);
   const urgent = ms > 0 && ms < 2 * 60 * 1000;
   const endingSoon = ms > 0 && ms <= 10 * 60 * 1000;
-  const remainingMins = Math.floor(ms / 60_000);
-  const freeForLabel =
-    remainingMins < 1
-      ? `Free for ${Math.max(1, Math.floor(ms / 1000))}s`
-      : `Free for ${remainingMins} min`;
 
   if (ms <= 0) {
     return (
-      <span className="inline-flex min-h-8 items-center rounded-lg bg-muted px-2.5 text-xs font-medium text-muted-foreground tabular-nums">
+      <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
         Expired
-      </span>
+      </p>
     );
   }
 
   return (
-    <span
-      className={cn(
-        "inline-flex min-h-8 items-center rounded-lg bg-muted/80 px-2.5 text-xs font-medium tabular-nums transition-[color] duration-500 ease-out",
-        urgent && !reduceMotion && "countdown-pulse",
-      )}
-      style={{ color }}
+    <div
+      className="space-y-0.5"
       aria-live="polite"
       aria-atomic="true"
       aria-label={
         endingSoon
-          ? `Ending soon, ${freeForLabel}, until ${untilLabel}`
+          ? `Ending soon, free until ${untilLabel}, ${formatRemaining(ms)}`
           : `Free until ${untilLabel}, ${formatRemaining(ms)}`
       }
     >
-      {endingSoon ? (
-        <AlertTriangle className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-      ) : null}
-      {endingSoon ? (
-        <span className="font-semibold">{freeForLabel}</span>
-      ) : (
-        <>
-          Free until {untilLabel}
-          <span className="mx-1.5 opacity-50">·</span>
-          <span className="tabular-nums font-semibold">
-            {formatRemaining(ms)}
+      <p
+        className={cn(
+          "type-room text-foreground",
+          urgent && "text-amber-700 dark:text-amber-300",
+        )}
+      >
+        {urgent ? (
+          <span className="inline-flex items-center gap-1.5">
+            {!reduceMotion ? (
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+            ) : null}
+            Ending soon
           </span>
-        </>
-      )}
-      {endingSoon ? (
-        <span className="ml-1.5 font-normal text-foreground/70">
-          · until {untilLabel}
-        </span>
-      ) : null}
-    </span>
+        ) : (
+          <>Free until {untilLabel}</>
+        )}
+      </p>
+      <p className="text-sm tabular-nums text-muted-foreground">
+        {formatRemaining(ms)}
+      </p>
+    </div>
   );
 }

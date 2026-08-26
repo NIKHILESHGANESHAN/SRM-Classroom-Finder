@@ -17,16 +17,15 @@ export default function StatsError({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-2xl font-bold text-primary">Couldn’t load Stats</h1>
-      <p className="text-sm text-muted-foreground">
-        Check that Postgres is running and report data is available, then try
-        again.
+      <h1 className="type-title text-foreground">Stats couldn&apos;t load</h1>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Try again in a moment.
       </p>
       <div className="flex flex-wrap justify-center gap-3">
-        <Button type="button" className="min-h-11" onClick={reset}>
+        <Button type="button" className="btn-press min-h-11" onClick={reset}>
           Try again
         </Button>
-        <Button variant="outline" className="min-h-11" asChild>
+        <Button variant="outline" className="btn-press min-h-11" asChild>
           <Link href="/">Back home</Link>
         </Button>
       </div>

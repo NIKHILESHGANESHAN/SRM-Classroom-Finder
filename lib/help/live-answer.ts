@@ -1,6 +1,6 @@
 /**
  * Public live-Finder answers for the help assistant (V2.6/V2.7).
- * Reuses getFinderRefreshData — same slot default as Class Finder.
+ * Reuses getFinderRefreshData — same slot default as ClassFinder.
  */
 
 import {
@@ -9,7 +9,7 @@ import {
   type FinderFilters,
 } from "@/lib/finder-data";
 import type { LiveHelpIntent, LiveSlotScope } from "@/lib/help/live-intent";
-import { applyFinderFocus } from "@/lib/finder-realtime";
+import { applyFinderFocus, remainingMsForRoom } from "@/lib/finder-realtime";
 
 const MAX_LIST = 12;
 
@@ -31,11 +31,30 @@ function formatRoom(room: ActiveFreeClassroom): string {
   return `${room.buildingCode} ${room.roomNumber} (Floor ${room.floorNumber})`;
 }
 
+function formatFreeUntil(room: ActiveFreeClassroom, nowMs: number): string {
+  const remaining = remainingMsForRoom(room, nowMs);
+  if (remaining <= 0) return "";
+  const end = new Date(nowMs + remaining);
+  const time = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(end);
+  return ` until ${time}`;
+}
+
+function formatRoomFreeLine(room: ActiveFreeClassroom, nowMs: number): string {
+  const status = room.status === "confirmed" ? "Confirmed" : "Unverified";
+  const until = formatFreeUntil(room, nowMs);
+  return `${formatRoom(room)} is currently reported free (${status})${until}.`;
+}
+
 function listRooms(rooms: ActiveFreeClassroom[]): string {
   const slice = rooms.slice(0, MAX_LIST);
   const lines = slice.map((r) => `• ${formatRoom(r)}`);
   if (rooms.length > MAX_LIST) {
-    lines.push(`• …and ${rooms.length - MAX_LIST} more on Class Finder`);
+    lines.push(`• …and ${rooms.length - MAX_LIST} more on ClassFinder`);
   }
   return lines.join("\n");
 }
@@ -53,7 +72,7 @@ export async function answerLiveHelpIntent(
     const data = await getFinderRefreshData(filters);
     const rooms = applyFinderFocus(data.rooms, "ending", Date.now());
     if (rooms.length === 0) {
-      return "There are currently no classrooms ending soon. Open Class Finder and choose Ending soon to double-check.";
+      return "There are currently no classrooms ending soon. Open ClassFinder and choose Ending soon to double-check.";
     }
     return `These classrooms are currently ending soon (expire within about 10 minutes):\n${listRooms(rooms)}`;
   }
@@ -105,7 +124,8 @@ export async function answerLiveHelpIntent(
   if (!hit) {
     const floorBit =
       intent.floorNumber !== undefined ? ` Floor ${intent.floorNumber}` : "";
-    return `${intent.buildingCode}${floorBit} ${intent.roomNumber} is not currently reported free.`;
+    return `${intent.buildingCode}${floorBit} ${intent.roomNumber} is not currently reported free.\n\nOpen Finder → /finder`;
   }
-  return `${formatRoom(hit)} is currently reported free (${hit.status === "confirmed" ? "Confirmed" : "Unverified"}).`;
+  const nowMs = Date.now();
+  return `${formatRoomFreeLine(hit, nowMs)}\n\nWant another room? Open Finder → /finder`;
 }

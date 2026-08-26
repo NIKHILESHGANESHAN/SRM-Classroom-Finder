@@ -46,7 +46,7 @@ export function AdminLoginForm() {
           {error}
         </p>
       ) : null}
-      <Button type="submit" className="min-h-11 w-full" disabled={pending}>
+      <Button type="submit" className="btn-press min-h-11 w-full" disabled={pending}>
         {pending ? "Checking…" : "Sign in"}
       </Button>
     </form>

@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import {
+  getCachedFinderBuildings,
+  getCachedTimeSlots,
+} from "@/lib/catalog-cache";
+import {
   formatSlotRangeLabel,
   getCurrentSlotId,
   getNowMinutesInTz,
@@ -241,6 +245,99 @@ type FinderContext = {
   };
 };
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
+
+async function resolveBuildingIdParam(
+  raw: string | null | undefined,
+): Promise<string | null> {
+  if (!raw || raw === "all") return null;
+  if (isUuid(raw)) return raw;
+  const match = await prisma.building.findFirst({
+    where: { code: { equals: raw, mode: "insensitive" } },
+    select: { id: true },
+  });
+  return match?.id ?? null;
+}
+
+async function resolveFloorIdParam(
+  buildingId: string | null,
+  raw: string | null | undefined,
+): Promise<string | null> {
+  if (!buildingId || !raw || raw === "all") return null;
+  if (isUuid(raw)) return raw;
+  if (/^\d+$/.test(raw)) {
+    const match = await prisma.floor.findFirst({
+      where: { buildingId, floorNumber: Number(raw) },
+      select: { id: true },
+    });
+    return match?.id ?? null;
+  }
+  return null;
+}
+
+function mapTimeSlots(
+  slots: {
+    id: string;
+    slotOrder: number;
+    startTime: Date | string;
+    endTime: Date | string;
+  }[],
+): { slotFields: SlotTimeFields[]; timeSlots: FinderSlot[] } {
+  const slotFields: SlotTimeFields[] = slots.map((s) => ({
+    id: s.id,
+    slotOrder: s.slotOrder,
+    startMinutes: timeToMinutes(s.startTime),
+    endMinutes: timeToMinutes(s.endTime),
+  }));
+  return {
+    slotFields,
+    timeSlots: slotFields.map((s) => ({
+      id: s.id,
+      slotOrder: s.slotOrder,
+      startMinutes: s.startMinutes,
+      endMinutes: s.endMinutes,
+      rangeLabel: formatSlotRangeLabel(s.startMinutes, s.endMinutes),
+    })),
+  };
+}
+
+function resolveTimeSlotId(
+  filters: FinderFilters,
+  currentSlotId: string | null,
+): string | null {
+  if (filters.timeSlotId === undefined) return currentSlotId;
+  if (filters.timeSlotId === "" || filters.timeSlotId === "all") return null;
+  return filters.timeSlotId;
+}
+
+/**
+ * Lightweight filter resolution for poll refresh — no building/floor catalog.
+ * Poll URLs already send resolved UUIDs from SSR; code-based deep links still work.
+ */
+async function resolveFinderRefreshContext(
+  filters: FinderFilters = {},
+): Promise<FinderContext["applied"] & { currentSlotId: string | null }> {
+  const [slots, buildingId] = await Promise.all([
+    getCachedTimeSlots(),
+    resolveBuildingIdParam(filters.buildingId),
+  ]);
+  const { slotFields } = mapTimeSlots(slots);
+  const currentSlotId = getCurrentSlotId(slotFields, getNowMinutesInTz());
+  const floorId = await resolveFloorIdParam(buildingId, filters.floorId);
+
+  return {
+    buildingId,
+    floorId,
+    timeSlotId: resolveTimeSlotId(filters, currentSlotId),
+    currentSlotId,
+  };
+}
+
 /**
  * Shared Building → Floor → Slot resolution for the page and V2.3 poll API.
  */
@@ -248,34 +345,13 @@ export async function resolveFinderContext(
   filters: FinderFilters = {},
 ): Promise<FinderContext> {
   const [buildings, slots] = await Promise.all([
-    prisma.building.findMany({
-      orderBy: { code: "asc" },
-      include: {
-        floors: {
-          orderBy: { floorNumber: "asc" },
-          select: { id: true, floorNumber: true },
-        },
-      },
-    }),
-    prisma.timeSlot.findMany({ orderBy: { slotOrder: "asc" } }),
+    getCachedFinderBuildings(),
+    getCachedTimeSlots(),
   ]);
 
-  const slotFields: SlotTimeFields[] = slots.map((s) => ({
-    id: s.id,
-    slotOrder: s.slotOrder,
-    startMinutes: timeToMinutes(s.startTime),
-    endMinutes: timeToMinutes(s.endTime),
-  }));
-
+  const { slotFields, timeSlots } = mapTimeSlots(slots);
   const currentSlotId = getCurrentSlotId(slotFields, getNowMinutesInTz());
-
-  // Default = "Free Right Now" (current slot). Explicit empty string means All.
-  const timeSlotId =
-    filters.timeSlotId === undefined
-      ? currentSlotId
-      : filters.timeSlotId === "" || filters.timeSlotId === "all"
-        ? null
-        : filters.timeSlotId;
+  const timeSlotId = resolveTimeSlotId(filters, currentSlotId);
 
   const mappedBuildings = buildings.map((b) => ({
     id: b.id,
@@ -290,13 +366,7 @@ export async function resolveFinderContext(
 
   return {
     buildings: mappedBuildings,
-    timeSlots: slotFields.map((s) => ({
-      id: s.id,
-      slotOrder: s.slotOrder,
-      startMinutes: s.startMinutes,
-      endMinutes: s.endMinutes,
-      rangeLabel: formatSlotRangeLabel(s.startMinutes, s.endMinutes),
-    })),
+    timeSlots,
     currentSlotId,
     applied: {
       buildingId,
@@ -406,16 +476,21 @@ export async function getFinderRefreshData(
   currentSlotId: string | null;
   applied: FinderPageData["applied"];
 }> {
-  const ctx = await resolveFinderContext(filters);
+  const ctx = await resolveFinderRefreshContext(filters);
+  const applied = {
+    buildingId: ctx.buildingId,
+    floorId: ctx.floorId,
+    timeSlotId: ctx.timeSlotId,
+  };
   const [rooms, coverage] = await Promise.all([
-    queryActiveFreeClassrooms(ctx.applied),
-    queryFinderCoverage(ctx.applied),
+    queryActiveFreeClassrooms(applied),
+    queryFinderCoverage(applied),
   ]);
 
   return {
     rooms,
     coverage,
     currentSlotId: ctx.currentSlotId,
-    applied: ctx.applied,
+    applied,
   };
 }

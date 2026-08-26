@@ -20,9 +20,14 @@ export type SlotTimeFields = {
   endMinutes: number;
 };
 
-/** Parse a Prisma @db.Time Date (or HH:MM(:SS) string) into minutes from midnight. */
+/** Parse a Prisma @db.Time Date (or HH:MM(:SS) / ISO string) into minutes from midnight. */
 export function timeToMinutes(value: Date | string): number {
   if (typeof value === "string") {
+    // unstable_cache JSON round-trip yields ISO strings for Prisma Time columns
+    if (value.includes("T")) {
+      const d = new Date(value);
+      return d.getUTCHours() * 60 + d.getUTCMinutes();
+    }
     const [h, m] = value.split(":").map(Number);
     return h * 60 + (m || 0);
   }

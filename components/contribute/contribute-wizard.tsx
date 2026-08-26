@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ProgressIndicator } from "@/components/contribute/progress-indicator";
 import { SlotPicker } from "@/components/contribute/slot-picker";
 import { SuccessState } from "@/components/contribute/success-state";
+import { GlassNavigation } from "@/components/glass";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import { submitFreeReport } from "@/lib/actions/contribute";
@@ -16,7 +17,8 @@ import type {
   ContributePageData,
   TimeSlotOption,
 } from "@/lib/contribute-data";
-import { DURATION_WIZARD, EASE_OUT_EXPO } from "@/lib/motion";
+import { PRODUCT_NAME } from "@/lib/design-tokens";
+import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 import { ensureDeviceToken } from "@/lib/token";
 import { cn } from "@/lib/utils";
 
@@ -32,38 +34,54 @@ type ContributeWizardProps = {
   data: ContributePageData;
 };
 
-function ChoiceCard({
+function humanSubmitError(error: string): string {
+  if (error === "Couldn't submit your report.") {
+    return "Something went wrong while reporting this room. Try again.";
+  }
+  if (error.includes("outside the reporting window")) {
+    return "This period isn't open for reporting right now.";
+  }
+  if (error.includes("Daily contribution limit")) {
+    return error;
+  }
+  if (error.includes("Too many requests")) {
+    return error;
+  }
+  if (error.includes("Missing device token")) {
+    return "Refresh the page and try again.";
+  }
+  return error;
+}
+
+function SelectionButton({
   selected,
   title,
   subtitle,
   onClick,
+  className,
 }: {
   selected: boolean;
   title: string;
   subtitle?: string;
   onClick: () => void;
+  className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={cn(
-        "flex min-h-14 w-full flex-col items-start justify-center rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "btn-press flex min-h-11 w-full flex-col items-start justify-center rounded-control border px-4 py-3 text-left transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         selected
-          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-border bg-card hover:border-primary/40 hover:bg-secondary/50",
+          ? "border-cf-accent bg-cf-accent-muted ring-2 ring-cf-accent/20"
+          : "border-border bg-card hover:border-cf-accent/35 hover:bg-muted/30",
+        className,
       )}
     >
-      <span className="text-base font-semibold">{title}</span>
+      <span className="text-base font-semibold text-foreground">{title}</span>
       {subtitle ? (
-        <span
-          className={cn(
-            "text-sm",
-            selected ? "text-primary-foreground/80" : "text-muted-foreground",
-          )}
-        >
-          {subtitle}
-        </span>
+        <span className="text-sm text-muted-foreground">{subtitle}</span>
       ) : null}
     </button>
   );
@@ -81,7 +99,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
   );
   const [success, setSuccess] = useState<SuccessPayload | null>(null);
   const [roomError, setRoomError] = useState<string | null>(null);
-  const [networkError, setNetworkError] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const building: BuildingOption | undefined = useMemo(
@@ -104,6 +122,15 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
     Boolean(buildingId && floorId && classroomId && timeSlotId) &&
     Boolean(selectedSlot?.selectable) &&
     !isPending;
+
+  const summaryLine =
+    building && selectedFloor && selectedClassroom
+      ? `${building.code} · Floor ${selectedFloor.floorNumber} · Room ${selectedClassroom.roomNumber}`
+      : null;
+
+  const slotSummary = selectedSlot
+    ? `Period ${selectedSlot.slotOrder} · ${selectedSlot.rangeLabel}`
+    : null;
 
   function goTo(next: Step) {
     setDirection(next > step ? 1 : -1);
@@ -133,11 +160,11 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
 
   function continueFromRoom() {
     if (!classroomId || !selectedClassroom) {
-      setRoomError("Select a classroom from the list.");
+      setRoomError("Pick a room from the list.");
       return;
     }
     if (classrooms.length === 0) {
-      setRoomError("No classrooms are listed for this floor yet.");
+      setRoomError("No rooms listed for this floor yet.");
       return;
     }
     setRoomError(null);
@@ -158,19 +185,20 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
     setFloorId(null);
     setClassroomId(null);
     setRoomError(null);
+    setSubmitError(null);
     setTimeSlotId(data.currentSlotId);
   }
 
   function handleSubmit() {
     if (!buildingId || !floorId || !timeSlotId || !classroomId) return;
     if (!selectedClassroom) {
-      setRoomError("Select a classroom from the list.");
+      setRoomError("Pick a room from the list.");
       goTo(2);
       return;
     }
 
     startTransition(async () => {
-      setNetworkError(false);
+      setSubmitError(null);
       try {
         const deviceToken = ensureDeviceToken();
         const result = await submitFreeReport({
@@ -182,27 +210,17 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
         });
 
         if (!result.ok) {
-          if (result.error === "Couldn't submit your report.") {
-            setNetworkError(true);
-            return;
-          }
-          toast.error(result.error);
+          const message = humanSubmitError(result.error);
+          setSubmitError(message);
+          toast.error(message);
           return;
         }
 
         const roomLabel =
           `${building?.code ?? ""} ${selectedClassroom.roomNumber}`.trim();
         const slotLabel = selectedSlot
-          ? `Slot ${selectedSlot.slotOrder} · ${selectedSlot.rangeLabel}`
-          : "Selected slot";
-
-        toast.success(
-          result.kind === "confirmed"
-            ? "Confirmation recorded"
-            : result.kind === "already_reported"
-              ? "Already on the board"
-              : "Free room reported",
-        );
+          ? `Period ${selectedSlot.slotOrder} · ${selectedSlot.rangeLabel}`
+          : "Selected period";
 
         setSuccess({
           kind: result.kind,
@@ -210,29 +228,42 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
           slotLabel,
         });
       } catch {
-        setNetworkError(true);
+        const message = humanSubmitError("Couldn't submit your report.");
+        setSubmitError(message);
       }
     });
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-6">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-4 sm:max-w-lg sm:gap-5">
+      <GlassNavigation
+        aria-label="Contributor navigation"
+        className="flex items-center gap-2 px-2 py-2 sm:px-3"
+      >
         <Button variant="ghost" size="icon" className="min-h-11 min-w-11" asChild>
           <Link href="/" aria-label="Back to home">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-primary">
-            Contributor
+          <h1 className="truncate text-base font-semibold text-foreground sm:text-lg">
+            {PRODUCT_NAME}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Report a free classroom — no login needed.
+          <p className="truncate text-xs text-muted-foreground">
+            Report a free room
           </p>
         </div>
-        <MoreOptionsMenu />
-      </div>
+        <MoreOptionsMenu className="shrink-0" />
+      </GlassNavigation>
+
+      <header className="px-1">
+        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+          Found an empty room?
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Let other students know before someone else takes it.
+        </p>
+      </header>
 
       {success ? (
         <SuccessState
@@ -246,7 +277,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
           <ProgressIndicator step={step} />
 
           <div
-            className="relative min-h-[320px] overflow-hidden rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-6"
+            className="relative min-h-[280px] overflow-hidden rounded-surface border border-border bg-card p-4 shadow-token-sm sm:min-h-[300px] sm:p-5"
             data-wizard-step={step}
           >
             <AnimatePresence initial={false} mode="sync">
@@ -255,32 +286,37 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                 initial={
                   reduceMotion
                     ? { opacity: 0 }
-                    : { x: direction > 0 ? 28 : -28, opacity: 0 }
+                    : { x: direction > 0 ? 20 : -20, opacity: 0 }
                 }
                 animate={{ x: 0, opacity: 1 }}
                 exit={
                   reduceMotion
                     ? { opacity: 0 }
-                    : { x: direction > 0 ? -28 : 28, opacity: 0, position: "absolute", width: "100%" }
+                    : {
+                        x: direction > 0 ? -20 : 20,
+                        opacity: 0,
+                        position: "absolute",
+                        width: "100%",
+                      }
                 }
                 transition={
                   reduceMotion
                     ? { duration: 0.1 }
-                    : { duration: DURATION_WIZARD, ease: EASE_OUT_EXPO }
+                    : { duration: MOTION_STANDARD, ease: EASE_OUT_EXPO }
                 }
-                className="w-full space-y-5"
+                className="w-full space-y-4"
               >
                 {step === 0 && (
                   <section className="space-y-4" aria-label="Select building">
                     <div>
-                      <h2 className="text-lg font-semibold">Which building?</h2>
+                      <h3 className="text-lg font-semibold">Which building?</h3>
                       <p className="text-sm text-muted-foreground">
-                        UB, Tech Park 1, or Tech Park 2.
+                        UB · TP1 · TP2
                       </p>
                     </div>
-                    <div className="grid gap-3">
+                    <div className="grid gap-2">
                       {data.buildings.map((b) => (
-                        <ChoiceCard
+                        <SelectionButton
                           key={b.id}
                           selected={buildingId === b.id}
                           title={b.code}
@@ -296,7 +332,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                   <section className="space-y-4" aria-label="Select floor">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-lg font-semibold">Which floor?</h2>
+                        <h3 className="text-lg font-semibold">Which floor?</h3>
                         <p className="text-sm text-muted-foreground">
                           {building
                             ? `${building.code} · ${building.name}`
@@ -314,17 +350,18 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                         Back
                       </Button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
                       {floors.map((f) => (
                         <button
                           key={f.id}
                           type="button"
+                          aria-pressed={floorId === f.id}
                           onClick={() => selectFloor(f.id)}
                           className={cn(
-                            "flex min-h-11 items-center justify-center rounded-xl border text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            "btn-press flex min-h-11 items-center justify-center rounded-control border text-base font-semibold tabular-nums transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             floorId === f.id
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border bg-background hover:border-primary/40",
+                              ? "border-cf-accent bg-cf-accent-muted text-foreground ring-2 ring-cf-accent/20"
+                              : "border-border bg-card hover:border-cf-accent/35",
                           )}
                         >
                           {f.floorNumber}
@@ -338,10 +375,9 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                   <section className="space-y-4" aria-label="Select classroom">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-lg font-semibold">Which classroom?</h2>
+                        <h3 className="text-lg font-semibold">Which room?</h3>
                         <p className="text-sm text-muted-foreground">
-                          {building?.code} · Floor{" "}
-                          {selectedFloor?.floorNumber}
+                          {building?.code} · Floor {selectedFloor?.floorNumber}
                         </p>
                       </div>
                       <Button
@@ -358,15 +394,15 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                     {classrooms.length === 0 ? (
                       <div
                         role="status"
-                        className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center"
+                        className="rounded-surface border border-dashed border-border bg-muted/30 px-4 py-8 text-left"
                       >
                         <p className="font-medium text-foreground">
-                          No classrooms listed for this floor yet
+                          No rooms listed for this floor yet
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          We don&apos;t have a verified room list for{" "}
-                          {building?.code} Floor {selectedFloor?.floorNumber}.
-                          That does not mean every room is occupied.
+                          We don&apos;t have a verified list for {building?.code}{" "}
+                          Floor {selectedFloor?.floorNumber} — that doesn&apos;t
+                          mean every room is occupied.
                         </p>
                       </div>
                     ) : (
@@ -383,10 +419,10 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                             aria-selected={classroomId === room.id}
                             onClick={() => selectClassroom(room.id)}
                             className={cn(
-                              "flex min-h-11 items-center justify-center rounded-xl border text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              "btn-press flex min-h-11 items-center justify-center rounded-control border text-base font-semibold tabular-nums transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                               classroomId === room.id
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border bg-background hover:border-primary/40",
+                                ? "border-cf-accent bg-cf-accent-muted text-foreground ring-2 ring-cf-accent/20"
+                                : "border-border bg-card hover:border-cf-accent/35",
                             )}
                           >
                             {room.roomNumber}
@@ -397,10 +433,6 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                     {roomError ? (
                       <p className="text-sm text-destructive" role="alert">
                         {roomError}
-                      </p>
-                    ) : classrooms.length > 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        Choose a room from the verified inventory for this floor.
                       </p>
                     ) : null}
                     <Button
@@ -415,14 +447,12 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                 )}
 
                 {step === 3 && (
-                  <section className="space-y-4" aria-label="Select time slot">
+                  <section className="space-y-4" aria-label="Confirm report">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-lg font-semibold">Time slot</h2>
+                        <h3 className="text-lg font-semibold">Confirm</h3>
                         <p className="text-sm text-muted-foreground">
-                          {building?.code} · Floor{" "}
-                          {selectedFloor?.floorNumber} ·{" "}
-                          {selectedClassroom?.roomNumber ?? "Room"}
+                          Check the room and period, then report it.
                         </p>
                       </div>
                       <Button
@@ -437,10 +467,27 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                       </Button>
                     </div>
 
+                    {summaryLine && slotSummary ? (
+                      <div className="rounded-surface border border-border bg-muted/30 px-4 py-3 text-left">
+                        <p className="type-room text-2xl text-foreground">
+                          {selectedClassroom?.roomNumber}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {summaryLine}
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {slotSummary}
+                        </p>
+                      </div>
+                    ) : null}
+
                     {selectableSlots.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center">
+                      <div
+                        role="status"
+                        className="rounded-surface border border-dashed border-border bg-muted/30 px-4 py-6 text-left"
+                      >
                         <p className="font-medium text-foreground">
-                          No reportable slot right now
+                          No reportable period right now
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
                           Come back during a class period (±5 min grace).
@@ -454,27 +501,27 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                       />
                     )}
 
-                    {networkError ? (
+                    {submitError ? (
                       <p className="text-sm text-destructive" role="alert">
-                        Couldn&apos;t submit your report.
+                        {submitError}
                       </p>
                     ) : null}
 
                     <Button
                       type="button"
-                      className="min-h-11 w-full"
+                      className="min-h-11 w-full text-base"
                       disabled={!canSubmit || selectableSlots.length === 0}
                       onClick={handleSubmit}
                     >
                       {isPending ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Submitting…
+                          Reporting…
                         </>
-                      ) : networkError ? (
+                      ) : submitError ? (
                         "Try again"
                       ) : (
-                        "Submit free room"
+                        "Report this room"
                       )}
                     </Button>
                   </section>

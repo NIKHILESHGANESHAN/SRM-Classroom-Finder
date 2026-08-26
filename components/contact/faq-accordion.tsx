@@ -14,22 +14,25 @@ export function FaqAccordion() {
     <div className="space-y-8">
       {sections.map((section) => (
         <section key={section.category} className="space-y-3">
-          <h2 className="text-lg font-semibold tracking-tight text-primary">
+          <h2 className="text-base font-semibold text-foreground">
             {section.category}
           </h2>
-          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-            {section.entries.map((entry) => {
+          <div className="overflow-hidden rounded-surface border border-border bg-card shadow-token-sm">
+            {section.entries.map((entry, index) => {
               const key = `${section.category}-${entry.id}`;
               const open = openKey === key;
               const panelId = `${baseId}-${key}-panel`;
               const buttonId = `${baseId}-${key}-button`;
               return (
-                <div key={key}>
+                <div
+                  key={key}
+                  className={cn(index > 0 && "border-t border-border/70")}
+                >
                   <h3>
                     <button
                       type="button"
                       id={buttonId}
-                      className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                      className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground transition-standard hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:px-5"
                       aria-expanded={open}
                       aria-controls={panelId}
                       onClick={() => setOpenKey(open ? null : key)}
@@ -37,7 +40,7 @@ export function FaqAccordion() {
                       <span>{entry.question}</span>
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 shrink-0 text-muted-foreground motion-reduce:transition-none",
+                          "h-4 w-4 shrink-0 text-muted-foreground transition-standard motion-reduce:transition-none",
                           open && "rotate-180",
                         )}
                         aria-hidden
@@ -52,7 +55,7 @@ export function FaqAccordion() {
                     role="region"
                     aria-labelledby={buttonId}
                     hidden={!open}
-                    className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground"
+                    className="border-t border-border/50 px-4 pb-4 pt-2 text-sm leading-relaxed text-muted-foreground sm:px-5"
                   >
                     {entry.answer}
                   </div>

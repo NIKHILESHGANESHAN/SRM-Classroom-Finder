@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getCachedTimeSlots } from "@/lib/catalog-cache";
 import {
   formatSlotRangeLabel,
   getCurrentSlotId,
@@ -7,6 +8,7 @@ import {
   timeToMinutes,
   type SlotTimeFields,
 } from "@/lib/slots";
+import { isAfterLastReportablePeriod } from "@/lib/finder-ui";
 
 export type ClassroomOption = {
   id: string;
@@ -39,6 +41,8 @@ export type ContributePageData = {
   timeSlots: TimeSlotOption[];
   currentSlotId: string | null;
   nowMinutes: number;
+  /** After the final slot grace window — Contributor UI closes for the day. */
+  afterHours: boolean;
 };
 
 /** Load dimension data for the Contributor wizard (Server Component). */
@@ -61,9 +65,7 @@ export async function getContributePageData(): Promise<ContributePageData> {
         },
       },
     }),
-    prisma.timeSlot.findMany({
-      orderBy: { slotOrder: "asc" },
-    }),
+    getCachedTimeSlots(),
   ]);
 
   const nowMinutes = getNowMinutesInTz();
@@ -99,5 +101,6 @@ export async function getContributePageData(): Promise<ContributePageData> {
     timeSlots,
     currentSlotId: getCurrentSlotId(slotFields, nowMinutes),
     nowMinutes,
+    afterHours: isAfterLastReportablePeriod(slotFields, nowMinutes),
   };
 }
