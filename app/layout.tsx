@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { ClassFinderHelpDeferred } from "@/components/help/classfinder-help-deferred";
 import { PwaRegister } from "@/components/pwa-register";
+import { PRODUCT_DESCRIPTOR, PRODUCT_NAME } from "@/lib/design-tokens";
 import { getAppUrl } from "@/lib/env";
 import "./globals.css";
 
@@ -16,14 +18,13 @@ const appUrl = getAppUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "SRM KTR Classroom Finder",
-    template: "%s · SRM KTR Classroom Finder",
+    default: PRODUCT_NAME,
+    template: `%s · ${PRODUCT_NAME}`,
   },
-  description:
-    "Find free classrooms at SRM KTR (UB, TP1, TP2) in real time. Anonymous contributor reports — no login required.",
-  applicationName: "SRM KTR Classroom Finder",
-  authors: [{ name: "NikhileshGaneshan" }, { name: "Sabrina" }],
+  description: PRODUCT_DESCRIPTOR,
+  applicationName: PRODUCT_NAME,
   keywords: [
+    "ClassFinder",
     "SRM",
     "KTR",
     "Kattankulathur",
@@ -33,12 +34,11 @@ export const metadata: Metadata = {
     "TP1",
     "TP2",
   ],
-  creator: "NikhileshGaneshan & Sabrina",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Classroom Finder",
+    title: PRODUCT_NAME,
   },
   formatDetection: {
     telephone: false,
@@ -47,24 +47,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     url: appUrl,
-    siteName: "SRM KTR Classroom Finder",
-    title: "SRM KTR Classroom Finder",
-    description:
-      "Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2). Anonymous crowd reports — no login.",
+    siteName: PRODUCT_NAME,
+    title: PRODUCT_NAME,
+    description: PRODUCT_DESCRIPTOR,
     images: [
       {
         url: "/icons/icon-512.png",
         width: 512,
         height: 512,
-        alt: "SRM KTR Classroom Finder",
+        alt: PRODUCT_NAME,
       },
     ],
   },
   twitter: {
     card: "summary",
-    title: "SRM KTR Classroom Finder",
-    description:
-      "Find free classrooms at SRM KTR (UB, TP1, TP2). Anonymous reports — no login.",
+    title: PRODUCT_NAME,
+    description: PRODUCT_DESCRIPTOR,
     images: ["/icons/icon-512.png"],
   },
   icons: {
@@ -82,8 +80,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0F2C59" },
-    { media: "(prefers-color-scheme: dark)", color: "#0F2C59" },
+    { media: "(prefers-color-scheme: light)", color: "#007AFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#007AFF" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -107,6 +105,7 @@ export default function RootLayout({
             Skip to main content
           </a>
           <div id="main-content">{children}</div>
+          <ClassFinderHelpDeferred />
         </Providers>
       </body>
     </html>

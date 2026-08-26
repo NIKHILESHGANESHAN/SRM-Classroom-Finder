@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { PRODUCT_DESCRIPTOR, PRODUCT_NAME } from "@/lib/design-tokens";
 
 /**
  * Web App Manifest — served at `/manifest.webmanifest` (Next.js App Router).
@@ -6,16 +7,15 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SRM KTR Classroom Finder",
-    short_name: "Classroom Finder",
-    description:
-      "Find free classrooms at SRM Kattankulathur (UB / TP1 / TP2). Anonymous crowd reports — no login.",
+    name: PRODUCT_NAME,
+    short_name: PRODUCT_NAME,
+    description: PRODUCT_DESCRIPTOR,
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait-primary",
-    background_color: "#0F2C59",
-    theme_color: "#0F2C59",
+    background_color: "#F5F6F8",
+    theme_color: "#007AFF",
     categories: ["education", "utilities"],
     icons: [
       {

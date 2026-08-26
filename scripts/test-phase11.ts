@@ -148,7 +148,7 @@ async function main() {
       icons?: unknown[];
     };
     assert(
-      Boolean(manifest.name?.includes("Classroom Finder")),
+      Boolean(manifest.name?.includes("ClassFinder")),
       "manifest name missing",
     );
     assert(manifest.display === "standalone", "manifest display standalone");

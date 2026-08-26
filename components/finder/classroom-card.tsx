@@ -1,12 +1,11 @@
 "use client";
 
 import { memo, useEffect, useRef, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
 import { Flag, Share2, ThumbsUp } from "lucide-react";
-import { ConfidenceBadge } from "@/components/finder/confidence-badge";
 import { FreeCountdown } from "@/components/finder/free-countdown";
 import { FreshnessLabel } from "@/components/finder/freshness-label";
-import { ReportModal } from "@/components/finder/report-modal";
 import { Button } from "@/components/ui/button";
 import { useDeviceToken } from "@/hooks/use-device-token";
 import { submitStillFree } from "@/lib/actions/still-free";
@@ -16,10 +15,18 @@ import {
   shareClassroomLink,
 } from "@/lib/classroom-share";
 import { roomUpdateSignature } from "@/lib/finder-realtime";
+import { deriveConfidence } from "@/lib/report-display";
 import type { RecentRoom } from "@/lib/local-preferences";
-import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
+import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+/** Lazy-load modal — keeps Finder first-load JS smaller until a report action. */
+const ReportModal = dynamic(
+  () =>
+    import("@/components/finder/report-modal").then((m) => m.ReportModal),
+  { ssr: false },
+);
 
 type ClassroomCardProps = {
   room: ActiveFreeClassroom;
@@ -35,6 +42,24 @@ function isNetworkFailure(error: unknown, serverMessage?: string): boolean {
   if (error instanceof TypeError) return true;
   const message = error instanceof Error ? error.message : "";
   return /fetch|network|failed/i.test(message);
+}
+
+function confirmationLine(room: ActiveFreeClassroom): string {
+  const display = deriveConfidence({
+    status: room.status,
+    confirmationCount: room.confirmationCount,
+    occupiedStrikeCount: room.occupiedStrikeCount,
+  });
+  if (!display) return "";
+
+  const count = display.confirmations;
+  const noun = count === 1 ? "student" : "students";
+  if (display.badge === "confirmed") {
+    return `${count} ${noun} confirmed`;
+  }
+  return count === 1
+    ? "Waiting for another confirmation"
+    : `${count} ${noun} confirmed · unverified`;
 }
 
 function ClassroomCardInner({
@@ -55,6 +80,7 @@ function ClassroomCardInner({
   const [stillFreePending, startStillFree] = useTransition();
 
   const roomLabel = `${room.buildingCode} ${room.roomNumber}`;
+  const confirmations = confirmationLine(room);
 
   useEffect(() => {
     if (!emphasized || !articleRef.current) return;
@@ -134,15 +160,15 @@ function ClassroomCardInner({
     <motion.article
       ref={articleRef}
       layout={!reduceMotion}
-      initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{
         opacity: 1,
         y: 0,
         transition: reduceMotion
           ? { duration: 0.12 }
           : {
-              duration: DURATION_UI,
-              delay: Math.min(index, 12) * 0.03,
+              duration: MOTION_STANDARD,
+              delay: Math.min(index, 8) * 0.025,
               ease: EASE_OUT_EXPO,
             },
       }}
@@ -153,56 +179,47 @@ function ClassroomCardInner({
               opacity: 0,
               height: 0,
               marginBottom: 0,
-              paddingTop: 0,
-              paddingBottom: 0,
               overflow: "hidden",
-              transition: {
-                duration: 0.35,
-                ease: EASE_OUT_EXPO,
-              },
+              transition: { duration: MOTION_STANDARD, ease: EASE_OUT_EXPO },
             }
       }
       className={cn(
-        "rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5 dark:shadow-black/30",
-        emphasized && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+        "rounded-surface border border-border bg-card px-4 py-4 shadow-token-sm sm:px-5 sm:py-5",
+        emphasized &&
+          "ring-2 ring-cf-accent ring-offset-2 ring-offset-background",
       )}
       data-shared-room={emphasized ? "true" : undefined}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-bold tracking-tight text-primary">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">
+            {room.buildingCode} · Floor {room.floorNumber}
+          </p>
+          <h2 className="type-room text-3xl text-foreground sm:text-4xl">
             {room.roomNumber}
-          </h3>
-          {emphasized ? (
-            <p className="sr-only">Shared classroom</p>
-          ) : null}
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {room.buildingCode} · {room.buildingName} · Floor {room.floorNumber}
-          </p>
-          <p className="mt-1 text-xs font-medium text-foreground/80">
-            Slot {room.slotOrder} · {room.slotRangeLabel}
-          </p>
-          <FreshnessLabel lastVerifiedAt={room.lastVerifiedAt} />
+          </h2>
+          {emphasized ? <p className="sr-only">Shared classroom</p> : null}
         </div>
-        <ConfidenceBadge
-          status={room.status}
-          confirmationCount={room.confirmationCount}
-          occupiedStrikeCount={room.occupiedStrikeCount}
-        />
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <FreeCountdown
           reportDate={room.reportDate}
           endMinutes={room.endMinutes}
         />
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="mt-3 space-y-1.5 border-t border-border/60 pt-3">
+        <FreshnessLabel lastVerifiedAt={room.lastVerifiedAt} />
+        {confirmations ? (
+          <p className="text-sm text-foreground/90">{confirmations}</p>
+        ) : null}
+        <p className="text-xs text-muted-foreground">
+          Slot {room.slotOrder} · {room.slotRangeLabel}
+        </p>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button
           type="button"
-          variant="secondary"
-          className="min-h-11 gap-1.5"
+          className="min-h-11 flex-1 gap-1.5 sm:flex-initial sm:min-w-[9.5rem]"
           onClick={handleStillFree}
           disabled={stillFreePending}
           aria-label={`Mark ${roomLabel} still free`}
@@ -213,17 +230,7 @@ function ClassroomCardInner({
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 gap-1.5"
-          onClick={() => setReportOpen(true)}
-          aria-label={`Report ${roomLabel} occupied`}
-        >
-          <Flag className="h-4 w-4" aria-hidden />
-          Report Occupied
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="min-h-11 gap-1.5 sm:col-span-2"
+          className="min-h-11 flex-1 gap-1.5 sm:flex-initial"
           onClick={() => {
             void handleShare();
           }}
@@ -233,12 +240,22 @@ function ClassroomCardInner({
           <Share2 className="h-4 w-4" aria-hidden />
           {sharePending ? "Sharing…" : "Share"}
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="min-h-11 gap-1.5 text-muted-foreground sm:ml-auto"
+          onClick={() => setReportOpen(true)}
+          aria-label={`Report ${roomLabel} occupied`}
+        >
+          <Flag className="h-4 w-4" aria-hidden />
+          Report occupied
+        </Button>
       </div>
 
       {stillFreeRetry ? (
         <div
           role="alert"
-          className="mt-3 flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+          className="mt-3 flex flex-col gap-2 rounded-surface border border-destructive/30 bg-destructive/5 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <p className="text-sm text-destructive">{stillFreeError}</p>
           <Button

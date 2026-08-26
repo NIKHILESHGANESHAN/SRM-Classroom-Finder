@@ -8,11 +8,14 @@ import { ClassroomCard } from "@/components/finder/classroom-card";
 import { FinderEmptyState } from "@/components/finder/finder-empty-state";
 import { FinderFiltersBar } from "@/components/finder/finder-filters";
 import { FinderLiveStatus } from "@/components/finder/finder-live-status";
+import { FinderMorningNote } from "@/components/finder/finder-morning-note";
 import { FinderRecentRooms } from "@/components/finder/finder-recent-rooms";
 import { HowItWorksLink } from "@/components/how-it-works-link";
+import { GlassNavigation } from "@/components/glass";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PRODUCT_NAME } from "@/lib/design-tokens";
 import { useFinderPoll } from "@/hooks/use-finder-poll";
 import {
   useFavoriteBuildings,
@@ -45,7 +48,6 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
-  const [listReady, setListReady] = useState(false);
   const [mineOnly, setMineOnly] = useState(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rememberedLink = useRef(false);
@@ -80,7 +82,6 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
   }, [appliedKey]);
 
   useEffect(() => {
-    setListReady(true);
     return () => {
       if (debounceTimer.current) window.clearTimeout(debounceTimer.current);
     };
@@ -143,7 +144,7 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
     [deepLink],
   );
 
-  const visibleRooms = useMemo(() => {
+  const roomPipeline = useMemo(() => {
     const nowMs = Date.now();
     const withoutHidden = rooms.filter((r) => !hiddenIds.has(r.freeReportId));
     const scoped = mineOnly
@@ -151,10 +152,11 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
       : withoutHidden;
     const focused = applyFinderFocus(scoped, focus, nowMs);
     const searched = applyRoomSearch(focused, deferredSearch);
-    return prioritizeFavoriteBuildings(
+    const visible = prioritizeFavoriteBuildings(
       searched,
       mineOnly ? [] : favoriteCodes,
     );
+    return { withoutHidden, scoped, focused, visible };
   }, [
     rooms,
     deferredSearch,
@@ -164,29 +166,26 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
     favoriteCodes,
   ]);
 
+  const visibleRooms = roomPipeline.visible;
+  const withoutHiddenCount = roomPipeline.withoutHidden.length;
+
   const emptyReason = useMemo(() => {
-    const nowMs = Date.now();
-    const withoutHidden = rooms.filter((r) => !hiddenIds.has(r.freeReportId));
-    const scoped = mineOnly
-      ? withoutHidden.filter((r) => favoriteCodes.includes(r.buildingCode))
-      : withoutHidden;
-    const focused = applyFinderFocus(scoped, focus, nowMs);
     const myBuildingsEmpty =
       mineOnly &&
       (favoriteCodes.length === 0 ||
-        (withoutHidden.length > 0 && scoped.length === 0));
+        (roomPipeline.withoutHidden.length > 0 &&
+          roomPipeline.scoped.length === 0));
     return resolveFinderEmptyReason({
       searchQuery: deferredSearch,
       focus,
-      roomsFromServer: withoutHidden.length,
-      roomsAfterFocus: focused.length,
+      roomsFromServer: roomPipeline.withoutHidden.length,
+      roomsAfterFocus: roomPipeline.focused.length,
       roomsAfterSearch: visibleRooms.length,
       coverageKind: coverage.kind,
       myBuildingsEmpty,
     });
   }, [
-    rooms,
-    hiddenIds,
+    roomPipeline,
     focus,
     deferredSearch,
     visibleRooms.length,
@@ -209,32 +208,38 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
     data.applied.timeSlotId !== null &&
     data.applied.timeSlotId === currentSlotId;
 
+  const showMorningNote =
+    emptyReason === "none_free" &&
+    withoutHiddenCount === 0 &&
+    !deferredSearch &&
+    !mineOnly;
+
   return (
     <div
-      className="mx-auto flex w-full max-w-2xl flex-col gap-6"
+      className="mx-auto flex w-full max-w-xl flex-col gap-3 overflow-x-hidden sm:max-w-2xl sm:gap-5"
       data-search={debouncedSearch}
       data-result-count={visibleRooms.length}
       data-focus={focus}
     >
-      <div className="flex items-center gap-3">
+      <GlassNavigation
+        aria-label="Finder navigation"
+        className="flex items-center gap-2 px-2 py-2 sm:px-3"
+      >
         <Button variant="ghost" size="icon" className="min-h-11 min-w-11" asChild>
           <Link href="/" aria-label="Back to home">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-primary">
-            Class Finder
+          <h1 className="truncate text-base font-semibold text-foreground sm:text-lg">
+            {PRODUCT_NAME}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {isCurrentSlot ? "Free right now" : "Browsing slots"} · {slotLabel}
+          <p className="truncate text-xs text-muted-foreground">
+            {isCurrentSlot ? "Free right now" : "Browse slots"} · {slotLabel}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <HowItWorksLink className="shrink-0" />
-          <MoreOptionsMenu />
-        </div>
-      </div>
+        <MoreOptionsMenu className="shrink-0" />
+      </GlassNavigation>
 
       <FinderFiltersBar
         buildings={data.buildings}
@@ -250,7 +255,7 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
 
       <div className="relative">
         <label htmlFor="room-search" className="sr-only">
-          Quick search room number
+          Search by room number
         </label>
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -260,8 +265,8 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
           id="room-search"
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Quick search — e.g. 504"
-          className="min-h-11 pl-9 text-base"
+          placeholder="Room number — e.g. 1205"
+          className="min-h-11 rounded-control pl-9 text-base"
           autoComplete="off"
           inputMode="search"
         />
@@ -272,9 +277,9 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
       {deepLink && !deepLink.inventoryOk ? (
         <p
           role="status"
-          className="rounded-xl border border-border bg-muted/40 px-3 py-3 text-sm"
+          className="rounded-surface border border-border bg-muted/50 px-3 py-3 text-sm"
         >
-          This link doesn’t match a listed classroom for {deepLink.buildingLabel}{" "}
+          This link doesn&apos;t match a listed classroom for {deepLink.buildingLabel}{" "}
           {deepLink.floorLabel}.
         </p>
       ) : null}
@@ -282,12 +287,18 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
       {deepLink?.inventoryOk && !sharedIsFree ? (
         <p
           role="status"
-          className="rounded-xl border border-border bg-muted/40 px-3 py-3 text-sm"
+          className="rounded-surface border border-border bg-muted/50 px-3 py-3 text-sm"
         >
-          {deepLink.buildingLabel} {deepLink.roomNumber} is no longer reported
-          free.
+          {deepLink.buildingLabel} {deepLink.roomNumber} isn&apos;t reported free
+          right now.
         </p>
       ) : null}
+
+      <FinderMorningNote
+        timeSlots={data.timeSlots}
+        totalActiveReports={withoutHiddenCount}
+        show={showMorningNote}
+      />
 
       <FinderLiveStatus
         lastUpdatedAt={lastUpdatedAt}
@@ -298,13 +309,13 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
       />
 
       {refreshError ? (
-        <p role="status" className="text-xs text-muted-foreground">
+        <p role="status" className="text-sm text-muted-foreground">
           {refreshError}
         </p>
       ) : null}
 
-      <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-        <p>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+        <p className="text-muted-foreground">
           {visibleRooms.length} room{visibleRooms.length === 1 ? "" : "s"}
           {deferredSearch
             ? ` matching “${deferredSearch}”`
@@ -312,12 +323,15 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
               ? "…"
               : ""}
         </p>
-        <Link
-          href="/contribute"
-          className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
-        >
-          Report a room
-        </Link>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <HowItWorksLink />
+          <Link
+            href="/contribute"
+            className="inline-flex min-h-11 items-center font-medium text-cf-accent underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            Report a room
+          </Link>
+        </div>
       </div>
 
       <div className="sr-only" aria-live="polite" aria-atomic="true">
@@ -337,11 +351,11 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
         <LayoutGroup>
           <div className="flex flex-col gap-3">
             <AnimatePresence mode="popLayout">
-              {visibleRooms.map((room, index) => (
+              {visibleRooms.map((room) => (
                 <ClassroomCard
                   key={room.freeReportId}
                   room={room}
-                  index={listReady ? 0 : index}
+                  index={0}
                   onRemove={handleRemove}
                   onNeedRefresh={refreshNow}
                   emphasized={matchesDeepLink(room)}

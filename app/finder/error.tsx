@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { PRODUCT_NAME } from "@/lib/design-tokens";
 
 export default function FinderError({
   error,
@@ -17,9 +18,11 @@ export default function FinderError({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-2xl font-bold text-primary">Couldn’t load Class Finder</h1>
+      <h1 className="text-2xl font-bold text-foreground">
+        Couldn&apos;t load {PRODUCT_NAME}
+      </h1>
       <p className="text-sm text-muted-foreground">
-        Check that Postgres is running and the active_free_classrooms view exists.
+        Something went wrong loading free rooms. Try again in a moment.
       </p>
       <div className="flex flex-wrap justify-center gap-3">
         <Button type="button" className="min-h-11" onClick={reset}>

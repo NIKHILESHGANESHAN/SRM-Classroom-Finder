@@ -50,14 +50,43 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        /* V3 semantic tokens */
+        "cf-accent": {
+          DEFAULT: "hsl(var(--color-accent))",
+          hover: "hsl(var(--color-accent-hover))",
+          active: "hsl(var(--color-accent-active))",
+          muted: "hsl(var(--color-accent-muted))",
+        },
+        "cf-surface": {
+          DEFAULT: "hsl(var(--color-surface))",
+          secondary: "hsl(var(--color-surface-secondary))",
+        },
+        "cf-text": {
+          primary: "hsl(var(--color-text-primary))",
+          secondary: "hsl(var(--color-text-secondary))",
+        },
+        "cf-focus": "hsl(var(--color-focus))",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        control: "var(--radius-control)",
+        button: "var(--radius-button)",
+        surface: "var(--radius-surface)",
+        popover: "var(--radius-popover)",
+        sheet: "var(--radius-sheet)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+      },
+      transitionDuration: {
+        micro: "var(--motion-micro)",
+        standard: "var(--motion-standard)",
+        contextual: "var(--motion-contextual)",
+      },
+      transitionTimingFunction: {
+        "ease-out-expo": "var(--motion-ease)",
       },
       keyframes: {
         "fade-up": {
@@ -70,11 +99,15 @@ const config: Config = {
         },
       },
       animation: {
-        "fade-up": "fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "fade-up": "fade-up var(--motion-contextual) var(--motion-ease) both",
         shimmer: "shimmer 1.5s infinite",
       },
-      transitionTimingFunction: {
-        "ease-out-expo": "cubic-bezier(0.22, 1, 0.36, 1)",
+      boxShadow: {
+        "token-sm": "var(--shadow-sm)",
+        "token-md": "var(--shadow-md)",
+        "token-lg": "var(--shadow-lg)",
+        "token-xl": "var(--shadow-xl)",
+        glass: "var(--glass-shadow)",
       },
     },
   },

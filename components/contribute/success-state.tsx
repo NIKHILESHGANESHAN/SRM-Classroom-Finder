@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { DURATION_UI, EASE_OUT_EXPO } from "@/lib/motion";
+import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 
 type SuccessStateProps = {
   roomLabel: string;
@@ -11,20 +12,29 @@ type SuccessStateProps = {
   onReportAnother: () => void;
 };
 
-function messageForKind(kind: SuccessStateProps["kind"]): string {
+function headlineForKind(kind: SuccessStateProps["kind"]): string {
   switch (kind) {
     case "confirmed":
-      return "Thanks — your confirmation bumped the confidence on this room.";
+      return "Confirmation recorded";
     case "already_reported":
-      return "You already reported this room for this slot today.";
+      return "Already on the board";
     default:
-      return "Classmates can now find this free room in Class Finder.";
+      return "Room reported";
   }
 }
 
-/**
- * Post-submit success: SVG checkmark stroke draw + delayed “Report another” CTA.
- */
+function bodyForKind(kind: SuccessStateProps["kind"], roomLabel: string): string {
+  switch (kind) {
+    case "confirmed":
+      return `${roomLabel} now has another confirmation from you.`;
+    case "already_reported":
+      return `You already reported ${roomLabel} for this period today.`;
+    default:
+      return `${roomLabel} is now visible to students looking for a free classroom.`;
+  }
+}
+
+/** Restrained post-submit confirmation — no confetti or exaggerated motion. */
 export function SuccessState({
   roomLabel,
   slotLabel,
@@ -34,73 +44,48 @@ export function SuccessState({
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="flex flex-col items-center gap-6 py-6 text-center">
-      <motion.div
-        initial={reduceMotion ? false : { scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{
-          duration: reduceMotion ? 0 : DURATION_UI,
-          ease: EASE_OUT_EXPO,
-        }}
-        className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10"
+    <motion.div
+      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: MOTION_STANDARD, ease: EASE_OUT_EXPO }}
+      className="rounded-surface border border-border bg-card px-5 py-8 text-center shadow-token-sm sm:px-8"
+    >
+      <div
+        className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-cf-accent-muted text-cf-accent"
+        aria-hidden
       >
-        <svg
-          viewBox="0 0 52 52"
-          className="h-12 w-12 text-primary"
-          aria-hidden
-        >
-          <motion.path
-            d="M14 27 L22 35 L38 17"
-            fill="none"
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+          <path
+            d="M6 12.5 L10 16.5 L18 7.5"
             stroke="currentColor"
-            strokeWidth="3.5"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            initial={
-              reduceMotion ? { pathLength: 1 } : { pathLength: 0, opacity: 0 }
-            }
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : { duration: 0.45, ease: EASE_OUT_EXPO, delay: 0.1 }
-            }
           />
         </svg>
-      </motion.div>
-
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight text-primary">
-          Report submitted
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{roomLabel}</span>
-          {" · "}
-          {slotLabel}
-        </p>
-        <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-          {messageForKind(kind)}
-        </p>
       </div>
 
-      <motion.div
-        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={
-          reduceMotion
-            ? { duration: 0 }
-            : { delay: 0.4, duration: DURATION_UI, ease: EASE_OUT_EXPO }
-        }
-      >
+      <h2 className="text-xl font-semibold text-foreground">
+        {headlineForKind(kind)}
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">{slotLabel}</p>
+      <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-foreground/90">
+        {bodyForKind(kind, roomLabel)}
+      </p>
+
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <Button asChild className="min-h-11 w-full sm:w-auto">
+          <Link href="/finder">Find another room</Link>
+        </Button>
         <Button
           type="button"
-          size="lg"
-          className="min-h-11 px-8"
+          variant="outline"
+          className="min-h-11 w-full sm:w-auto"
           onClick={onReportAnother}
         >
           Report another
         </Button>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 }

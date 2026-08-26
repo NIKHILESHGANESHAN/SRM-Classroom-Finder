@@ -1,6 +1,7 @@
 import { formatTokenFingerprint } from "@/lib/admin/fingerprint";
 import { isOfficialInventoryRoom } from "@/prisma/data/classroom-inventory";
 import { prisma } from "@/lib/prisma";
+import { getCampusDateString } from "@/lib/slots";
 
 export type AdminHealth = {
   databaseOk: boolean;
@@ -8,9 +9,22 @@ export type AdminHealth = {
   campusTimeLabel: string;
   appVersion: string;
   activeClassroomCount: number;
+  inactiveClassroomCount: number;
+  totalClassroomCount: number;
   activeFreeReportCount: number;
+  reportsToday: number;
   expiredReportCount: number;
   hiddenReportCount: number;
+};
+
+export type AdminBuildingSummary = {
+  buildingId: string;
+  code: string;
+  name: string;
+  floorCount: number;
+  classroomCount: number;
+  activeClassroomCount: number;
+  inventoryDeferred: boolean;
 };
 
 export async function getAdminHealth(): Promise<AdminHealth> {
@@ -20,26 +34,49 @@ export async function getAdminHealth(): Promise<AdminHealth> {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date());
+  const campusToday = getCampusDateString();
 
   let databaseOk = false;
   let activeClassroomCount = 0;
+  let inactiveClassroomCount = 0;
+  let totalClassroomCount = 0;
   let activeFreeReportCount = 0;
+  let reportsToday = 0;
   let expiredReportCount = 0;
   let hiddenReportCount = 0;
+
+  const [year, month, day] = campusToday.split("-").map(Number);
+  const campusDate = new Date(Date.UTC(year, month - 1, day));
 
   try {
     await prisma.$queryRaw`SELECT 1`;
     databaseOk = true;
-    const [activeClass, activeFree, expired, hidden] = await Promise.all([
+    const [
+      activeClass,
+      inactiveClass,
+      totalClass,
+      activeFree,
+      todayReports,
+      expired,
+      hidden,
+    ] = await Promise.all([
       prisma.classroom.count({ where: { isActive: true } }),
+      prisma.classroom.count({ where: { isActive: false } }),
+      prisma.classroom.count(),
       prisma.freeReport.count({
         where: { status: { in: ["unverified", "confirmed"] } },
+      }),
+      prisma.freeReport.count({
+        where: { reportDate: campusDate },
       }),
       prisma.freeReport.count({ where: { status: "expired" } }),
       prisma.freeReport.count({ where: { status: "hidden" } }),
     ]);
     activeClassroomCount = activeClass;
+    inactiveClassroomCount = inactiveClass;
+    totalClassroomCount = totalClass;
     activeFreeReportCount = activeFree;
+    reportsToday = todayReports;
     expiredReportCount = expired;
     hiddenReportCount = hidden;
   } catch {
@@ -52,10 +89,33 @@ export async function getAdminHealth(): Promise<AdminHealth> {
     campusTimeLabel,
     appVersion: "0.1.0",
     activeClassroomCount,
+    inactiveClassroomCount,
+    totalClassroomCount,
     activeFreeReportCount,
+    reportsToday,
     expiredReportCount,
     hiddenReportCount,
   };
+}
+
+export async function getAdminBuildingSummaries(): Promise<AdminBuildingSummary[]> {
+  const buildings = await prisma.building.findMany({
+    orderBy: { code: "asc" },
+    include: {
+      _count: { select: { floors: true, classrooms: true } },
+      classrooms: { select: { isActive: true } },
+    },
+  });
+
+  return buildings.map((building) => ({
+    buildingId: building.id,
+    code: building.code,
+    name: building.name,
+    floorCount: building._count.floors,
+    classroomCount: building._count.classrooms,
+    activeClassroomCount: building.classrooms.filter((c) => c.isActive).length,
+    inventoryDeferred: building.code === "TP1",
+  }));
 }
 
 export type AdminInventoryRow = {

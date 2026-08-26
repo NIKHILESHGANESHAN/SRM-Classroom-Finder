@@ -6,7 +6,8 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { listFaqQuestions, getFaqSections } from "../lib/help/faq";
-import { KNOWLEDGE, CHAT_QUICK_PROMPTS } from "../lib/help/knowledge";
+import { KNOWLEDGE, CHAT_PAGE_QUICK_PROMPTS, CHAT_QUICK_PROMPTS } from "../lib/help/knowledge";
+import { parseLiveHelpIntent } from "../lib/help/live-intent";
 import {
   buildFeedbackMailtoHref,
   FEEDBACK_RECIPIENT,
@@ -49,7 +50,7 @@ function main() {
   section("FAQ covers required Community questions");
   const faqQuestions = listFaqQuestions();
   const required = [
-    "What is SRM KTR Classroom Finder?",
+    "What is ClassFinder?",
     "How does it work?",
     "Do I need an account?",
     "Do I need OTP?",
@@ -134,10 +135,96 @@ function main() {
     assert(reply.entryId === id, `${question} → ${reply.entryId} expected ${id}`);
     assert(!isOutOfScope(question), `${question} in scope`);
   }
-  for (const prompt of CHAT_QUICK_PROMPTS) {
+  for (const prompt of CHAT_PAGE_QUICK_PROMPTS) {
     const reply = answerHelpQuestion(prompt.question);
-    assert(reply.kind === "answer", `quick ${prompt.label}`);
+    assert(reply.kind === "answer", `page quick ${prompt.label}`);
   }
+  for (const prompt of CHAT_QUICK_PROMPTS) {
+    if (prompt.label === "Check a room") {
+      assert(
+        parseLiveHelpIntent(prompt.question)?.kind === "room",
+        "floating check-a-room live intent",
+      );
+    } else if (prompt.label === "Find a free room") {
+      assert(
+        parseLiveHelpIntent(prompt.question)?.kind === "general",
+        "floating find-room live intent",
+      );
+    } else {
+      const reply = answerHelpQuestion(prompt.question);
+      assert(reply.kind === "answer", `floating quick ${prompt.label}`);
+    }
+  }
+  assert(
+    parseLiveHelpIntent("what about 302", { buildingCode: "UB" })?.kind ===
+      "room",
+    "follow-up room intent",
+  );
+
+  section("Live intent — room number parsing (Phase 10.1)");
+  const roomCases: Array<[string, string, string, Record<string, unknown>?]> = [
+    ["Is UB 301 free?", "UB", "301"],
+    ["Check UB-301", "UB", "301"],
+    ["UB 301", "UB", "301"],
+    ["Is TP2 204 free?", "TP2", "204"],
+    ["Check TP1 305", "TP1", "305"],
+    ["What about 302?", "UB", "302", { buildingCode: "UB" }],
+    ["what about UB 302?", "UB", "302"],
+    ["Is room 301 in UB free?", "UB", "301"],
+  ];
+  for (const [question, building, room, ctx] of roomCases) {
+    const intent = parseLiveHelpIntent(question, ctx ?? {});
+    assert(intent?.kind === "room", `${question} kind=${intent?.kind}`);
+    if (intent?.kind !== "room") continue;
+    assert(intent.buildingCode === building, `${question} building`);
+    assert(intent.roomNumber === room, `${question} room`);
+  }
+  assert(
+    parseLiveHelpIntent("Free rooms in UB?")?.kind === "building",
+    "building intent not room",
+  );
+  assert(
+    parseLiveHelpIntent("Free rooms on UB floor 3")?.kind === "floor",
+    "floor intent not room",
+  );
+  console.log("ok  room parsing regressions");
+
+  section("Knowledge — ClassFinder identity");
+  for (const question of [
+    "Who built you?",
+    "Who made ClassFinder?",
+    "Who made you?",
+    "Who created ClassFinder?",
+    "Who developed ClassFinder?",
+    "Who is behind ClassFinder?",
+    "Why was ClassFinder created?",
+    "Is ClassFinder student built?",
+  ]) {
+    const reply = answerHelpQuestion(question);
+    assert(reply.kind === "answer", `${question} ${reply.kind}`);
+    assert(reply.entryId === "start-who-built", `${question} entry`);
+    assert(
+      reply.text.includes("student-built campus utility"),
+      `${question} copy`,
+    );
+  }
+  for (const question of ["Who owns ClassFinder?", "owned by?"]) {
+    const reply = answerHelpQuestion(question);
+    assert(reply.kind === "answer", `${question} ${reply.kind}`);
+    assert(reply.entryId === "start-who-owns", `${question} entry`);
+    assert(
+      !reply.text.toLowerCase().includes("openai"),
+      `${question} no AI claim`,
+    );
+  }
+  const ipl = answerHelpQuestion("Who will win the IPL?");
+  assert(ipl.kind === "out_of_scope", "IPL out of scope");
+  assert(
+    parseLiveHelpIntent("302?", { buildingCode: "UB" })?.kind === "room",
+    "302? follow-up room intent",
+  );
+  console.log("ok  identity knowledge");
+
   console.log("ok  allowed + quick prompts");
 
   section("Scope — unrelated questions");

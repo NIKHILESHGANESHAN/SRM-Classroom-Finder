@@ -3,12 +3,14 @@
  * Opens the user's email client — never sends mail from the server.
  */
 
+import { PRODUCT_NAME } from "@/lib/design-tokens";
+
 export const FEEDBACK_RECIPIENT = "arthurknox007@gmail.com";
 
-export const FEEDBACK_SUBJECT = "SRM KTR Classroom Finder — Feedback";
+export const FEEDBACK_SUBJECT = `${PRODUCT_NAME} — Feedback`;
 
 export const FEEDBACK_BODY = [
-  "Hello SRM KTR Classroom Finder Team,",
+  `Hello ${PRODUCT_NAME} team,`,
   "",
   "I would like to share the following feedback:",
   "",

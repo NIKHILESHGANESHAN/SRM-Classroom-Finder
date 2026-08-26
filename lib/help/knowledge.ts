@@ -1,5 +1,5 @@
 /**
- * Curated Classroom Finder knowledge (V2.5).
+ * Curated ClassFinder knowledge (V2.5).
  * Shared by the Community FAQ and the controlled help chatbot.
  * Answers describe repository behavior only — no invented features.
  */
@@ -36,11 +36,12 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
   {
     id: "start-what-is",
     category: "Getting Started",
-    question: "What is SRM KTR Classroom Finder?",
+    question: "What is ClassFinder?",
     answer:
-      "SRM KTR Classroom Finder is a campus web app for SRM Institute of Science and Technology, Kattankulathur. Students anonymously report empty classrooms in UB, Tech Park 1 (TP1), and Tech Park 2 (TP2). Classmates browse those reports in Class Finder. It is a DBMS coursework project and does not use accounts.",
+      "ClassFinder is a student-built campus utility for SRM KTR that helps students find classrooms reported free and contribute fresh room reports. Students anonymously report empty classrooms in UB, Tech Park 1 (TP1), and Tech Park 2 (TP2). No account is required.",
     keywords: [
       "what is",
+      "classfinder",
       "classroom finder",
       "srm",
       "ktr",
@@ -51,11 +52,61 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     aliases: ["what is this website", "what is classroom finder"],
   },
   {
+    id: "start-who-built",
+    category: "Getting Started",
+    question: "Who built ClassFinder?",
+    answer:
+      "ClassFinder is a student-built campus utility for SRM KTR that helps students find classrooms reported free and contribute fresh room reports.",
+    keywords: [
+      "who built",
+      "who made",
+      "who created",
+      "who developed",
+      "who is behind",
+      "creator",
+      "student built",
+      "why was classfinder created",
+      "why was it created",
+      "behind classfinder",
+      "made classfinder",
+      "created classfinder",
+      "developed classfinder",
+    ],
+    aliases: [
+      "Who built you?",
+      "Who made ClassFinder?",
+      "Who made you?",
+      "Who created ClassFinder?",
+      "Who developed ClassFinder?",
+      "Who is behind ClassFinder?",
+      "Why was ClassFinder created?",
+      "Is ClassFinder student built?",
+    ],
+  },
+  {
+    id: "start-who-owns",
+    category: "Getting Started",
+    question: "Who owns ClassFinder?",
+    answer:
+      "ClassFinder does not list a single named owner here. It is a student-built campus utility for SRM KTR that helps students find classrooms reported free and contribute fresh room reports.",
+    keywords: [
+      "who owns",
+      "owned by",
+      "ownership",
+      "owner of classfinder",
+    ],
+    aliases: [
+      "Who owns ClassFinder?",
+      "owned by?",
+      "who owns it",
+    ],
+  },
+  {
     id: "start-how-it-works",
     category: "Getting Started",
     question: "How does it work?",
     answer:
-      "Open Class Finder to see rooms students have reported free for the current period. Check freshness and the countdown, then tap Still Free if the room is empty or Report Occupied if it is in use. Two independent occupied reports from different devices hide a listing. Reports also expire when the class period ends. There is no account — an anonymous device token prevents duplicate counts.",
+      "Open ClassFinder to see rooms students have reported free for the current period. Check freshness and the countdown, then tap Still Free if the room is empty or Report Occupied if it is in use. Two independent occupied reports from different devices hide a listing. Reports also expire when the class period ends. There is no account — an anonymous device token prevents duplicate counts.",
     keywords: [
       "how it works",
       "how does it work",
@@ -69,7 +120,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Getting Started",
     question: "Do I need an account?",
     answer:
-      "No. SRM KTR Classroom Finder does not require an account, login, or sign-up. You can find rooms, report rooms, share links, and open Stats without creating a user.",
+      "No. ClassFinder does not require an account, login, or sign-up. You can find rooms, report rooms, share links, and open Stats without creating a user.",
     keywords: ["account", "login", "sign up", "signup", "register", "user"],
     aliases: ["do i need to log in", "is there a login"],
   },
@@ -87,7 +138,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Finding Classrooms",
     question: "How do I find a free classroom?",
     answer:
-      "Open Class Finder from the home page. Filter by building and floor if you want, or leave them open to see more rooms. By default you see rooms reported free for the current time slot (“Free right now”). You can also search by room number. Listings come from student reports — empty inventory or no reports is not the same as every room being occupied.",
+      "Open ClassFinder from the home page. Filter by building and floor if you want, or leave them open to see more rooms. By default you see rooms reported free for the current time slot (“Free right now”). You can also search by room number. Listings come from student reports — empty inventory or no reports is not the same as every room being occupied.",
     keywords: [
       "find",
       "free classroom",
@@ -117,7 +168,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Finding Classrooms",
     question: "How do I filter by building?",
     answer:
-      "In Class Finder, use the building filter to choose UB, TP1, or TP2. You can star favorite buildings so they sort first, and use “My buildings” to show only starred buildings. Filters are stored in the page URL so you can bookmark or share the same view.",
+      "In ClassFinder, use the building filter to choose UB, TP1, or TP2. You can star favorite buildings so they sort first, and use “My buildings” to show only starred buildings. Filters are stored in the page URL so you can bookmark or share the same view.",
     keywords: ["filter", "building", "ub", "tp1", "tp2", "star"],
     aliases: ["how to choose a building"],
   },
@@ -218,7 +269,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Reporting",
     question: "What happens after submitting?",
     answer:
-      "If the room was not already listed for that slot and campus day, a new free report is created as Unverified and appears in Class Finder. If another student already reported it, your submit can count as an independent confirmation (Still Free–style) unless you were the original reporter. If you already submitted that room for the same slot today, you get “already on the board” instead of a duplicate row. There is also a daily cap of about 15 new contributions per device token.",
+      "If the room was not already listed for that slot and campus day, a new free report is created as Unverified and appears in ClassFinder. If another student already reported it, your submit can count as an independent confirmation (Still Free–style) unless you were the original reporter. If you already submitted that room for the same slot today, you get “already on the board” instead of a duplicate row. There is also a daily cap of about 15 new contributions per device token.",
     keywords: ["after submitting", "what happens", "created", "already on the board"],
     aliases: ["what happens when i submit"],
   },
@@ -361,7 +412,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Privacy",
     question: "Are favorites stored on the server?",
     answer:
-      "No. Favorite buildings are stored locally in your browser (localStorage). They are not stored in the Classroom Finder database and are not sent as a preference payload to the server.",
+      "No. Favorite buildings are stored locally in your browser (localStorage). They are not stored in the ClassFinder database and are not sent as a preference payload to the server.",
     keywords: ["favorites stored", "server favorites", "star buildings"],
     aliases: ["are favorite buildings uploaded"],
   },
@@ -370,7 +421,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Privacy",
     question: "Are recent rooms stored on the server?",
     answer:
-      "No. Recent rooms are stored locally in your browser and are not sent to the Classroom Finder server. You can clear them with “Clear history” on Finder.",
+      "No. Recent rooms are stored locally in your browser and are not sent to the ClassFinder server. You can clear them with “Clear history” on Finder.",
     keywords: ["recent rooms stored", "server recents", "history"],
     aliases: ["does the server save recent rooms"],
   },
@@ -397,7 +448,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Expiry",
     question: "What happens after the class period?",
     answer:
-      "When the period ends, the report is marked expired (cron plus the expiry timestamp). It disappears from Class Finder but remains in the database for Stats history. You can report the room again in a later selectable slot.",
+      "When the period ends, the report is marked expired (cron plus the expiry timestamp). It disappears from ClassFinder but remains in the database for Stats history. You can report the room again in a later selectable slot.",
     keywords: ["after the class period", "period ends", "expired"],
     aliases: ["what happens when the slot ends"],
   },
@@ -415,7 +466,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Sharing",
     question: "How do I share a classroom?",
     answer:
-      "On a Finder room card, tap Share. That builds a human-readable Class Finder link such as `/finder?building=UB&floor=12&room=1205`. Share does not include device tokens, report IDs, or slot/focus state. The person who opens it sees the current slot like a normal Finder visit. Invalid inventory rooms (for example UB Floor 12 room 504) are not treated as a listed classroom.",
+      "On a Finder room card, tap Share. That builds a human-readable ClassFinder link such as `/finder?building=UB&floor=12&room=1205`. Share does not include device tokens, report IDs, or slot/focus state. The person who opens it sees the current slot like a normal Finder visit. Invalid inventory rooms (for example UB Floor 12 room 504) are not treated as a listed classroom.",
     keywords: ["share", "sharing", "send room", "link"],
     aliases: ["how do i share a classroom", "how to share a room"],
   },
@@ -442,7 +493,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Sharing",
     question: "Where are shared classroom links opened?",
     answer:
-      "They open Class Finder (`/finder`) with building, floor, and room query parameters. If the room is in inventory, Finder can highlight it and remember it locally when it is still reported free. If it is no longer free, you see a status message. Links never carry your device token.",
+      "They open ClassFinder (`/finder`) with building, floor, and room query parameters. If the room is in inventory, Finder can highlight it and remember it locally when it is still reported free. If it is no longer free, you see a status message. Links never carry your device token.",
     keywords: ["shared link", "deep link", "open share"],
     aliases: ["where does the share link go"],
   },
@@ -460,7 +511,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Personalization",
     question: "Where are favorites stored?",
     answer:
-      "Favorite buildings are stored locally in your browser. They are not stored in the Classroom Finder database.",
+      "Favorite buildings are stored locally in your browser. They are not stored in the ClassFinder database.",
     keywords: ["where favorites", "localstorage favorites"],
     aliases: ["where do you save favorites"],
   },
@@ -478,7 +529,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Personalization",
     question: "Can I clear recent rooms?",
     answer:
-      "Yes. Use “Clear history” next to Recent rooms on Class Finder. That only clears local browser storage for this preference.",
+      "Yes. Use “Clear history” next to Recent rooms on ClassFinder. That only clears local browser storage for this preference.",
     keywords: ["clear recent", "clear history"],
     aliases: ["how do i clear recent rooms"],
   },
@@ -523,7 +574,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Installation",
     question: "Can I install the PWA?",
     answer:
-      "Yes. SRM KTR Classroom Finder is an installable Progressive Web App (manifest, icons, and a service worker). You can add it to your home screen from a supporting browser. Installation is optional — the website works in the browser without installing.",
+      "Yes. ClassFinder is an installable Progressive Web App (manifest, icons, and a service worker). You can add it to your home screen from a supporting browser. Installation is optional — the website works in the browser without installing.",
     keywords: ["pwa", "install", "add to home screen", "app"],
     aliases: ["can i install the app", "is this a pwa"],
   },
@@ -568,7 +619,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Troubleshooting",
     question: "What should I do if the website doesn't load?",
     answer:
-      "Check your network, try a refresh, or reopen the home page. If a page errors, use Back home / Class Finder. This app needs its database in production — a down database can fail Finder, Contributor, and Stats. Help, Contact, and Community knowledge do not require chatting with an external AI.",
+      "Check your network, try a refresh, or reopen the home page. If a page errors, use Back home / ClassFinder. This app needs its database in production — a down database can fail Finder, Contributor, and Stats. Help, Contact, and Community knowledge do not require chatting with an external AI.",
     keywords: ["doesn't load", "blank", "error page", "website down"],
     aliases: ["site not loading"],
   },
@@ -586,7 +637,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Contact",
     question: "How do I get help in chat?",
     answer:
-      "Open More options → Contact us, then Chat with us (`/contact/chat`). The Classroom Finder Assistant only answers questions about this website. It uses a local knowledge base — not ChatGPT or any paid AI API. Refreshing the page clears the conversation; nothing is stored in PostgreSQL.",
+      "Open More options → Contact, then ClassFinder Help (`/contact/chat`). It only answers questions about ClassFinder — using a local knowledge base, not ChatGPT or any paid AI API. Refreshing the page clears the conversation; nothing is stored in the database.",
     keywords: ["chat", "assistant", "help bot", "contact chat"],
     aliases: ["how do i chat with you"],
   },
@@ -595,7 +646,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Contact",
     question: "How do I send feedback?",
     answer:
-      "On Contact us, choose Send feedback. That opens your email app to arthurknox007@gmail.com with subject “SRM KTR Classroom Finder — Feedback” and a suggested body you can edit. The website does not send email itself and does not store feedback in the database.",
+      "On Contact, choose Send feedback. That opens your email app to arthurknox007@gmail.com with subject “ClassFinder — Feedback” and a suggested body you can edit. The website does not send email itself and does not store feedback in the database.",
     keywords: ["feedback", "mailto", "email", "contact"],
     aliases: ["how do i email you", "send feedback"],
   },
@@ -604,7 +655,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Contact",
     question: "What is Community?",
     answer:
-      "Community (`/contact/community`) is a curated FAQ. It is not a public forum: there are no accounts, comments, or user posts. Answers are the same knowledge source the help assistant uses.",
+      "ClassFinder Help (`/contact/chat`) and this FAQ use the same curated answers. There are no accounts, comments, or user posts.",
     keywords: ["community", "faq", "questions"],
     aliases: ["what is the community page"],
   },
@@ -640,7 +691,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Getting Started",
     question: "Where is How It Works?",
     answer:
-      "Open `/how-it-works` from the home page or the How it works link on Class Finder. It is a short guided explanation of Finder, freshness, Still Free, occupied reports, expiry, and anonymity.",
+      "Open `/how-it-works` from the home page or the How it works link on ClassFinder. It is a short guided explanation of Finder, freshness, Still Free, occupied reports, expiry, and anonymity.",
     keywords: ["how it works page", "guide", "tutorial"],
     aliases: ["where is the tutorial"],
   },
@@ -650,6 +701,17 @@ export const KNOWLEDGE_BY_ID: Readonly<Record<string, KnowledgeEntry>> =
   Object.fromEntries(KNOWLEDGE.map((entry) => [entry.id, entry]));
 
 export const CHAT_QUICK_PROMPTS: readonly {
+  label: string;
+  question: string;
+}[] = [
+  { label: "Find a free room", question: "Are there any free classrooms right now?" },
+  { label: "Check a room", question: "Is UB 301 free?" },
+  { label: "How do reports work?", question: "How does ClassFinder work?" },
+  { label: "Report a room", question: "How do I report a room?" },
+];
+
+/** Full-page /contact/chat keeps the wider prompt set. */
+export const CHAT_PAGE_QUICK_PROMPTS: readonly {
   label: string;
   question: string;
 }[] = [

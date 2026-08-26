@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  /** Tree-shake heavy icon/chart packages in client bundles. */
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts"],
+  },
   /**
    * Service worker + manifest headers for PWA installability.
    * `Service-Worker-Allowed: /` keeps scope at the site root.
