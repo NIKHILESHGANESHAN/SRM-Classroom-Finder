@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { MessageCircle, X } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useSoundOnOpen } from "@/hooks/use-sound-on-open";
 import { glassSurfaceClasses } from "@/lib/glass";
 import { HELP_FLOATING_WELCOME } from "@/lib/help/help-ui";
 import { EASE_OUT_EXPO, MOTION_STANDARD } from "@/lib/motion";
@@ -52,6 +53,8 @@ export function ClassFinderHelpGlobal() {
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [panelMounted, setPanelMounted] = useState(false);
+
+  useSoundOnOpen(open);
 
   const handleClose = useCallback(() => {
     setOpen(false);

@@ -20,6 +20,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useSound } from "@/components/sound/sound-provider";
+import { useSoundOnOpen } from "@/hooks/use-sound-on-open";
 import type { FinderBuilding, FinderSlot } from "@/lib/finder-data";
 import {
   buildFinderQuery,
@@ -80,6 +82,8 @@ function FilterControls({
   floors,
   orderedBuildings,
 }: FilterControlsProps) {
+  const { play } = useSound();
+
   return (
     <div
       className={cn("min-w-0 space-y-4", pending && "opacity-80")}
@@ -105,7 +109,7 @@ function FilterControls({
               });
             }}
           >
-            <SelectTrigger id="finder-building" className="min-h-11 rounded-control">
+            <SelectTrigger id="finder-building" className="min-h-11 rounded-button">
               <SelectValue placeholder="All buildings" />
             </SelectTrigger>
             <SelectContent>
@@ -136,7 +140,7 @@ function FilterControls({
               });
             }}
           >
-            <SelectTrigger id="finder-floor" className="min-h-11 rounded-control">
+            <SelectTrigger id="finder-floor" className="min-h-11 rounded-button">
               <SelectValue
                 placeholder={
                   applied.buildingId ? "All floors" : "Pick a building"
@@ -169,7 +173,7 @@ function FilterControls({
               });
             }}
           >
-            <SelectTrigger id="finder-slot" className="min-h-11 rounded-control">
+            <SelectTrigger id="finder-slot" className="min-h-11 rounded-button">
               <SelectValue placeholder="Current slot" />
             </SelectTrigger>
             <SelectContent>
@@ -246,7 +250,10 @@ function FilterControls({
                     ? `${b.code} — Favorited`
                     : `Add ${b.code} to My buildings`
                 }
-                onClick={() => onToggleFavorite(b.code)}
+                onClick={() => {
+                  play("select");
+                  onToggleFavorite(b.code);
+                }}
               >
                 <Star
                   className="h-3.5 w-3.5"
@@ -263,7 +270,10 @@ function FilterControls({
             active={mineOnly}
             className="max-w-full shrink-0 px-3 min-h-11"
             aria-pressed={mineOnly}
-            onClick={() => onMineOnlyChange(!mineOnly)}
+            onClick={() => {
+              play("click");
+              onMineOnlyChange(!mineOnly);
+            }}
           >
             My buildings only
           </GlassControl>
@@ -274,11 +284,14 @@ function FilterControls({
 }
 
 export function FinderFiltersBar(props: FinderFiltersBarProps) {
+  const { play } = useSound();
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const [sheetOpen, setSheetOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  useSoundOnOpen(sheetOpen);
 
   const floors = useMemo(() => {
     if (!props.applied.buildingId) return [];
@@ -304,6 +317,7 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
     timeSlotId: string | null;
     focus: FinderFocus;
   }) {
+    play("select");
     const href = `${pathname}${buildFinderQuery({
       ...next,
       currentSlotId: props.currentSlotId,
@@ -362,7 +376,7 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
             >
               <SelectTrigger
                 id="finder-building-mobile"
-                className="min-h-11 rounded-control"
+                className="min-h-11 rounded-button"
               >
                 <SelectValue placeholder="All buildings" />
               </SelectTrigger>
@@ -399,7 +413,7 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
             >
               <SelectTrigger
                 id="finder-floor-mobile"
-                className="min-h-11 rounded-control"
+                className="min-h-11 rounded-button"
               >
                 <SelectValue placeholder="All" />
               </SelectTrigger>
@@ -434,7 +448,7 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
             >
               <SelectTrigger
                 id="finder-slot-mobile"
-                className="min-h-11 rounded-control"
+                className="min-h-11 rounded-button"
               >
                 <SelectValue placeholder="Now" />
               </SelectTrigger>

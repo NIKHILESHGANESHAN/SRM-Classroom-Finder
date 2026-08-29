@@ -19,7 +19,7 @@ export default function HowItWorksLoading() {
           </div>
         </GlassNavigation>
         <div className="space-y-2 px-1">
-          <div className="h-7 w-56 rounded-md bg-muted motion-reduce:animate-none" />
+          <div className="h-7 w-56 rounded-surface bg-muted motion-reduce:animate-none" />
           <div className="h-4 w-full max-w-md rounded bg-muted/70 motion-reduce:animate-none" />
         </div>
         <div className="space-y-6">

@@ -1,16 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { GlassNavigation, GlassSurface } from "@/components/glass";
+import { ClassFinderNavTitle } from "@/components/brand/classfinder-nav-title";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
+import { SoundLink } from "@/components/sound/sound-link";
 import { Button } from "@/components/ui/button";
 import type { StatsPageData } from "@/lib/stats-data";
-import { PRODUCT_NAME } from "@/lib/design-tokens";
 import { EASE_OUT_EXPO, MOTION_STANDARD } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { motion, useReducedMotion } from "framer-motion";
 
 /** Lazy-load Recharts — keeps /stats first-load JS smaller. */
 const ReportsBarChart = dynamic(
@@ -139,7 +139,7 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
               classrooms. Nothing is shown until real reports exist.
             </p>
             <Button asChild className="btn-press mt-5 min-h-11">
-              <Link href="/contribute">Report a room</Link>
+              <SoundLink href="/contribute">Report a room</SoundLink>
             </Button>
           </SolidPanel>
         </FadeIn>
@@ -386,18 +386,11 @@ function StatsNavigation() {
       className="flex items-center gap-2 px-2 py-2 sm:px-3"
     >
       <Button variant="ghost" size="icon" className="btn-press min-h-11 min-w-11" asChild>
-        <Link href="/" aria-label="Back to home">
+        <SoundLink href="/" aria-label="Back to home">
           <ArrowLeft className="h-5 w-5" />
-        </Link>
+        </SoundLink>
       </Button>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-semibold text-foreground sm:text-lg">
-          {PRODUCT_NAME}
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          See how students are using ClassFinder.
-        </p>
-      </div>
+      <ClassFinderNavTitle subtitle="See how students are using ClassFinder." />
       <MoreOptionsMenu className="shrink-0" />
     </GlassNavigation>
   );

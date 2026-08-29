@@ -4,7 +4,10 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ThemeProvider } from "next-themes";
+import { THEME_STORAGE_KEY } from "@/components/theme/theme-toggle";
 import { AppToaster } from "@/components/app-toaster";
+import { XoEasterEggDeferred } from "@/components/easter-egg/xo-easter-egg-deferred";
+import { SoundProvider } from "@/components/sound/sound-provider";
 import { ClassFinderHelpDeferred } from "@/components/help/classfinder-help-deferred";
 import { DeviceTokenBootstrap } from "@/components/device-token-bootstrap";
 import { PageTransition } from "@/components/page-transition";
@@ -69,10 +72,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const showBoot = bootPhase === "playing";
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      storageKey={THEME_STORAGE_KEY}
+      disableTransitionOnChange={false}
+    >
+      <SoundProvider>
       <DeviceTokenBootstrap />
       <PageTransition>{children}</PageTransition>
       <ClassFinderHelpDeferred />
+      <XoEasterEggDeferred />
       <AppToaster />
       <AnimatePresence>
         {showBoot ? (
@@ -90,6 +101,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </motion.div>
         ) : null}
       </AnimatePresence>
+      </SoundProvider>
     </ThemeProvider>
   );
 }

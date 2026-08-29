@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { RotateCcw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SoundLink } from "@/components/sound/sound-link";
+import { useSound } from "@/components/sound/sound-provider";
 import { glassSurfaceClasses } from "@/lib/glass";
 import type { HelpChatWelcome } from "@/components/help/use-help-chat";
 import { useHelpChat } from "@/components/help/use-help-chat";
@@ -38,6 +39,7 @@ export function HelpChatPanel({
   autoFocusInput = false,
   composerId: composerIdProp,
 }: HelpChatPanelProps) {
+  const { play } = useSound();
   const quickPrompts =
     quickPromptsProp ??
     (variant === "floating" ? CHAT_QUICK_PROMPTS : CHAT_PAGE_QUICK_PROMPTS);
@@ -72,6 +74,8 @@ export function HelpChatPanel({
   }, [autoFocusInput]);
 
   function submit(raw: string) {
+    if (!raw.trim()) return;
+    play("click");
     sendMessage(raw);
     setInput("");
     window.requestAnimationFrame(() => inputRef.current?.focus());
@@ -90,7 +94,10 @@ export function HelpChatPanel({
           variant="ghost"
           size="sm"
           className="min-h-11 shrink-0 gap-1.5 px-2 text-xs"
-          onClick={startNewConversation}
+          onClick={() => {
+            play("click");
+            startNewConversation();
+          }}
           disabled={pending}
         >
           <RotateCcw className="h-3.5 w-3.5" aria-hidden />
@@ -130,7 +137,7 @@ export function HelpChatPanel({
               <button
                 key={prompt.label}
                 type="button"
-                className="btn-press inline-flex min-h-11 items-center rounded-control border border-border bg-background px-3 text-left text-xs font-medium transition-standard hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="btn-press inline-flex min-h-11 items-center rounded-button border border-border bg-background px-3 text-left text-xs font-medium transition-standard hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => submit(prompt.question)}
               >
                 {prompt.label}
@@ -159,7 +166,7 @@ export function HelpChatPanel({
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder="Ask about ClassFinder…"
-          className="min-h-11 flex-1 rounded-control border-border bg-background text-base"
+          className="min-h-11 flex-1 rounded-button border-border bg-background text-base"
           autoComplete="off"
           maxLength={500}
           disabled={pending}
@@ -176,9 +183,9 @@ export function HelpChatPanel({
 
       {variant === "floating" ? (
         <p className="border-t border-border/50 px-3 py-2 text-center text-[11px] text-muted-foreground sm:px-4">
-          <Link href="/contact/chat" className="underline-offset-2 hover:underline">
+          <SoundLink href="/contact/chat" className="underline-offset-2 hover:underline">
             Open full-page Help
-          </Link>
+          </SoundLink>
         </p>
       ) : null}
     </div>

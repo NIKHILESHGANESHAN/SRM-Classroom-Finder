@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+/** Align page ISR with stats data cache (60s). */
+export const revalidate = 60;
 
 export default async function StatsPage() {
   const data = await getStatsPageData();

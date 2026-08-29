@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { SoundLink } from "@/components/sound/sound-link";
 import { cn } from "@/lib/utils";
 
 type HowItWorksLinkProps = {
@@ -7,7 +9,7 @@ type HowItWorksLinkProps = {
 
 export function HowItWorksLink({ className }: HowItWorksLinkProps) {
   return (
-    <Link
+    <SoundLink
       href="/how-it-works"
       className={cn(
         "inline-flex min-h-11 items-center text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline",
@@ -16,6 +18,6 @@ export function HowItWorksLink({ className }: HowItWorksLinkProps) {
       )}
     >
       How it works
-    </Link>
+    </SoundLink>
   );
 }

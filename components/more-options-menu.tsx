@@ -5,7 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { GlassPopover } from "@/components/glass";
+import { SoundToggle } from "@/components/sound/sound-toggle";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { useSound } from "@/components/sound/sound-provider";
 import { cn } from "@/lib/utils";
 
 type MoreOptionsMenuProps = {
@@ -20,6 +23,7 @@ function isContactPath(pathname: string | null): boolean {
  * Compact overflow menu (V2.5/V2.6). Keyboard + pointer; pathname-aware.
  */
 export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
+  const { play } = useSound();
   const pathname = usePathname();
   const onContact = isContactPath(pathname);
   const [open, setOpen] = useState(false);
@@ -59,7 +63,9 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
   const itemLabel = onContact ? "Home" : "Contact us";
 
   return (
-    <div ref={wrapRef} className={cn("relative isolate", className)}>
+    <div ref={wrapRef} className={cn("relative isolate flex items-center gap-0.5", className)}>
+      <ThemeToggle />
+      <SoundToggle />
       <Button
         ref={buttonRef}
         type="button"
@@ -71,7 +77,10 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          play(open ? "close" : "open");
+          setOpen((value) => !value);
+        }}
       >
         <MoreVertical className="h-5 w-5" aria-hidden />
       </Button>
@@ -89,8 +98,11 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
             role="menuitem"
             href={itemHref}
             aria-current={onContact && itemHref === pathname ? "page" : undefined}
-            className="flex min-h-11 items-center rounded-control px-3 text-sm font-medium text-foreground outline-none transition-standard hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={() => setOpen(false)}
+            className="flex min-h-11 items-center rounded-button px-3 text-sm font-medium text-foreground outline-none transition-standard hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => {
+              play("click");
+              setOpen(false);
+            }}
           >
             {itemLabel}
           </Link>

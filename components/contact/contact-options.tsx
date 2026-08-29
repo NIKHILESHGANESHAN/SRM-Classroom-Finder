@@ -1,6 +1,9 @@
-import Link from "next/link";
+"use client";
+
 import { ChevronRight } from "lucide-react";
 import { GlassSurface } from "@/components/glass";
+import { SoundLink } from "@/components/sound/sound-link";
+import { useSound } from "@/components/sound/sound-provider";
 import { buildFeedbackMailtoHref } from "@/lib/help/mailto";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +59,8 @@ function OptionRow({
 }
 
 export function ContactOptions() {
+  const { play } = useSound();
+
   return (
     <nav aria-label="Contact options">
       <GlassSurface variant="regular" className="overflow-hidden shadow-token-sm">
@@ -76,16 +81,17 @@ export function ContactOptions() {
                     href={option.href}
                     className="block transition-standard hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                     data-feedback-mailto="true"
+                    onClick={() => play("click")}
                   >
                     {row}
                   </a>
                 ) : (
-                  <Link
+                  <SoundLink
                     href={option.href}
                     className="block transition-standard hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                   >
                     {row}
-                  </Link>
+                  </SoundLink>
                 )}
               </li>
             );

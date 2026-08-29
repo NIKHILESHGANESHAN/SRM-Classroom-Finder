@@ -9,7 +9,7 @@ export default function RootLoading() {
       </div>
       <main className="mx-auto flex min-h-[calc(100dvh-4.5rem)] w-full max-w-xl flex-col justify-center gap-10 px-4 pb-8 pt-6 sm:px-6 sm:pt-10">
         <div className="space-y-4">
-          <div className="h-10 w-4/5 max-w-sm animate-pulse rounded-md bg-muted motion-reduce:animate-none" />
+          <div className="h-10 w-4/5 max-w-sm animate-pulse rounded-surface bg-muted motion-reduce:animate-none" />
           <div className="h-5 w-full max-w-md animate-pulse rounded bg-muted/70 motion-reduce:animate-none" />
           <div className="h-4 w-48 animate-pulse rounded bg-muted/50 motion-reduce:animate-none" />
         </div>

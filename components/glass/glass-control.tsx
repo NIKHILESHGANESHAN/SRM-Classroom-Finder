@@ -15,9 +15,9 @@ const glassControlVariants = cva(
         elevated: surfaceElevatedClasses(),
       },
       size: {
-        default: "min-h-11 px-3 rounded-control text-sm",
-        sm: "min-h-11 px-2.5 rounded-control text-xs",
-        icon: "min-h-11 min-w-11 rounded-control",
+        default: "min-h-11 px-3 rounded-button text-sm",
+        sm: "min-h-11 px-2.5 rounded-button text-xs",
+        icon: "min-h-11 min-w-11 rounded-button",
       },
     },
     defaultVariants: {

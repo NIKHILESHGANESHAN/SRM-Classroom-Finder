@@ -4,14 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GlassNavigation } from "@/components/glass";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { ClassFinderLogo } from "@/components/brand/classfinder-logo";
+import { SoundToggle } from "@/components/sound/sound-toggle";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { useSound } from "@/components/sound/sound-provider";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/admin", label: "Overview", exact: true },
+  { href: "/admin/operations", label: "Operations", exact: false },
   { href: "/admin/reports", label: "Reports", exact: false },
 ] as const;
 
 export function AdminNav() {
+  const { play } = useSound();
   const pathname = usePathname();
 
   return (
@@ -19,13 +25,16 @@ export function AdminNav() {
       aria-label="ClassFinder Admin"
       className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:gap-4"
     >
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-semibold text-foreground">
-          ClassFinder · Admin
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          Campus operations console
-        </p>
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <ClassFinderLogo size="nav" />
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold text-foreground">
+            ClassFinder · Admin
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            Campus operations console
+          </p>
+        </div>
       </div>
       <nav
         aria-label="Admin sections"
@@ -40,8 +49,9 @@ export function AdminNav() {
               key={link.href}
               href={link.href}
               aria-current={active ? "page" : undefined}
+              onClick={() => play("click")}
               className={cn(
-                "btn-press inline-flex min-h-11 items-center rounded-control px-3 text-sm font-medium transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "btn-press inline-flex min-h-11 items-center rounded-button px-3 text-sm font-medium transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 active
                   ? "bg-cf-accent-muted text-foreground"
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
@@ -52,6 +62,8 @@ export function AdminNav() {
           );
         })}
       </nav>
+      <ThemeToggle />
+      <SoundToggle />
       <AdminLogoutButton />
     </GlassNavigation>
   );

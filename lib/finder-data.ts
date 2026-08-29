@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
-  getCachedFinderBuildings,
-  getCachedTimeSlots,
+  getCatalogFinderBuildings,
+  getCatalogTimeSlots,
 } from "@/lib/catalog-cache";
 import { getActiveFinderReportDate } from "@/lib/easter-egg";
 import {
@@ -331,7 +331,7 @@ async function resolveFinderRefreshContext(
   filters: FinderFilters = {},
 ): Promise<FinderContext["applied"] & { currentSlotId: string | null }> {
   const [slots, buildingId] = await Promise.all([
-    getCachedTimeSlots(),
+    getCatalogTimeSlots(),
     resolveBuildingIdParam(filters.buildingId),
   ]);
   const { slotFields } = mapTimeSlots(slots);
@@ -353,8 +353,8 @@ export async function resolveFinderContext(
   filters: FinderFilters = {},
 ): Promise<FinderContext> {
   const [buildings, slots] = await Promise.all([
-    getCachedFinderBuildings(),
-    getCachedTimeSlots(),
+    getCatalogFinderBuildings(),
+    getCatalogTimeSlots(),
   ]);
 
   const { slotFields, timeSlots } = mapTimeSlots(slots);

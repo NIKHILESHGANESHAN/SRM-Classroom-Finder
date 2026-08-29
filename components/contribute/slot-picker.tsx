@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { disabledSlotTooltip } from "@/lib/slots";
 import type { TimeSlotOption } from "@/lib/contribute-data";
+import { useSound } from "@/components/sound/sound-provider";
 import { cn } from "@/lib/utils";
 
 type SlotPickerProps = {
@@ -30,6 +31,8 @@ function selectedSlotClasses(selected: boolean, disabled: boolean): string {
  * Time-slot grid — solid surfaces, clear selected state (no glass pills).
  */
 export function SlotPicker({ slots, value, onChange }: SlotPickerProps) {
+  const { play } = useSound();
+
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={0}>
       <div
@@ -56,9 +59,12 @@ export function SlotPicker({ slots, value, onChange }: SlotPickerProps) {
                   : `Period ${slot.slotOrder}, ${slot.rangeLabel}`
               }
               disabled={disabled}
-              onClick={() => onChange(slot.id)}
+              onClick={() => {
+                play("select");
+                onChange(slot.id);
+              }}
               className={cn(
-                "flex min-h-11 flex-col items-center justify-center rounded-control border px-2 py-2 text-center transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "flex min-h-11 flex-col items-center justify-center rounded-button border px-2 py-2 text-center transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 selectedSlotClasses(selected, disabled),
               )}
             >

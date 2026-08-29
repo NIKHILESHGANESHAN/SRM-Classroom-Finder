@@ -27,10 +27,12 @@ async function main() {
     section("Inventory file vs seed (no invented rooms)");
     const listed = flattenClassroomInventory();
     const ubListed = countInventoryRooms("UB");
+    const tp1Listed = countInventoryRooms("TP1");
     const tp2Listed = countInventoryRooms("TP2");
     assert(ubListed === 77, `UB listed rooms expected 77, got ${ubListed}`);
+    assert(tp1Listed === 88, `TP1 listed rooms expected 88, got ${tp1Listed}`);
     assert(tp2Listed === 78, `TP2 listed rooms expected 78, got ${tp2Listed}`);
-    assert(listed.length === 155, `total listed expected 155, got ${listed.length}`);
+    assert(listed.length === 243, `total listed expected 243, got ${listed.length}`);
     assert(
       !CLASSROOM_INVENTORY.UB[12].includes("504"),
       "inventory file must not place 504 on UB floor 12",
@@ -40,10 +42,16 @@ async function main() {
       "inventory file must include 1205 on UB floor 12",
     );
     assert(
-      !listed.some((r) => (r as { buildingCode: string }).buildingCode === "TP1"),
-      "inventory file must not include TP1",
+      !CLASSROOM_INVENTORY.TP1[1].includes("104"),
+      "inventory file must not include 104 on TP1 floor 1",
     );
-    console.log(`ok  listed UB=${ubListed} TP2=${tp2Listed} total=${listed.length}`);
+    assert(
+      listed.some((r) => (r as { buildingCode: string }).buildingCode === "TP1"),
+      "inventory file must include TP1",
+    );
+    console.log(
+      `ok  listed UB=${ubListed} TP1=${tp1Listed} TP2=${tp2Listed} total=${listed.length}`,
+    );
 
     const buildings = await prisma.building.findMany({
       include: { floors: true },
@@ -74,8 +82,8 @@ async function main() {
     const tp1Official = officialActive.filter((c) => c.building.code === "TP1").length;
     assert(ubOfficial === 77, `UB official active expected 77, got ${ubOfficial}`);
     assert(tp2Official === 78, `TP2 official active expected 78, got ${tp2Official}`);
-    assert(tp1Official === 0, `TP1 official active expected 0, got ${tp1Official}`);
-    console.log("ok  seeded official inventory present; TP1 has no inventory rooms");
+    assert(tp1Official === 88, `TP1 official active expected 88, got ${tp1Official}`);
+    console.log("ok  seeded official inventory present; TP1 has 88 inventory rooms");
 
     const ub12 = ub.floors.find((f) => f.floorNumber === 12);
     const ub5 = ub.floors.find((f) => f.floorNumber === 5);
@@ -184,15 +192,21 @@ async function main() {
     assert(classroomsAfter === 7, `UB12 classroom count expected 7, got ${classroomsAfter}`);
     console.log("ok  no classroom/report rows created for UB Floor 12 + 504");
 
-    section("Finder coverage — TP1 inventory gap");
+    section("Finder coverage — TP1 inventory");
     const tp1Coverage = await queryFinderCoverage({
       buildingId: tp1.id,
       floorId: tp1f1.id,
       timeSlotId: null,
     });
-    assert(tp1Coverage.activeClassroomCount === 0, "TP1 floor should have 0 classrooms");
-    assert(tp1Coverage.kind === "inventory_gap", `expected inventory_gap, got ${tp1Coverage.kind}`);
-    console.log("ok  TP1 coverage is inventory_gap");
+    assert(
+      tp1Coverage.activeClassroomCount === 4,
+      `TP1 floor 1 should have 4 classrooms, got ${tp1Coverage.activeClassroomCount}`,
+    );
+    assert(
+      tp1Coverage.kind !== "inventory_gap",
+      `TP1 should not be inventory_gap, got ${tp1Coverage.kind}`,
+    );
+    console.log(`ok  TP1 floor 1 coverage kind=${tp1Coverage.kind} classrooms=4`);
 
     const ub12Coverage = await queryFinderCoverage({
       buildingId: ub.id,

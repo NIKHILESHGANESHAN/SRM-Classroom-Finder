@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 function SkeletonLine({ className }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded-md bg-muted motion-reduce:animate-none ${className ?? ""}`}
+      className={`animate-pulse rounded-surface bg-muted motion-reduce:animate-none ${className ?? ""}`}
       aria-hidden
     />
   );

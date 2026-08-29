@@ -300,7 +300,7 @@ function main() {
   const inventory = KNOWLEDGE.find((e) => e.id === "report-inventory");
   assert(inventory?.answer.includes("UB Floor 12"), "ub 12");
   assert(inventory?.answer.includes("1205"), "1205");
-  assert(inventory?.answer.includes("TP1"), "tp1 gap");
+  assert(inventory?.answer.includes("verified inventory"), "inventory wording");
   const share = KNOWLEDGE.find((e) => e.id === "share-how");
   assert(share?.answer.includes("building=UB"), "share path");
   const fav = KNOWLEDGE.find((e) => e.id === "pref-favorites-where");

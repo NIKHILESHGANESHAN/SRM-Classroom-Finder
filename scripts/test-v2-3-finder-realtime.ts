@@ -465,8 +465,9 @@ async function main() {
       floorId: tp1f1.id,
       timeSlotId: null,
     });
-    assert(tp1Coverage.kind === "inventory_gap", "TP1 remains inventory gap");
-    console.log("ok  V2.1 UB12/504, UB12/1205, TP2/504, TP1 gap");
+    assert(tp1Coverage.kind !== "inventory_gap", "TP1 has inventory");
+    assert(tp1Coverage.activeClassroomCount === 4, "TP1 floor 1 has 4 rooms");
+    console.log("ok  V2.1 UB12/504, UB12/1205, TP2/504, TP1 inventory");
 
     section("V2.2 + V2.3 DB — view filters, recent/ending");
     const slot = await prisma.timeSlot.findFirstOrThrow({

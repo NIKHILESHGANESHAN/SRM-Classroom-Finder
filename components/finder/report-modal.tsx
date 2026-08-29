@@ -27,6 +27,8 @@ import {
 import { showReportToast } from "@/components/finder/report-toast";
 import { useDeviceToken } from "@/hooks/use-device-token";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useSoundOnOpen } from "@/hooks/use-sound-on-open";
+import { useSound } from "@/components/sound/sound-provider";
 import {
   submitOccupiedReport,
   type ReportReason,
@@ -126,12 +128,15 @@ export function ReportModal({
   roomLabel,
   onHidden,
 }: ReportModalProps) {
+  const { play } = useSound();
   const isDesktop = useMediaQuery("(min-width: 640px)");
   const deviceToken = useDeviceToken();
   const [reason, setReason] = useState<ReportReason | "">("");
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  useSoundOnOpen(open);
 
   function resetAndClose() {
     setReason("");
@@ -144,6 +149,7 @@ export function ReportModal({
     if (!reason) {
       setError("Pick a reason before submitting.");
       setRetry(false);
+      play("error");
       return;
     }
 
@@ -160,9 +166,11 @@ export function ReportModal({
         if (!result.ok) {
           setError(result.error);
           setRetry(result.error === "Couldn't submit your report.");
+          play("error");
           return;
         }
 
+        play("success");
         resetAndClose();
 
         if (result.kind === "already_reported") {
@@ -181,6 +189,7 @@ export function ReportModal({
       } catch {
         setError("Couldn't submit your report.");
         setRetry(true);
+        play("error");
       }
     });
   }
@@ -236,7 +245,7 @@ export function ReportModal({
         onOpenChange(next);
       }}
     >
-      <SheetContent side="bottom" className="rounded-t-2xl pb-8">
+      <SheetContent side="bottom" className="rounded-t-sheet pb-8">
         <SheetHeader className="text-left">
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>{description}</SheetDescription>

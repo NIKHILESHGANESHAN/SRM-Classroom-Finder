@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SoundCtaLink } from "@/components/sound/sound-cta-link";
+import { SoundLink } from "@/components/sound/sound-link";
 
 /**
  * Custom 404 — App Router `not-found.tsx`.
@@ -25,11 +26,11 @@ export default function NotFound() {
           or Contributor.
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-2">
-          <Button className="min-h-11" asChild>
-            <Link href="/">Back home</Link>
-          </Button>
+          <SoundCtaLink className="min-h-11" href="/">
+            Back home
+          </SoundCtaLink>
           <Button variant="outline" className="min-h-11" asChild>
-            <Link href="/finder">Find a classroom</Link>
+            <SoundLink href="/finder">Find a classroom</SoundLink>
           </Button>
         </div>
       </div>

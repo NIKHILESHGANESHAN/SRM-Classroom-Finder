@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +8,10 @@ import { ProgressIndicator } from "@/components/contribute/progress-indicator";
 import { SlotPicker } from "@/components/contribute/slot-picker";
 import { SuccessState } from "@/components/contribute/success-state";
 import { GlassNavigation } from "@/components/glass";
+import { ClassFinderNavTitle } from "@/components/brand/classfinder-nav-title";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
+import { SoundLink } from "@/components/sound/sound-link";
+import { useSound } from "@/components/sound/sound-provider";
 import { Button } from "@/components/ui/button";
 import { submitFreeReport } from "@/lib/actions/contribute";
 import type {
@@ -17,7 +19,6 @@ import type {
   ContributePageData,
   TimeSlotOption,
 } from "@/lib/contribute-data";
-import { PRODUCT_NAME } from "@/lib/design-tokens";
 import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 import { ensureDeviceToken } from "@/lib/token";
 import { cn } from "@/lib/utils";
@@ -70,13 +71,18 @@ function SelectionButton({
   onClick: () => void;
   className?: string;
 }) {
+  const { play } = useSound();
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        play("select");
+        onClick();
+      }}
       aria-pressed={selected}
       className={cn(
-        "btn-press flex min-h-11 w-full flex-col items-start justify-center rounded-control border px-4 py-3 text-left transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "btn-press flex min-h-11 w-full flex-col items-start justify-center rounded-button border px-4 py-3 text-left transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         selected
           ? "border-cf-accent bg-cf-accent-muted ring-2 ring-cf-accent/20"
           : "border-border bg-card hover:border-cf-accent/35 hover:bg-muted/30",
@@ -95,6 +101,7 @@ export function ContributeWizard({
   data,
   reportingBlocked = false,
 }: ContributeWizardProps) {
+  const { play } = useSound();
   const reduceMotion = useReducedMotion();
   const [step, setStep] = useState<Step>(0);
   const [direction, setDirection] = useState(1);
@@ -155,6 +162,7 @@ export function ContributeWizard({
   }
 
   function selectFloor(id: string) {
+    play("select");
     setFloorId(id);
     setClassroomId(null);
     setRoomError(null);
@@ -162,6 +170,7 @@ export function ContributeWizard({
   }
 
   function selectClassroom(id: string) {
+    play("select");
     setClassroomId(id);
     setRoomError(null);
   }
@@ -169,13 +178,16 @@ export function ContributeWizard({
   function continueFromRoom() {
     if (!classroomId || !selectedClassroom) {
       setRoomError("Pick a room from the list.");
+      play("error");
       return;
     }
     if (classrooms.length === 0) {
       setRoomError("No rooms listed for this floor yet.");
+      play("error");
       return;
     }
     setRoomError(null);
+    play("click");
     if (
       !timeSlotId ||
       !data.timeSlots.find((s) => s.id === timeSlotId)?.selectable
@@ -201,6 +213,7 @@ export function ContributeWizard({
     if (!buildingId || !floorId || !timeSlotId || !classroomId) return;
     if (!selectedClassroom) {
       setRoomError("Pick a room from the list.");
+      play("error");
       goTo(2);
       return;
     }
@@ -221,9 +234,11 @@ export function ContributeWizard({
           const message = humanSubmitError(result.error);
           setSubmitError(message);
           toast.error(message);
+          play("error");
           return;
         }
 
+        play("success");
         const roomLabel =
           `${building?.code ?? ""} ${selectedClassroom.roomNumber}`.trim();
         const slotLabel = selectedSlot
@@ -238,6 +253,7 @@ export function ContributeWizard({
       } catch {
         const message = humanSubmitError("Couldn't submit your report.");
         setSubmitError(message);
+        play("error");
       }
     });
   }
@@ -249,18 +265,11 @@ export function ContributeWizard({
         className="flex items-center gap-2 px-2 py-2 sm:px-3"
       >
         <Button variant="ghost" size="icon" className="min-h-11 min-w-11" asChild>
-          <Link href="/" aria-label="Back to home">
+          <SoundLink href="/" aria-label="Back to home">
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </SoundLink>
         </Button>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-semibold text-foreground sm:text-lg">
-            {PRODUCT_NAME}
-          </h1>
-          <p className="truncate text-xs text-muted-foreground">
-            Report a free room
-          </p>
-        </div>
+        <ClassFinderNavTitle subtitle="Report a free room" />
         <MoreOptionsMenu className="shrink-0" />
       </GlassNavigation>
 
@@ -352,7 +361,10 @@ export function ContributeWizard({
                         variant="ghost"
                         size="sm"
                         className="min-h-11 shrink-0"
-                        onClick={() => goTo(0)}
+                        onClick={() => {
+                          play("click");
+                          goTo(0);
+                        }}
                       >
                         <ChevronLeft className="h-4 w-4" />
                         Back
@@ -366,7 +378,7 @@ export function ContributeWizard({
                           aria-pressed={floorId === f.id}
                           onClick={() => selectFloor(f.id)}
                           className={cn(
-                            "btn-press flex min-h-11 items-center justify-center rounded-control border text-base font-semibold tabular-nums transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            "btn-press flex min-h-11 items-center justify-center rounded-button border text-base font-semibold tabular-nums transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             floorId === f.id
                               ? "border-cf-accent bg-cf-accent-muted text-foreground ring-2 ring-cf-accent/20"
                               : "border-border bg-card hover:border-cf-accent/35",
@@ -393,7 +405,10 @@ export function ContributeWizard({
                         variant="ghost"
                         size="sm"
                         className="min-h-11 shrink-0"
-                        onClick={() => goTo(1)}
+                        onClick={() => {
+                          play("click");
+                          goTo(1);
+                        }}
                       >
                         <ChevronLeft className="h-4 w-4" />
                         Back
@@ -427,7 +442,7 @@ export function ContributeWizard({
                             aria-selected={classroomId === room.id}
                             onClick={() => selectClassroom(room.id)}
                             className={cn(
-                              "btn-press flex min-h-11 items-center justify-center rounded-control border text-base font-semibold tabular-nums transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              "btn-press flex min-h-11 items-center justify-center rounded-button border text-base font-semibold tabular-nums transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                               classroomId === room.id
                                 ? "border-cf-accent bg-cf-accent-muted text-foreground ring-2 ring-cf-accent/20"
                                 : "border-border bg-card hover:border-cf-accent/35",
@@ -468,7 +483,10 @@ export function ContributeWizard({
                         variant="ghost"
                         size="sm"
                         className="min-h-11 shrink-0"
-                        onClick={() => goTo(2)}
+                        onClick={() => {
+                          play("click");
+                          goTo(2);
+                        }}
                       >
                         <ChevronLeft className="h-4 w-4" />
                         Back

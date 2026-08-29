@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { SoundLink } from "@/components/sound/sound-link";
+import { useSound } from "@/components/sound/sound-provider";
 
 export default function ContactError({
   error,
@@ -11,6 +12,8 @@ export default function ContactError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { play } = useSound();
+
   useEffect(() => {
     console.error("[contact]", error);
   }, [error]);
@@ -22,11 +25,18 @@ export default function ContactError({
         Try again in a moment.
       </p>
       <div className="flex flex-wrap justify-center gap-3">
-        <Button type="button" className="btn-press min-h-11" onClick={reset}>
+        <Button
+          type="button"
+          className="btn-press min-h-11"
+          onClick={() => {
+            play("click");
+            reset();
+          }}
+        >
           Try again
         </Button>
         <Button variant="outline" className="btn-press min-h-11" asChild>
-          <Link href="/contact">Back to Contact</Link>
+          <SoundLink href="/contact">Back to Contact</SoundLink>
         </Button>
       </div>
     </div>

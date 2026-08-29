@@ -1,9 +1,9 @@
 "use client";
 
 import { Moon } from "lucide-react";
-import Link from "next/link";
 import { GlassNavigation } from "@/components/glass";
-import { Button } from "@/components/ui/button";
+import { ClassFinderNavTitle } from "@/components/brand/classfinder-nav-title";
+import { EasterEggEntryActions } from "@/components/easter-egg/easter-egg-entry-actions";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PRODUCT_NAME } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 
 const NIGHT_EGG_MESSAGE =
@@ -24,7 +23,7 @@ type ContributeNightProps = {
 
 /**
  * Night Easter Egg — 21:00–03:59 IST. Reporting closed, Finder still available.
- * Not dismissible; only exit is Back to Finder.
+ * Not dismissible; Play XO or Home only (no Report / Finder shortcuts).
  */
 export function ContributeNight({ open = true }: ContributeNightProps) {
   return (
@@ -33,12 +32,7 @@ export function ContributeNight({ open = true }: ContributeNightProps) {
         aria-label="Contributor navigation"
         className="flex items-center gap-2 px-2 py-2 sm:px-3"
       >
-        <div className="min-w-0 flex-1 px-1">
-          <h1 className="truncate text-base font-semibold text-foreground">
-            Report a room
-          </h1>
-          <p className="truncate text-xs text-muted-foreground">{PRODUCT_NAME}</p>
-        </div>
+        <ClassFinderNavTitle title="Report a room" />
       </GlassNavigation>
 
       <Dialog open={open} onOpenChange={() => {}}>
@@ -63,9 +57,7 @@ export function ContributeNight({ open = true }: ContributeNightProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-6 flex-col gap-2 sm:flex-col sm:space-x-0">
-            <Button asChild className="min-h-11 w-full">
-              <Link href="/finder">Back to Finder</Link>
-            </Button>
+            <EasterEggEntryActions />
           </DialogFooter>
         </DialogContent>
       </Dialog>

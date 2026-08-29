@@ -2,10 +2,12 @@
 
 import { useId, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useSound } from "@/components/sound/sound-provider";
 import { getFaqSections } from "@/lib/help/faq";
 import { cn } from "@/lib/utils";
 
 export function FaqAccordion() {
+  const { play } = useSound();
   const sections = getFaqSections();
   const baseId = useId();
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -35,7 +37,10 @@ export function FaqAccordion() {
                       className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground transition-standard hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:px-5"
                       aria-expanded={open}
                       aria-controls={panelId}
-                      onClick={() => setOpenKey(open ? null : key)}
+                      onClick={() => {
+                        play(open ? "close" : "open");
+                        setOpenKey(open ? null : key);
+                      }}
                     >
                       <span>{entry.question}</span>
                       <ChevronDown
