@@ -12,6 +12,7 @@ import {
   THROTTLED_CONFIRMATION_THRESHOLD,
   TRUSTED_CONFIRMATION_THRESHOLD,
 } from "../lib/token-trust";
+import { buildExpiresAt, timeToMinutes } from "../lib/slots";
 
 const prisma = new PrismaClient();
 
@@ -44,8 +45,9 @@ async function ensureClassroom(roomNumber: string) {
       buildingId: building.id,
       floorId: floor.id,
       roomNumber,
+      isActive: false,
     },
-    update: {},
+    update: { isActive: false },
   });
 }
 
@@ -74,7 +76,10 @@ async function seedHiddenForToken(token: string, n: number, reportDate: Date) {
           contributorToken: token,
           status: "hidden",
           confirmationCount: 1,
-          expiresAt: new Date(Date.now() + 3_600_000),
+          expiresAt: buildExpiresAt(
+            reportDate.toISOString().slice(0, 10),
+            timeToMinutes(slots[i].endTime),
+          ),
         },
       });
     } else {
@@ -86,7 +91,10 @@ async function seedHiddenForToken(token: string, n: number, reportDate: Date) {
           contributorToken: token,
           status: "hidden",
           confirmationCount: 1,
-          expiresAt: new Date(Date.now() + 3_600_000),
+          expiresAt: buildExpiresAt(
+            reportDate.toISOString().slice(0, 10),
+            timeToMinutes(slots[i].endTime),
+          ),
         },
       });
     }
@@ -131,7 +139,10 @@ async function simulateConfirmations(args: {
       contributorToken: args.originalToken,
       status: "unverified",
       confirmationCount: 1,
-      expiresAt: new Date(Date.now() + 7_200_000),
+      expiresAt: buildExpiresAt(
+        args.reportDate.toISOString().slice(0, 10),
+        timeToMinutes(slot.endTime),
+      ),
     },
   });
 
@@ -282,6 +293,18 @@ async function main() {
   }
 
   console.log("Phase 9 trust smoke tests PASSED");
+
+  // Leave fixtures in test-safe state — do not pollute admin "active" counts.
+  await prisma.freeReport.updateMany({
+    where: {
+      classroom: {
+        roomNumber: { in: ["P9T1", "P9T2", "P9T3", "P9H0", "P9H1", "P9H2"] },
+      },
+      reportDate,
+    },
+    data: { status: "expired" },
+  });
+  console.log("cleanup: P9T/P9H fixture reports marked expired");
 }
 
 main()

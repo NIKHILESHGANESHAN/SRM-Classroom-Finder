@@ -80,7 +80,7 @@ export function HelpChatPanel({
   const shellClass =
     variant === "page"
       ? "flex min-h-[min(70vh,36rem)] flex-col overflow-hidden rounded-surface border border-border bg-card shadow-token-sm"
-      : "flex max-h-[min(600px,calc(100dvh-6rem-env(safe-area-inset-bottom)))] min-h-[min(500px,70dvh)] flex-col overflow-hidden rounded-surface border border-border bg-card shadow-token-lg";
+      : "flex max-h-[min(600px,calc(100dvh-6rem-env(safe-area-inset-bottom)))] min-h-[min(280px,calc(100dvh-9rem-env(safe-area-inset-bottom)))] flex-col overflow-hidden rounded-surface border border-border bg-card shadow-token-lg";
 
   return (
     <div className={cn(shellClass, className)}>

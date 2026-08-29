@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  isDatabaseConnectivityError,
+  sanitizeErrorForLog,
+} from "@/lib/db-errors";
 import { getFinderRefreshData } from "@/lib/finder-data";
 import { logger } from "@/lib/logger";
 
@@ -44,11 +48,10 @@ export async function GET(request: Request) {
       },
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "finder_refresh_failed";
     logger.error("finder.refresh", {
       ok: false,
-      error: message,
+      connectivity: isDatabaseConnectivityError(error),
+      error: sanitizeErrorForLog(error),
       durationMs: Date.now() - started,
     });
     return NextResponse.json(

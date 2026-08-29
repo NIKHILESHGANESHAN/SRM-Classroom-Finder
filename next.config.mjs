@@ -2,7 +2,7 @@
 const nextConfig = {
   /** Tree-shake heavy icon/chart packages in client bundles. */
   experimental: {
-    optimizePackageImports: ["lucide-react", "recharts"],
+    optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
   },
   /**
    * Service worker + manifest headers for PWA installability.

@@ -150,8 +150,12 @@
     @apply border-border;
   }
 
+  html {
+    overflow-x: clip;
+  }
+
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply min-w-0 bg-background text-foreground antialiased;
   }
 
   /* Typography foundation */
@@ -374,6 +378,39 @@
 
   .shadow-glass {
     box-shadow: var(--glass-shadow);
+  }
+
+  /*
+   * Bottom clearance for the fixed Help launcher (h-14 + safe area + gap).
+   * Applied on student-facing page shells — not admin.
+   */
+  .cf-help-clearance {
+    padding-bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom)));
+  }
+
+  /*
+   * Elevated content surface — glass palette without backdrop-filter.
+   * For classroom cards, selects inside glass bars, and other list items.
+   */
+  .surface-elevated {
+    border: 1px solid var(--glass-border-light);
+    background-color: var(--glass-bg-prominent-light);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-surface);
+    contain: layout style;
+  }
+
+  .dark .surface-elevated {
+    border-color: var(--glass-border-dark);
+    background-color: var(--glass-bg-prominent-dark);
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .surface-elevated {
+      background-color: hsl(var(--color-surface));
+      border-color: hsl(var(--color-border));
+      box-shadow: var(--shadow-md);
+    }
   }
 
   .rounded-control {

@@ -8,7 +8,11 @@ import {
   timeToMinutes,
   type SlotTimeFields,
 } from "@/lib/slots";
-import { isAfterLastReportablePeriod } from "@/lib/finder-ui";
+import {
+  getEasterEggPhase,
+  isReportingAllowed,
+  type EasterEggPhase,
+} from "@/lib/easter-egg";
 
 export type ClassroomOption = {
   id: string;
@@ -41,8 +45,10 @@ export type ContributePageData = {
   timeSlots: TimeSlotOption[];
   currentSlotId: string | null;
   nowMinutes: number;
-  /** After the final slot grace window — Contributor UI closes for the day. */
-  afterHours: boolean;
+  /** Current Easter Egg phase (IST clock windows). */
+  easterEggPhase: EasterEggPhase;
+  /** Evening/night eggs or daily cycle end — no new reports. */
+  reportingBlocked: boolean;
 };
 
 /** Load dimension data for the Contributor wizard (Server Component). */
@@ -101,6 +107,7 @@ export async function getContributePageData(): Promise<ContributePageData> {
     timeSlots,
     currentSlotId: getCurrentSlotId(slotFields, nowMinutes),
     nowMinutes,
-    afterHours: isAfterLastReportablePeriod(slotFields, nowMinutes),
+    easterEggPhase: getEasterEggPhase(nowMinutes),
+    reportingBlocked: !isReportingAllowed(nowMinutes),
   };
 }

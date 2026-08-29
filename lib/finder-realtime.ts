@@ -17,6 +17,7 @@
  */
 
 import { FRESHNESS_MS } from "@/lib/report-display";
+import { getActiveFinderReportDate } from "@/lib/easter-egg";
 import type { ActiveFreeClassroom, FinderCoverage } from "@/lib/finder-data";
 
 export const POLL_INTERVAL_MS = 20_000;
@@ -24,6 +25,23 @@ export const ADAPTIVE_POLL_INTERVAL_MS = 10_000;
 export const ADAPTIVE_EXPIRY_WINDOW_MS = 5 * 60 * 1000;
 export const ENDING_SOON_MS = 10 * 60 * 1000;
 export const RECENTLY_REPORTED_MS = FRESHNESS_MS.fresh;
+
+/**
+ * Finder-visible rooms for the active campus reporting cycle.
+ * Drops previous-day rows and client-stale expired slot reports.
+ */
+export function filterRoomsForActiveCycle(
+  rooms: ActiveFreeClassroom[],
+  now: Date = new Date(),
+): ActiveFreeClassroom[] {
+  const activeDate = getActiveFinderReportDate(now);
+  if (!activeDate) return [];
+  const nowMs = now.getTime();
+  return rooms.filter(
+    (room) =>
+      room.reportDate === activeDate && remainingMsForRoom(room, nowMs) > 0,
+  );
+}
 
 export type FinderFocus = "all" | "recent" | "ending";
 
@@ -199,6 +217,18 @@ export function diffFinderRooms(
   }
 
   return { added, removed, changed, unchangedIds };
+}
+
+/** Shallow compare — avoids rerenders when poll JSON recreates the coverage object. */
+export function finderCoverageUnchanged(
+  a: FinderCoverage,
+  b: FinderCoverage,
+): boolean {
+  return (
+    a.kind === b.kind &&
+    a.activeClassroomCount === b.activeClassroomCount &&
+    a.historicalReportCount === b.historicalReportCount
+  );
 }
 
 export function roomsPayloadUnchanged(

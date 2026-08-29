@@ -18,6 +18,12 @@ import {
   isSensitiveProbe,
   type HelpReply,
 } from "@/lib/help/scope";
+import {
+  isDatabaseConnectivityError,
+  LIVE_DATA_UNAVAILABLE_MESSAGE,
+  sanitizeErrorForLog,
+} from "@/lib/db-errors";
+import { logger } from "@/lib/logger";
 import { getClientIp, RATE_LIMITS, rateLimit } from "@/lib/rate-limit";
 
 import type { HelpSessionContext } from "@/lib/help/session-context";
@@ -70,10 +76,17 @@ export async function askHelpAssistant(
     try {
       const liveText = await answerLiveHelpIntent(liveIntent);
       return { kind: "answer", text: liveText, entryId: null, live: true };
-    } catch {
+    } catch (error) {
+      logger.error("help.live_data_failed", {
+        connectivity: isDatabaseConnectivityError(error),
+        error: sanitizeErrorForLog(error),
+      });
+      const text = isDatabaseConnectivityError(error)
+        ? `${LIVE_DATA_UNAVAILABLE_MESSAGE} Earlier messages in this chat may show older availability — they are not a fresh live check. You can also ask a how-to question.`
+        : "I couldn't read live classroom data just now. Try ClassFinder, or ask a how-to question.";
       return {
         kind: "no_match",
-        text: "I couldn't read live classroom data just now. Try ClassFinder, or ask a how-to question.",
+        text,
         entryId: null,
         live: true,
       };

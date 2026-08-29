@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { glassSurfaceClasses } from "@/lib/glass";
+import { surfaceElevatedClasses, glassSurfaceClasses } from "@/lib/glass";
 import { cn } from "@/lib/utils";
 
 const glassControlVariants = cva(
@@ -12,11 +12,12 @@ const glassControlVariants = cva(
         regular: glassSurfaceClasses({ variant: "regular" }),
         clear: glassSurfaceClasses({ variant: "clear" }),
         prominent: glassSurfaceClasses({ variant: "prominent" }),
+        elevated: surfaceElevatedClasses(),
       },
       size: {
-        default: "min-h-9 px-3 rounded-control text-sm",
-        sm: "min-h-8 px-2.5 rounded-control text-xs",
-        icon: "h-9 w-9 rounded-control",
+        default: "min-h-11 px-3 rounded-control text-sm",
+        sm: "min-h-11 px-2.5 rounded-control text-xs",
+        icon: "min-h-11 min-w-11 rounded-control",
       },
     },
     defaultVariants: {

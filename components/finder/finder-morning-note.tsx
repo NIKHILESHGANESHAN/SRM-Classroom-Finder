@@ -4,32 +4,32 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { GlassSurface } from "@/components/glass";
 import { Button } from "@/components/ui/button";
+import { isMorningEasterEgg } from "@/lib/easter-egg";
 import {
-  isBeforeFirstReportablePeriod,
   morningNoteDismissStorageKey,
 } from "@/lib/finder-ui";
 import { getCampusDateString } from "@/lib/slots";
-import type { FinderSlot } from "@/lib/finder-data";
 
 type FinderMorningNoteProps = {
-  timeSlots: FinderSlot[];
   totalActiveReports: number;
   show: boolean;
 };
 
 /**
- * Early-morning note — only before the first reportable period with zero active reports.
+ * Morning Easter Egg — 04:00–07:50 IST with zero active reports.
  * Non-blocking, dismissible for the campus day (sessionStorage).
  */
 export function FinderMorningNote({
-  timeSlots,
   totalActiveReports,
   show,
 }: FinderMorningNoteProps) {
-  const [dismissed, setDismissed] = useState(true);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!show) return;
+    if (!show) {
+      setDismissed(false);
+      return;
+    }
     const key = morningNoteDismissStorageKey(getCampusDateString());
     setDismissed(sessionStorage.getItem(key) === "1");
   }, [show]);
@@ -38,7 +38,7 @@ export function FinderMorningNote({
     !show ||
     dismissed ||
     totalActiveReports > 0 ||
-    !isBeforeFirstReportablePeriod(timeSlots)
+    !isMorningEasterEgg()
   ) {
     return null;
   }

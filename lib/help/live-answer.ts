@@ -9,7 +9,11 @@ import {
   type FinderFilters,
 } from "@/lib/finder-data";
 import type { LiveHelpIntent, LiveSlotScope } from "@/lib/help/live-intent";
-import { applyFinderFocus, remainingMsForRoom } from "@/lib/finder-realtime";
+import {
+  applyFinderFocus,
+  filterRoomsForActiveCycle,
+  remainingMsForRoom,
+} from "@/lib/finder-realtime";
 
 const MAX_LIST = 12;
 
@@ -63,6 +67,11 @@ function scopeNote(scope: LiveSlotScope | undefined): string {
   return scope === "all" ? " (all slots)" : "";
 }
 
+/** Same active-cycle scope ClassFinder displays (excludes expired slot rows). */
+function visibleFinderRooms(rooms: ActiveFreeClassroom[]): ActiveFreeClassroom[] {
+  return filterRoomsForActiveCycle(rooms);
+}
+
 export async function answerLiveHelpIntent(
   intent: LiveHelpIntent,
 ): Promise<string> {
@@ -70,7 +79,7 @@ export async function answerLiveHelpIntent(
 
   if (intent.kind === "ending_soon") {
     const data = await getFinderRefreshData(filters);
-    const rooms = applyFinderFocus(data.rooms, "ending", Date.now());
+    const rooms = applyFinderFocus(visibleFinderRooms(data.rooms), "ending", Date.now());
     if (rooms.length === 0) {
       return "There are currently no classrooms ending soon. Open ClassFinder and choose Ending soon to double-check.";
     }
@@ -79,7 +88,7 @@ export async function answerLiveHelpIntent(
 
   if (intent.kind === "recent") {
     const data = await getFinderRefreshData(filters);
-    const rooms = applyFinderFocus(data.rooms, "recent", Date.now());
+    const rooms = applyFinderFocus(visibleFinderRooms(data.rooms), "recent", Date.now());
     if (rooms.length === 0) {
       return "There are currently no recently verified free classrooms (last 10 minutes). Other rooms may still be listed under All free.";
     }
@@ -88,30 +97,32 @@ export async function answerLiveHelpIntent(
 
   if (intent.kind === "general") {
     const data = await getFinderRefreshData(filters);
-    if (data.rooms.length === 0) {
+    const rooms = visibleFinderRooms(data.rooms);
+    if (rooms.length === 0) {
       return "There are currently no classrooms reported free. That does not mean every room on campus is occupied — nobody may have reported yet.";
     }
-    return `There are currently ${data.rooms.length} classroom${data.rooms.length === 1 ? "" : "s"} reported free${scopeNote(intent.slotScope)}:\n${listRooms(data.rooms)}`;
+    return `There are currently ${rooms.length} classroom${rooms.length === 1 ? "" : "s"} reported free${scopeNote(intent.slotScope)}:\n${listRooms(rooms)}`;
   }
 
   const data = await getFinderRefreshData(filters);
+  const visibleRooms = visibleFinderRooms(data.rooms);
 
   if (intent.kind === "building") {
-    if (data.rooms.length === 0) {
+    if (visibleRooms.length === 0) {
       return `There are currently no classrooms reported free in ${intent.buildingCode}.`;
     }
-    return `There are currently ${data.rooms.length} classroom${data.rooms.length === 1 ? "" : "s"} reported free in ${intent.buildingCode}${scopeNote(intent.slotScope)}:\n${listRooms(data.rooms)}`;
+    return `There are currently ${visibleRooms.length} classroom${visibleRooms.length === 1 ? "" : "s"} reported free in ${intent.buildingCode}${scopeNote(intent.slotScope)}:\n${listRooms(visibleRooms)}`;
   }
 
   if (intent.kind === "floor") {
-    const rooms = data.rooms.filter((r) => r.floorNumber === intent.floorNumber);
+    const rooms = visibleRooms.filter((r) => r.floorNumber === intent.floorNumber);
     if (rooms.length === 0) {
       return `There are currently no classrooms reported free in ${intent.buildingCode} Floor ${intent.floorNumber}.`;
     }
     return `There are currently ${rooms.length} classroom${rooms.length === 1 ? "" : "s"} reported free in ${intent.buildingCode} Floor ${intent.floorNumber}:\n${listRooms(rooms)}`;
   }
 
-  const rooms = data.rooms.filter((r) => {
+  const rooms = visibleRooms.filter((r) => {
     if (r.roomNumber.toUpperCase() !== intent.roomNumber.toUpperCase()) {
       return false;
     }

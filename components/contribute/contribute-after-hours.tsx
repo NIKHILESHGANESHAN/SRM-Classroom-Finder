@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { Moon } from "lucide-react";
+import Link from "next/link";
 import { GlassNavigation } from "@/components/glass";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,8 @@ type ContributeAfterHoursProps = {
 };
 
 /**
- * After-hours Contributor — evening message when reporting has closed for the day.
+ * Evening Easter Egg — reporting closed, Finder still available.
+ * Not dismissible; only exit is Back to Finder.
  */
 export function ContributeAfterHours({ open = true }: ContributeAfterHoursProps) {
   return (
@@ -37,14 +38,15 @@ export function ContributeAfterHours({ open = true }: ContributeAfterHoursProps)
         </div>
       </GlassNavigation>
 
-      <Dialog open={open}>
+      <Dialog open={open} onOpenChange={() => {}}>
         <DialogContent
+          showCloseButton={false}
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
           className={cn(
             "glass-surface glass-surface--prominent max-w-md gap-0 border-0 p-6 shadow-glass sm:rounded-sheet sm:p-8",
-            "[&>button]:hidden",
           )}
-          onPointerDownOutside={(event) => event.preventDefault()}
-          onEscapeKeyDown={(event) => event.preventDefault()}
         >
           <DialogHeader className="space-y-3 text-left">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cf-accent-muted text-cf-accent">
@@ -60,9 +62,6 @@ export function ContributeAfterHours({ open = true }: ContributeAfterHoursProps)
           <DialogFooter className="mt-6 flex-col gap-2 sm:flex-col sm:space-x-0">
             <Button asChild className="min-h-11 w-full">
               <Link href="/finder">Back to Finder</Link>
-            </Button>
-            <Button asChild variant="outline" className="min-h-11 w-full">
-              <Link href="/">Okay</Link>
             </Button>
           </DialogFooter>
         </DialogContent>

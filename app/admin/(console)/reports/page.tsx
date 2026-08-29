@@ -1,19 +1,19 @@
 import { getAdminReports } from "@/lib/admin/data";
+import {
+  formatReportExpiresAt,
+  isAnomalousReportExpiry,
+} from "@/lib/admin/format-report-expiry";
 import { requireAdmin } from "@/lib/admin/session";
 import { ReportStatusBadge } from "@/components/admin/report-status-badge";
 
 export const dynamic = "force-dynamic";
 
-function formatIsoShort(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+function formatExpiryCell(expiresAt: string, reportDate: string): string {
+  const label = formatReportExpiresAt(expiresAt);
+  if (isAnomalousReportExpiry(expiresAt, reportDate)) {
+    return `${label} (check data)`;
+  }
+  return label;
 }
 
 export default async function AdminReportsPage() {
@@ -90,7 +90,7 @@ export default async function AdminReportsPage() {
                     <td className="px-4 py-3 tabular-nums">{row.eventCount}</td>
                     <td className="px-4 py-3 tabular-nums">{row.slotOrder}</td>
                     <td className="px-4 py-3 text-xs tabular-nums">
-                      {formatIsoShort(row.expiresAt)}
+                      {formatExpiryCell(row.expiresAt, row.reportDate)}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs">
                       {row.contributorFingerprint}
@@ -133,7 +133,7 @@ export default async function AdminReportsPage() {
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Expires</dt>
-                    <dd>{formatIsoShort(row.expiresAt)}</dd>
+                    <dd>{formatExpiryCell(row.expiresAt, row.reportDate)}</dd>
                   </div>
                 </dl>
                 <p className="mt-2 font-mono text-xs text-muted-foreground">

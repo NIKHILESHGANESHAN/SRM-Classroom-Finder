@@ -17,6 +17,7 @@ import {
 import { roomUpdateSignature } from "@/lib/finder-realtime";
 import { deriveConfidence } from "@/lib/report-display";
 import type { RecentRoom } from "@/lib/local-preferences";
+import { surfaceElevatedClasses } from "@/lib/glass";
 import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -64,7 +65,6 @@ function confirmationLine(room: ActiveFreeClassroom): string {
 
 function ClassroomCardInner({
   room,
-  index,
   onRemove,
   onNeedRefresh,
   onShared,
@@ -159,7 +159,7 @@ function ClassroomCardInner({
   return (
     <motion.article
       ref={articleRef}
-      layout={!reduceMotion}
+      layout={false}
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{
         opacity: 1,
@@ -168,7 +168,6 @@ function ClassroomCardInner({
           ? { duration: 0.12 }
           : {
               duration: MOTION_STANDARD,
-              delay: Math.min(index, 8) * 0.025,
               ease: EASE_OUT_EXPO,
             },
       }}
@@ -184,14 +183,14 @@ function ClassroomCardInner({
             }
       }
       className={cn(
-        "rounded-surface border border-border bg-card px-4 py-4 shadow-token-sm sm:px-5 sm:py-5",
+        surfaceElevatedClasses("px-4 py-4 sm:px-5 sm:py-5"),
         emphasized &&
           "ring-2 ring-cf-accent ring-offset-2 ring-offset-background",
       )}
       data-shared-room={emphasized ? "true" : undefined}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm font-medium text-muted-foreground">
             {room.buildingCode} · Floor {room.floorNumber}
           </p>
@@ -200,10 +199,12 @@ function ClassroomCardInner({
           </h2>
           {emphasized ? <p className="sr-only">Shared classroom</p> : null}
         </div>
-        <FreeCountdown
-          reportDate={room.reportDate}
-          endMinutes={room.endMinutes}
-        />
+        <div className="shrink-0 sm:text-right">
+          <FreeCountdown
+            reportDate={room.reportDate}
+            endMinutes={room.endMinutes}
+          />
+        </div>
       </div>
 
       <div className="mt-3 space-y-1.5 border-t border-border/60 pt-3">

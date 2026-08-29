@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { memo } from "react";
 import { AlertTriangle } from "lucide-react";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { useWallClockTick } from "@/hooks/use-wall-clock-tick";
 import { formatMinutesAsLabel } from "@/lib/slots";
 import { cn } from "@/lib/utils";
 
@@ -43,15 +44,14 @@ function formatRemaining(ms: number): string {
 
 /**
  * Live availability countdown — accurate wall-clock, text-first (not color-only).
+ * Shares a single 1 Hz timer across all instances on the page.
  */
-export function FreeCountdown({ reportDate, endMinutes }: CountdownProps) {
-  const reduceMotion = useReducedMotion();
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
+export const FreeCountdown = memo(function FreeCountdown({
+  reportDate,
+  endMinutes,
+}: CountdownProps) {
+  const reduceMotion = usePrefersReducedMotion();
+  const now = useWallClockTick();
 
   const ms = remainingMs(reportDate, endMinutes, now);
   const untilLabel = formatMinutesAsLabel(endMinutes);
@@ -99,4 +99,4 @@ export function FreeCountdown({ reportDate, endMinutes }: CountdownProps) {
       </p>
     </div>
   );
-}
+});

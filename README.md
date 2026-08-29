@@ -270,7 +270,7 @@ Unauthorized → `401`. Rate-limited bursts → `429`.
 
 - Set `ADMIN_SECRET` (min 16 characters, **not** `CRON_SECRET`, never `NEXT_PUBLIC_`).
 - Sign-in sets an HttpOnly `SameSite=Lax` cookie (Secure in production, 8 hour expiry).
-- Unauthenticated visits to `/admin`, `/admin/inventory`, and `/admin/reports` are redirected to `/admin/login` (middleware + server `requireAdmin()`).
+- Unauthenticated visits to `/admin` and `/admin/reports` are redirected to `/admin/login` (middleware + server `requireAdmin()`).
 - Inventory: activate / deactivate official classrooms only. Reports are not deleted.
 - Report list shows one-way token fingerprints (`Token 7f3a91…`), never raw anonymous tokens.
 

@@ -60,7 +60,7 @@ export function LandingNav() {
     <header className="relative z-20 px-4 pt-3 sm:px-6 sm:pt-4">
       <GlassNavigation
         aria-label="ClassFinder"
-        className="mx-auto flex max-w-xl items-center justify-between gap-3 px-3 py-2 sm:px-4"
+        className="mx-auto flex w-full max-w-xl items-center justify-between gap-3 px-3 py-2 sm:px-4 lg:max-w-2xl"
       >
         <p className="truncate text-sm font-medium text-foreground">
           <span className="text-cf-accent">{PRODUCT_NAME}</span>

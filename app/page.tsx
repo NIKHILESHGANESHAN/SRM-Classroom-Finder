@@ -14,7 +14,7 @@ export default function HomePage() {
 
       <LandingNav />
 
-      <main className="relative z-10 mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-xl flex-col px-4 pb-6 pt-5 sm:min-h-[calc(100dvh-4.5rem)] sm:px-6 sm:pb-8 sm:pt-10 lg:max-w-2xl lg:pt-14">
+      <main className="relative z-10 mx-auto flex min-h-[calc(100dvh-4rem)] w-full min-w-0 max-w-xl flex-col px-4 pt-5 cf-help-clearance sm:min-h-[calc(100dvh-4.5rem)] sm:px-6 sm:pt-10 lg:max-w-2xl lg:pt-14">
         <div className="flex flex-1 flex-col justify-center gap-8 sm:gap-10 lg:gap-12">
           <LandingHero />
           <LandingActions />

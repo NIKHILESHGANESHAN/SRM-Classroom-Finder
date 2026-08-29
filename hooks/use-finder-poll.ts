@@ -9,6 +9,8 @@ import {
   buildFinderRefreshPath,
   createFinderPollController,
   diffFinderRooms,
+  filterRoomsForActiveCycle,
+  finderCoverageUnchanged,
   nextPollIntervalMs,
   roomsPayloadUnchanged,
   summarizeFinderDiff,
@@ -16,6 +18,8 @@ import {
   type FinderPollController,
   type FinderRefreshPayload,
 } from "@/lib/finder-realtime";
+import { FINDER_REFRESH_FAILED_MESSAGE } from "@/lib/db-errors";
+import { getActiveFinderReportDate } from "@/lib/easter-egg";
 
 type UseFinderPollArgs = {
   initialRooms: ActiveFreeClassroom[];
@@ -76,7 +80,9 @@ export function useFinderPoll({
   initialCurrentSlotId,
   applied,
 }: UseFinderPollArgs): UseFinderPollResult {
-  const [rooms, setRooms] = useState(initialRooms);
+  const [rooms, setRooms] = useState(() =>
+    filterRoomsForActiveCycle(initialRooms),
+  );
   const [coverage, setCoverage] = useState(initialCoverage);
   const [currentSlotId, setCurrentSlotId] = useState(initialCurrentSlotId);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(() => Date.now());
@@ -88,46 +94,61 @@ export function useFinderPoll({
   const appliedRef = useRef(applied);
   const currentSlotIdRef = useRef(currentSlotId);
   const controllerRef = useRef<FinderPollController | null>(null);
+  const manualRefreshRef = useRef(false);
 
   roomsRef.current = rooms;
   appliedRef.current = applied;
   currentSlotIdRef.current = currentSlotId;
 
-  const applyPayload = useCallback((payload: FinderRefreshPayload) => {
-    const previous = roomsRef.current;
-    if (roomsPayloadUnchanged(previous, payload.rooms)) {
+  const applyPayload = useCallback(
+    (payload: FinderRefreshPayload, options?: { bumpTimestamp?: boolean }) => {
+      const filtered = filterRoomsForActiveCycle(payload.rooms);
+      const previous = roomsRef.current;
+      if (roomsPayloadUnchanged(previous, filtered)) {
+        setCoverage((prev) =>
+          finderCoverageUnchanged(prev, payload.coverage)
+            ? prev
+            : payload.coverage,
+        );
+        if (payload.currentSlotId !== currentSlotIdRef.current) {
+          setCurrentSlotId(payload.currentSlotId);
+        }
+        setRefreshError(null);
+        if (options?.bumpTimestamp) {
+          setLastUpdatedAt(Date.now());
+        }
+        return;
+      }
+      const diff = diffFinderRooms(previous, filtered);
+      setRooms(filtered);
       setCoverage(payload.coverage);
       setCurrentSlotId(payload.currentSlotId);
       setLastUpdatedAt(Date.now());
       setRefreshError(null);
-      return;
-    }
-    const diff = diffFinderRooms(previous, payload.rooms);
-    setRooms(payload.rooms);
-    setCoverage(payload.coverage);
-    setCurrentSlotId(payload.currentSlotId);
-    setLastUpdatedAt(Date.now());
-    setRefreshError(null);
-    const summary = summarizeFinderDiff(diff);
-    if (summary) setAnnouncement(summary);
-  }, []);
+      const summary = summarizeFinderDiff(diff);
+      if (summary) setAnnouncement(summary);
+    },
+    [],
+  );
 
   const runFetch = useCallback(
     async (signal: AbortSignal) => {
+      const showSpinner = manualRefreshRef.current;
+      manualRefreshRef.current = false;
       const path = buildFinderRefreshPath({
         applied: appliedRef.current,
         currentSlotId: currentSlotIdRef.current,
       });
-      setRefreshing(true);
+      if (showSpinner) setRefreshing(true);
       try {
         const payload = await fetchFinderRefresh(path, signal);
         if (signal.aborted) return;
-        applyPayload(payload);
+        applyPayload(payload, { bumpTimestamp: showSpinner });
       } catch {
         if (signal.aborted) return;
-        setRefreshError("Unable to refresh — showing recent data.");
+        setRefreshError(FINDER_REFRESH_FAILED_MESSAGE);
       } finally {
-        setRefreshing(false);
+        if (showSpinner) setRefreshing(false);
       }
     },
     [applyPayload],
@@ -139,7 +160,7 @@ export function useFinderPoll({
   const appliedKey = `${applied.buildingId ?? ""}|${applied.floorId ?? ""}|${applied.timeSlotId ?? "all"}`;
 
   useEffect(() => {
-    setRooms(initialRooms);
+    setRooms(filterRoomsForActiveCycle(initialRooms));
     setCoverage(initialCoverage);
     setCurrentSlotId(initialCurrentSlotId);
     setLastUpdatedAt(Date.now());
@@ -148,6 +169,19 @@ export function useFinderPoll({
     // Filter identity only — ignore new SSR array refs (e.g. focus= URL change).
     // eslint-disable-next-line react-hooks/exhaustive-deps -- appliedKey is the server-filter identity
   }, [appliedKey]);
+
+  // Reconcile when the campus reporting day/cycle changes while Finder stays open.
+  useEffect(() => {
+    let activeDate = getActiveFinderReportDate();
+    const id = window.setInterval(() => {
+      const nextDate = getActiveFinderReportDate();
+      if (nextDate === activeDate) return;
+      activeDate = nextDate;
+      setRooms((current) => filterRoomsForActiveCycle(current));
+      void controllerRef.current?.refreshNow();
+    }, 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const controller = createFinderPollController({
@@ -174,6 +208,7 @@ export function useFinderPoll({
   }, [appliedKey]);
 
   const refreshNow = useCallback(async () => {
+    manualRefreshRef.current = true;
     await controllerRef.current?.refreshNow();
   }, []);
 

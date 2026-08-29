@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import { GlassNavigation } from "@/components/glass";
+import { GlassNavigation, GlassSurface } from "@/components/glass";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import type { StatsPageData } from "@/lib/stats-data";
@@ -86,14 +86,9 @@ function SolidPanel({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-surface border border-border bg-card px-4 py-4 shadow-token-sm sm:px-5 sm:py-5",
-        className,
-      )}
-    >
+    <GlassSurface variant="regular" className={cn("px-4 py-4 sm:px-5 sm:py-5", className)}>
       {children}
-    </div>
+    </GlassSurface>
   );
 }
 
@@ -125,7 +120,7 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
 
   if (!data.hasAnyData) {
     return (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-6 sm:max-w-2xl sm:gap-7">
+      <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-6 overflow-x-hidden sm:max-w-2xl sm:gap-7">
         <StatsNavigation />
         <FadeIn className="space-y-4">
           <header className="space-y-2 px-1">
@@ -153,7 +148,7 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 sm:max-w-2xl sm:gap-7">
+    <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-6 overflow-x-hidden sm:max-w-2xl sm:gap-7">
       <StatsNavigation />
 
       <FadeIn className="space-y-6 sm:space-y-8">

@@ -32,6 +32,7 @@ type SuccessPayload = {
 
 type ContributeWizardProps = {
   data: ContributePageData;
+  reportingBlocked?: boolean;
 };
 
 function humanSubmitError(error: string): string {
@@ -40,6 +41,9 @@ function humanSubmitError(error: string): string {
   }
   if (error.includes("outside the reporting window")) {
     return "This period isn't open for reporting right now.";
+  }
+  if (error.includes("Reporting is closed right now")) {
+    return "Reporting is closed right now. Finder is still available.";
   }
   if (error.includes("Daily contribution limit")) {
     return error;
@@ -87,7 +91,10 @@ function SelectionButton({
   );
 }
 
-export function ContributeWizard({ data }: ContributeWizardProps) {
+export function ContributeWizard({
+  data,
+  reportingBlocked = false,
+}: ContributeWizardProps) {
   const reduceMotion = useReducedMotion();
   const [step, setStep] = useState<Step>(0);
   const [direction, setDirection] = useState(1);
@@ -121,7 +128,8 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
   const canSubmit =
     Boolean(buildingId && floorId && classroomId && timeSlotId) &&
     Boolean(selectedSlot?.selectable) &&
-    !isPending;
+    !isPending &&
+    !reportingBlocked;
 
   const summaryLine =
     building && selectedFloor && selectedClassroom
@@ -235,7 +243,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-4 sm:max-w-lg sm:gap-5">
+    <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-4 overflow-x-hidden sm:max-w-lg sm:gap-5">
       <GlassNavigation
         aria-label="Contributor navigation"
         className="flex items-center gap-2 px-2 py-2 sm:px-3"
@@ -481,7 +489,19 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                       </div>
                     ) : null}
 
-                    {selectableSlots.length === 0 ? (
+                    {reportingBlocked ? (
+                      <div
+                        role="status"
+                        className="rounded-surface border border-dashed border-border bg-muted/30 px-4 py-6 text-left"
+                      >
+                        <p className="font-medium text-foreground">
+                          Reporting is closed right now
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Finder is still available — come back during class hours.
+                        </p>
+                      </div>
+                    ) : selectableSlots.length === 0 ? (
                       <div
                         role="status"
                         className="rounded-surface border border-dashed border-border bg-muted/30 px-4 py-6 text-left"
@@ -510,7 +530,7 @@ export function ContributeWizard({ data }: ContributeWizardProps) {
                     <Button
                       type="button"
                       className="min-h-11 w-full text-base"
-                      disabled={!canSubmit || selectableSlots.length === 0}
+                      disabled={!canSubmit || selectableSlots.length === 0 || reportingBlocked}
                       onClick={handleSubmit}
                     >
                       {isPending ? (
