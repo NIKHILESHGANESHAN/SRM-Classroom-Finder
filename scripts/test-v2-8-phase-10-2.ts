@@ -17,7 +17,8 @@ function section(title: string) {
 
 function main() {
   section("Production inventory rules");
-  assert(!isOfficialInventoryRoom("TP1", 1, "101"), "TP1 not in inventory");
+  assert(isOfficialInventoryRoom("TP1", 1, "101"), "TP1 101 official");
+  assert(!isOfficialInventoryRoom("TP1", 1, "104"), "TP1 104 not official");
   assert(isOfficialInventoryRoom("UB", 6, "604"), "UB 604 official");
   assert(!isOfficialInventoryRoom("UB", 6, "999"), "999 not official");
   console.log("ok  inventory source unchanged");

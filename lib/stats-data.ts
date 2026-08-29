@@ -6,6 +6,7 @@
  * SQL stays visible in source for viva / DBMS evaluation.
  */
 
+import { withCatalogCacheFallback } from "@/lib/catalog-cache";
 import { prisma } from "@/lib/prisma";
 import {
   formatSlotRangeLabel,
@@ -311,11 +312,11 @@ async function queryTopClassroomsThisWeek(
   }));
 }
 
-/** Load all Stats dashboard aggregates in parallel. */
-export async function getStatsPageData(): Promise<StatsPageData> {
-  const campusToday = getCampusDateString();
-  const weekStart = getCampusWeekStartString();
-
+/** Load all Stats dashboard aggregates in parallel (uncached — use getStatsPageData). */
+async function loadStatsPageData(
+  campusToday: string,
+  weekStart: string,
+): Promise<StatsPageData> {
   const [
     busiestBuildingToday,
     mostActiveSlotThisWeek,
@@ -346,6 +347,21 @@ export async function getStatsPageData(): Promise<StatsPageData> {
     topClassroomsThisWeek,
     hasAnyData: totals.thisWeek > 0 || totals.today > 0,
   };
+}
+
+const STATS_PAGE_REVALIDATE_SECONDS = 60;
+
+const getCachedStatsPayload = withCatalogCacheFallback(
+  loadStatsPageData,
+  ["stats-page-data"],
+  STATS_PAGE_REVALIDATE_SECONDS,
+);
+
+/** Stats dashboard data — cached up to 60s; not user-specific. */
+export async function getStatsPageData(): Promise<StatsPageData> {
+  const campusToday = getCampusDateString();
+  const weekStart = getCampusWeekStartString();
+  return getCachedStatsPayload(campusToday, weekStart);
 }
 
 /** Exported for smoke tests — busiest building row count shape. */

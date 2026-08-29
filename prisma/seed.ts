@@ -5,7 +5,7 @@
  *   - buildings (UB, TP1, TP2)
  *   - floors (per-building ranges from the project spec)
  *   - time_slots (slots 1–10 with official start/end times)
- *   - classrooms (owner-verified UB + TP2 list only — no TP1 rooms)
+ *   - classrooms (owner-verified UB + TP1 + TP2 list)
  *
  * Never writes free_reports. Demo reports live in scripts/seed-stats-data.ts
  * (DEVELOPMENT/DEMO ONLY — not invoked here).
@@ -212,7 +212,7 @@ async function seedClassrooms(): Promise<void> {
   }
 
   console.log(
-    `✓ Classrooms — ${rows.length} owner-verified rooms (UB + TP2; no TP1)`,
+    `✓ Classrooms — ${rows.length} owner-verified rooms (UB + TP1 + TP2)`,
   );
 }
 
@@ -250,7 +250,7 @@ async function printSummary(): Promise<void> {
     console.log(`  ${b.code}: floors [${nums}] (${b._count.floors})`);
   }
 
-  const codes: InventoryBuildingCode[] = ["UB", "TP2"];
+  const codes: InventoryBuildingCode[] = ["UB", "TP1", "TP2"];
   for (const code of codes) {
     const listed = Object.values(CLASSROOM_INVENTORY[code]).reduce(
       (sum, rooms) => sum + rooms.length,
@@ -258,7 +258,6 @@ async function printSummary(): Promise<void> {
     );
     console.log(`  ${code} inventory rooms: ${listed}`);
   }
-  console.log("  TP1 inventory rooms: 0 (deferred to V3)");
 }
 
 async function main(): Promise<void> {

@@ -287,7 +287,7 @@ export const KNOWLEDGE: readonly KnowledgeEntry[] = [
     category: "Reporting",
     question: "Why can't I select an arbitrary classroom number?",
     answer:
-      "Classrooms are chosen from the application's verified classroom inventory. You cannot type an arbitrary door number for another floor or invent a room. For example, UB Floor 12 includes 1205 but not 504; 504 on UB Floor 12 is rejected. TP2 Floor 5 does include 504. TP1 floors currently have an inventory gap — no verified room list yet — so you cannot pick TP1 classroom numbers until that list is added.",
+      "Classrooms are chosen from the application's verified classroom inventory. You cannot type an arbitrary door number for another floor or invent a room. For example, UB Floor 12 includes 1205 but not 504; 504 on UB Floor 12 is rejected. TP2 Floor 5 does include 504. Only verified inventory rooms can be selected in Contribute.",
     keywords: [
       "arbitrary",
       "inventory",

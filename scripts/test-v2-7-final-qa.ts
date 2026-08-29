@@ -105,11 +105,12 @@ async function main() {
     assert(!pkg.prisma?.seed?.includes("seed-stats-data"), "not in db:seed");
     console.log("ok  demo seed");
 
-    section("Inventory integrity (no TP1, no UB12/504)");
+    section("Inventory integrity (TP1, UB12/504)");
     assert(isOfficialInventoryRoom("UB", 12, "1205"), "1205");
     assert(!isOfficialInventoryRoom("UB", 12, "504"), "504");
     assert(isOfficialInventoryRoom("TP2", 5, "504"), "tp2 504");
-    assert(!isOfficialInventoryRoom("TP1", 1, "101"), "no tp1");
+    assert(isOfficialInventoryRoom("TP1", 1, "101"), "tp1 101");
+    assert(!isOfficialInventoryRoom("TP1", 1, "104"), "no tp1 104");
     console.log("ok  inventory");
 
     section("Chat slot scope parsing");

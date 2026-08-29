@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminLoginForm } from "@/components/admin/admin-login-form";
+import { ClassFinderLogo } from "@/components/brand/classfinder-logo";
 import { isAdminAuthenticated } from "@/lib/admin/session";
 
 export const metadata: Metadata = {
@@ -19,12 +20,15 @@ export default function AdminLoginPage() {
 
   return (
     <div className="mx-auto w-full max-w-md space-y-6">
-      <header className="space-y-2 px-1">
-        <h1 className="type-title text-foreground">ClassFinder · Admin</h1>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          Private operations console. Sign in with the admin secret configured on
-          the server.
-        </p>
+      <header className="space-y-3 px-1">
+        <ClassFinderLogo size="md" />
+        <div className="space-y-2">
+          <h1 className="type-title text-foreground">ClassFinder · Admin</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Private operations console. Sign in with the admin secret configured on
+            the server.
+          </p>
+        </div>
       </header>
       <div className="rounded-surface border border-border bg-card p-5 shadow-token-sm">
         <AdminLoginForm />

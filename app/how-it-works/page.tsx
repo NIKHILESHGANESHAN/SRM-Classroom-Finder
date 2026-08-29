@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { GlassNavigation } from "@/components/glass";
+import { ClassFinderNavTitle } from "@/components/brand/classfinder-nav-title";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
+import { SoundCtaLink } from "@/components/sound/sound-cta-link";
+import { SoundLink } from "@/components/sound/sound-link";
 import { Button } from "@/components/ui/button";
 import { PRODUCT_DESCRIPTOR, PRODUCT_NAME } from "@/lib/design-tokens";
 
@@ -51,16 +53,11 @@ export default function HowItWorksPage() {
             className="btn-press min-h-11 min-w-11"
             asChild
           >
-            <Link href="/" aria-label="Back to home">
+            <SoundLink href="/" aria-label="Back to home">
               <ArrowLeft className="h-5 w-5" />
-            </Link>
+            </SoundLink>
           </Button>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-semibold text-foreground sm:text-lg">
-              {PRODUCT_NAME}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">How it works</p>
-          </div>
+          <ClassFinderNavTitle subtitle="How it works" />
           <MoreOptionsMenu className="shrink-0" />
         </GlassNavigation>
 
@@ -121,11 +118,11 @@ export default function HowItWorksPage() {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Button className="btn-press min-h-11" asChild>
-            <Link href="/finder">Find a classroom</Link>
-          </Button>
+          <SoundCtaLink className="btn-press min-h-11" href="/finder">
+            Find a classroom
+          </SoundCtaLink>
           <Button variant="outline" className="btn-press min-h-11" asChild>
-            <Link href="/contribute">Report a room</Link>
+            <SoundLink href="/contribute">Report a room</SoundLink>
           </Button>
         </div>
       </div>

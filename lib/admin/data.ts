@@ -116,7 +116,8 @@ export async function getAdminBuildingSummaries(): Promise<AdminBuildingSummary[
     floorCount: building._count.floors,
     classroomCount: building._count.classrooms,
     activeClassroomCount: building.classrooms.filter((c) => c.isActive).length,
-    inventoryDeferred: building.code === "TP1",
+    inventoryDeferred:
+      building._count.floors > 0 && building._count.classrooms === 0,
   }));
 }
 

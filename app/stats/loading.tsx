@@ -20,7 +20,7 @@ export default function StatsLoading() {
         </GlassNavigation>
 
         <div className="space-y-2 px-1">
-          <div className="h-7 w-52 rounded-md bg-muted motion-reduce:animate-none" />
+          <div className="h-7 w-52 rounded-surface bg-muted motion-reduce:animate-none" />
           <div className="h-4 w-full max-w-md rounded bg-muted/70 motion-reduce:animate-none" />
         </div>
 

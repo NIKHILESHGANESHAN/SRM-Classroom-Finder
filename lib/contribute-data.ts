@@ -1,5 +1,4 @@
-import { prisma } from "@/lib/prisma";
-import { getCachedTimeSlots } from "@/lib/catalog-cache";
+import { getCatalogContributeBuildings, getCatalogTimeSlots } from "@/lib/catalog-cache";
 import {
   formatSlotRangeLabel,
   getCurrentSlotId,
@@ -54,24 +53,8 @@ export type ContributePageData = {
 /** Load dimension data for the Contributor wizard (Server Component). */
 export async function getContributePageData(): Promise<ContributePageData> {
   const [buildings, slots] = await Promise.all([
-    prisma.building.findMany({
-      orderBy: { code: "asc" },
-      include: {
-        floors: {
-          orderBy: { floorNumber: "asc" },
-          select: {
-            id: true,
-            floorNumber: true,
-            classrooms: {
-              where: { isActive: true },
-              orderBy: { roomNumber: "asc" },
-              select: { id: true, roomNumber: true },
-            },
-          },
-        },
-      },
-    }),
-    getCachedTimeSlots(),
+    getCatalogContributeBuildings(),
+    getCatalogTimeSlots(),
   ]);
 
   const nowMinutes = getNowMinutesInTz();

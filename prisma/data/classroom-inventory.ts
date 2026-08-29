@@ -5,10 +5,9 @@
  *   - Only rooms listed here may be seeded.
  *   - Do not infer missing numbers (e.g. UB 509 is absent on purpose).
  *   - Do not generate sequential ranges.
- *   - TP1 is intentionally omitted until a verified V3 list is supplied.
  */
 
-export type InventoryBuildingCode = "UB" | "TP2";
+export type InventoryBuildingCode = "UB" | "TP1" | "TP2";
 
 /** Floor number → room numbers (as they appear on the door). */
 export type FloorRoomMap = Readonly<Record<number, readonly string[]>>;
@@ -71,6 +70,23 @@ export const CLASSROOM_INVENTORY: Readonly<
     11: ["1102", "1103", "1111", "1112"],
     12: ["1205", "1206", "1207", "1211", "1212", "1216", "1219"],
   },
+  TP1: {
+    1: ["101", "102", "103", "105"],
+    2: ["201", "202", "203", "204", "205", "206"],
+    3: ["301", "302", "303", "304", "305", "306"],
+    4: ["401", "402", "403", "404", "405", "406"],
+    5: ["501", "502", "503", "504", "505", "506"],
+    6: ["601", "602", "603", "604", "605", "606"],
+    7: ["701", "702", "703", "704", "705", "706"],
+    8: ["801", "802", "803", "804", "805", "806"],
+    9: ["901", "902", "903", "904", "905", "906"],
+    10: ["1001", "1002", "1003", "1004", "1005", "1006"],
+    11: ["1101", "1102", "1103", "1104", "1105", "1106"],
+    12: ["1201", "1202", "1203", "1204", "1205", "1206"],
+    13: ["1301", "1302", "1303", "1304", "1305", "1306"],
+    14: ["1401", "1402", "1403", "1404", "1405", "1406"],
+    15: ["1501", "1502", "1503", "1504", "1505", "1506"],
+  },
   TP2: {
     2: ["204", "205", "206", "213", "214", "215", "219", "220"],
     3: ["304", "305", "306", "313", "314", "315", "319", "320"],
@@ -107,14 +123,14 @@ export function flattenClassroomInventory(): ClassroomInventoryRow[] {
   return rows;
 }
 
-/** True only for owner-verified UB/TP2 rooms. Admin must not invent UB 12 / 504. */
+/** True only for owner-verified inventory rooms. */
 export function isOfficialInventoryRoom(
   buildingCode: string,
   floorNumber: number,
   roomNumber: string,
 ): boolean {
   const code = buildingCode.trim().toUpperCase();
-  if (code !== "UB" && code !== "TP2") return false;
+  if (code !== "UB" && code !== "TP1" && code !== "TP2") return false;
   const rooms = CLASSROOM_INVENTORY[code][floorNumber];
   if (!rooms) return false;
   return rooms.includes(roomNumber.trim());

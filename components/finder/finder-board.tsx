@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import { ArrowLeft, Search } from "lucide-react";
 import { ClassroomCard } from "@/components/finder/classroom-card";
@@ -12,11 +11,12 @@ import { FinderMorningNote } from "@/components/finder/finder-morning-note";
 import { FinderRecentRooms } from "@/components/finder/finder-recent-rooms";
 import { HowItWorksLink } from "@/components/how-it-works-link";
 import { GlassNavigation } from "@/components/glass";
+import { ClassFinderNavTitle } from "@/components/brand/classfinder-nav-title";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
+import { SoundLink } from "@/components/sound/sound-link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { glassSurfaceClasses } from "@/lib/glass";
-import { PRODUCT_NAME } from "@/lib/design-tokens";
 import { useFinderPoll } from "@/hooks/use-finder-poll";
 import {
   useFavoriteBuildings,
@@ -231,18 +231,13 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
         className="relative z-20 flex items-center gap-2 px-2 py-2 sm:px-3"
       >
         <Button variant="ghost" size="icon" className="min-h-11 min-w-11" asChild>
-          <Link href="/" aria-label="Back to home">
+          <SoundLink href="/" aria-label="Back to home">
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </SoundLink>
         </Button>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-semibold text-foreground sm:text-lg">
-            {PRODUCT_NAME}
-          </h1>
-          <p className="truncate text-xs text-muted-foreground">
-            {isCurrentSlot ? "Free right now" : "Browse slots"} · {slotLabel}
-          </p>
-        </div>
+        <ClassFinderNavTitle
+          subtitle={`${isCurrentSlot ? "Free right now" : "Browse slots"} · ${slotLabel}`}
+        />
         <MoreOptionsMenu className="shrink-0" />
       </GlassNavigation>
 
@@ -272,7 +267,7 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Room number — e.g. 1205"
           className={cn(
-            "min-h-11 rounded-control border-0 pl-9 text-base shadow-none",
+            "min-h-11 rounded-button border-0 pl-9 text-base shadow-none",
             glassSurfaceClasses({ variant: "clear" }),
           )}
           autoComplete="off"
@@ -332,12 +327,12 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
         </p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <HowItWorksLink />
-          <Link
+          <SoundLink
             href="/contribute"
             className="inline-flex min-h-11 items-center font-medium text-cf-accent underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Report a room
-          </Link>
+          </SoundLink>
         </div>
       </div>
 

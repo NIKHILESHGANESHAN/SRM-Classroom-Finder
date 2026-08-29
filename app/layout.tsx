@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { PwaRegister } from "@/components/pwa-register";
+import { ThemeScript } from "@/components/theme/theme-script";
 import { PRODUCT_DESCRIPTOR, PRODUCT_NAME } from "@/lib/design-tokens";
 import { getAppUrl } from "@/lib/env";
 import "./globals.css";
@@ -86,8 +87,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#007AFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#007AFF" },
+    { media: "(prefers-color-scheme: light)", color: "#EAECF0" },
+    { media: "(prefers-color-scheme: dark)", color: "#111318" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -102,11 +103,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
+        <ThemeScript />
         <Providers>
           <PwaRegister />
           <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-3 focus:text-sm focus:font-medium focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-button focus:bg-primary focus:px-4 focus:py-3 focus:text-sm focus:font-medium focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
             Skip to main content
           </a>

@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { SoundLink } from "@/components/sound/sound-link";
+import { useSound } from "@/components/sound/sound-provider";
 import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 
 type SuccessStateProps = {
@@ -41,6 +42,7 @@ export function SuccessState({
   kind,
   onReportAnother,
 }: SuccessStateProps) {
+  const { play } = useSound();
   const reduceMotion = useReducedMotion();
 
   return (
@@ -75,13 +77,16 @@ export function SuccessState({
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
         <Button asChild className="min-h-11 w-full sm:w-auto">
-          <Link href="/finder">Find another room</Link>
+          <SoundLink href="/finder">Find another room</SoundLink>
         </Button>
         <Button
           type="button"
           variant="outline"
           className="min-h-11 w-full sm:w-auto"
-          onClick={onReportAnother}
+          onClick={() => {
+            play("click");
+            onReportAnother();
+          }}
         >
           Report another
         </Button>

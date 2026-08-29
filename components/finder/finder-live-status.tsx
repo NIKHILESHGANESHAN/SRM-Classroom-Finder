@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSound } from "@/components/sound/sound-provider";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { formatUpdatedAgo } from "@/lib/finder-realtime";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ export function FinderLiveStatus({
   refreshing,
   onRefresh,
 }: FinderLiveStatusProps) {
+  const { play } = useSound();
   const reduceMotion = usePrefersReducedMotion();
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -51,7 +53,10 @@ export function FinderLiveStatus({
         variant="ghost"
         size="icon"
         className="min-h-11 min-w-11 shrink-0"
-        onClick={onRefresh}
+        onClick={() => {
+          play("click");
+          onRefresh();
+        }}
         disabled={refreshing}
         aria-label={refreshing ? "Refreshing classroom list" : "Refresh classroom list"}
       >

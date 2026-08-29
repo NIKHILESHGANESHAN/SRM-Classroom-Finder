@@ -18,7 +18,7 @@ export function AppToaster() {
       closeButton
       toastOptions={{
         classNames: {
-          toast: "font-sans",
+          toast: "font-sans rounded-surface",
         },
       }}
     />

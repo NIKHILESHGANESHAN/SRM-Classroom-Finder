@@ -7,6 +7,7 @@ import { Flag, Share2, ThumbsUp } from "lucide-react";
 import { FreeCountdown } from "@/components/finder/free-countdown";
 import { FreshnessLabel } from "@/components/finder/freshness-label";
 import { Button } from "@/components/ui/button";
+import { useSound } from "@/components/sound/sound-provider";
 import { useDeviceToken } from "@/hooks/use-device-token";
 import { submitStillFree } from "@/lib/actions/still-free";
 import type { ActiveFreeClassroom } from "@/lib/finder-data";
@@ -70,6 +71,7 @@ function ClassroomCardInner({
   onShared,
   emphasized = false,
 }: ClassroomCardProps) {
+  const { play } = useSound();
   const reduceMotion = useReducedMotion();
   const deviceToken = useDeviceToken();
   const articleRef = useRef<HTMLElement | null>(null);
@@ -104,6 +106,7 @@ function ClassroomCardInner({
         browserShareAdapters(),
       );
       if (outcome === "shared" || outcome === "copied") {
+        play("success");
         onShared?.({
           buildingCode: room.buildingCode,
           floorNumber: room.floorNumber,
@@ -133,17 +136,21 @@ function ClassroomCardInner({
           if (result.error === "Couldn't submit your report.") {
             setStillFreeRetry(true);
             setStillFreeError(result.error);
+            play("error");
             return;
           }
           toast.error(result.error);
+          play("error");
           return;
         }
         if (result.kind === "already_reported") {
           toast.success("Already confirmed from this device");
+          play("notification");
           onNeedRefresh?.();
           return;
         }
         toast.success("Marked still free");
+        play("success");
         onNeedRefresh?.();
       } catch (error) {
         if (isNetworkFailure(error)) {

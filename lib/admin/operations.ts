@@ -1,5 +1,5 @@
 import { getAppVersion } from "@/lib/app-version";
-import { getCachedFinderBuildings, getCachedTimeSlots } from "@/lib/catalog-cache";
+import { getCatalogFinderBuildings, getCatalogTimeSlots } from "@/lib/catalog-cache";
 import { isAnomalousReportExpiry } from "@/lib/admin/format-report-expiry";
 import { prisma } from "@/lib/prisma";
 import {
@@ -165,8 +165,8 @@ function integritySummaryStatus(issues: IntegrityIssue[]): HealthStatus {
 async function checkFinderCatalogHealth(): Promise<SystemHealthItem> {
   try {
     const [slots, buildings] = await Promise.all([
-      getCachedTimeSlots(),
-      getCachedFinderBuildings(),
+      getCatalogTimeSlots(),
+      getCatalogFinderBuildings(),
     ]);
     if (slots.length === 0) {
       return {

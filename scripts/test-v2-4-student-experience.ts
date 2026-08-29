@@ -247,13 +247,20 @@ async function main() {
       buildingId: "TP1",
       floorId: "1",
     });
-    assert(tp1Page.coverage.kind === "inventory_gap", "TP1 gap");
+    assert(tp1Page.coverage.kind !== "inventory_gap", "TP1 has inventory");
+    const tp1Building = tp1Page.buildings.find((b) => b.code === "TP1");
+    const tp1Floor1 = tp1Building?.floors.find((f) => f.floorNumber === 1);
+    if (!tp1Building || !tp1Floor1) throw new Error("FAIL: TP1 floor 1");
     const tp1Link = await resolveFinderDeepLink({
       buildings: tp1Page.buildings,
-      applied: tp1Page.applied,
+      applied: {
+        buildingId: tp1Building.id,
+        floorId: tp1Floor1.id,
+        timeSlotId: tp1Page.applied.timeSlotId,
+      },
       roomRaw: "101",
     });
-    assert(tp1Link?.inventoryOk === false, "TP1 invented room rejected");
+    assert(tp1Link?.inventoryOk === true, "TP1 101 accepted");
     console.log("ok  deep links / inventory");
 
     console.log("\nV2.4 student experience tests passed.");

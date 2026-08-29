@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { SoundLink } from "@/components/sound/sound-link";
+import { useSound } from "@/components/sound/sound-provider";
 import { PRODUCT_NAME } from "@/lib/design-tokens";
 
 export default function ContributeError({
@@ -12,6 +13,8 @@ export default function ContributeError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { play } = useSound();
+
   useEffect(() => {
     console.error("[contribute]", error);
   }, [error]);
@@ -25,11 +28,18 @@ export default function ContributeError({
         Something went wrong loading the report form. Try again in a moment.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button type="button" onClick={reset} className="min-h-11">
+        <Button
+          type="button"
+          onClick={() => {
+            play("click");
+            reset();
+          }}
+          className="min-h-11"
+        >
           Try again
         </Button>
         <Button variant="outline" className="min-h-11" asChild>
-          <Link href="/finder">Back to Finder</Link>
+          <SoundLink href="/finder">Back to Finder</SoundLink>
         </Button>
       </div>
     </main>

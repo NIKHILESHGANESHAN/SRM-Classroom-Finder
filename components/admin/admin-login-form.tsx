@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { loginAdmin } from "@/lib/actions/admin";
+import { useSound } from "@/components/sound/sound-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function AdminLoginForm() {
+  const { play } = useSound();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -19,9 +21,13 @@ export function AdminLoginForm() {
         const data = new FormData(form);
         setPending(true);
         setError(null);
+        play("click");
         void loginAdmin(data)
           .then((result) => {
-            if (result && !result.ok) setError(result.error);
+            if (result && !result.ok) {
+              setError(result.error);
+              play("error");
+            }
             setPending(false);
           })
           .catch(() => {

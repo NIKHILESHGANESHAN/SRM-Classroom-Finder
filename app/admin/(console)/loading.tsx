@@ -14,7 +14,7 @@ export default function AdminConsoleLoading() {
         </div>
       </GlassNavigation>
       <div className="space-y-2 px-1">
-        <div className="h-7 w-36 rounded-md bg-muted motion-reduce:animate-none" />
+        <div className="h-7 w-36 rounded-surface bg-muted motion-reduce:animate-none" />
         <div className="h-4 w-full max-w-md rounded bg-muted/70 motion-reduce:animate-none" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

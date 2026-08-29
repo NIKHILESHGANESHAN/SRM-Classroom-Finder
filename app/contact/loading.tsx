@@ -19,7 +19,7 @@ export default function ContactLoading() {
           </div>
         </GlassNavigation>
         <div className="space-y-2 px-1">
-          <div className="h-7 w-36 rounded-md bg-muted motion-reduce:animate-none" />
+          <div className="h-7 w-36 rounded-surface bg-muted motion-reduce:animate-none" />
           <div className="h-4 w-full max-w-sm rounded bg-muted/70 motion-reduce:animate-none" />
         </div>
         <div className="h-44 rounded-surface border border-border/60 bg-muted/40 motion-reduce:animate-none" />

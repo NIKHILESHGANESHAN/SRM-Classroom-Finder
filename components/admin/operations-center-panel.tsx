@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { HealthStatusBadge } from "@/components/admin/health-status-badge";
+import { SoundLink } from "@/components/sound/sound-link";
 import type {
   ActivityItem,
   AttentionItem,
@@ -83,12 +83,12 @@ function AttentionCard({ item }: { item: AttentionItem }) {
 
   if (item.href) {
     return (
-      <Link
+      <SoundLink
         href={item.href}
         className="block rounded-surface border border-border bg-card p-4 shadow-token-sm transition-standard hover:border-cf-accent/30 hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         {content}
-      </Link>
+      </SoundLink>
     );
   }
 

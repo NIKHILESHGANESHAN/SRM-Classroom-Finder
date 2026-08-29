@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { GlassSurface } from "@/components/glass";
 import { Button } from "@/components/ui/button";
+import { useSound } from "@/components/sound/sound-provider";
 import { isMorningEasterEgg } from "@/lib/easter-egg";
 import {
   morningNoteDismissStorageKey,
@@ -23,6 +24,7 @@ export function FinderMorningNote({
   totalActiveReports,
   show,
 }: FinderMorningNoteProps) {
+  const { play } = useSound();
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export function FinderMorningNote({
   }
 
   function dismiss() {
+    play("close");
     const key = morningNoteDismissStorageKey(getCampusDateString());
     sessionStorage.setItem(key, "1");
     setDismissed(true);

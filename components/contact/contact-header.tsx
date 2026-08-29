@@ -1,7 +1,10 @@
-import Link from "next/link";
+"use client";
+
 import { ArrowLeft } from "lucide-react";
 import { GlassNavigation } from "@/components/glass";
+import { ClassFinderNavTitle } from "@/components/brand/classfinder-nav-title";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
+import { SoundLink } from "@/components/sound/sound-link";
 import { Button } from "@/components/ui/button";
 import { PRODUCT_NAME } from "@/lib/design-tokens";
 
@@ -31,29 +34,15 @@ export function ContactHeader({
         className="btn-press min-h-11 min-w-11"
         asChild
       >
-        <Link href={backHref} aria-label={backLabel}>
+        <SoundLink href={backHref} aria-label={backLabel}>
           <ArrowLeft className="h-5 w-5" />
-        </Link>
+        </SoundLink>
       </Button>
-      <div className="min-w-0 flex-1">
-        {showProductName ? (
-          <>
-            <p className="truncate text-base font-semibold text-foreground sm:text-lg">
-              {PRODUCT_NAME}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">{title}</p>
-          </>
-        ) : (
-          <>
-            <p className="truncate text-base font-semibold text-foreground sm:text-lg">
-              {title}
-            </p>
-            {subtitle ? (
-              <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
-            ) : null}
-          </>
-        )}
-      </div>
+      {showProductName ? (
+        <ClassFinderNavTitle title={PRODUCT_NAME} subtitle={title} />
+      ) : (
+        <ClassFinderNavTitle title={title} subtitle={subtitle} />
+      )}
       <MoreOptionsMenu className="shrink-0" />
     </GlassNavigation>
   );
