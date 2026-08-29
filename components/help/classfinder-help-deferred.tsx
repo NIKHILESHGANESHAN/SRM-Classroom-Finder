@@ -5,15 +5,22 @@ import { ClassFinderHelpGlobal } from "@/components/help/classfinder-help-global
 
 /**
  * Client-only mount gate for the global Help launcher.
- * The shell renders synchronously after hydration — no nested next/dynamic
- * boundary (that silently rendered nothing when async chunks failed on Netlify).
+ * Defers until the browser is idle so the homepage first paint stays lean.
  * The chat panel stays lazy inside ClassFinderHelpGlobal.
  */
 export function ClassFinderHelpDeferred() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(() => setMounted(true), {
+        timeout: 2500,
+      });
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timerId = window.setTimeout(() => setMounted(true), 400);
+    return () => window.clearTimeout(timerId);
   }, []);
 
   if (!mounted) return null;

@@ -1,5 +1,4 @@
 import type { AdminBuildingSummary, AdminHealth } from "@/lib/admin/data";
-import Link from "next/link";
 
 function Metric({
   label,
@@ -63,15 +62,7 @@ export function AdminOverviewPanel({
       </section>
 
       <section className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-base font-semibold text-foreground">Buildings</h2>
-          <Link
-            href="/admin/inventory"
-            className="inline-flex min-h-11 items-center text-sm font-medium text-cf-accent underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Manage inventory
-          </Link>
-        </div>
+        <h2 className="text-base font-semibold text-foreground">Buildings</h2>
         <div className="overflow-x-auto rounded-surface border border-border bg-card shadow-token-sm">
           <table className="w-full min-w-[28rem] text-left text-sm">
             <caption className="sr-only">Building inventory summary</caption>
@@ -132,9 +123,12 @@ export function AdminOverviewPanel({
             <dt className="text-muted-foreground">App version</dt>
             <dd className="font-medium tabular-nums">{health.appVersion}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-border/60 pb-2 sm:col-span-2">
-            <dt className="text-muted-foreground">Server time (UTC)</dt>
-            <dd className="font-medium tabular-nums">{health.serverTimeIso}</dd>
+          <div className="flex flex-col gap-0.5 border-b border-border/60 pb-2 sm:col-span-2">
+            <dt className="text-muted-foreground">Server time (campus IST)</dt>
+            <dd className="font-medium text-foreground">{health.campusTimeLabel}</dd>
+            <dd className="text-xs tabular-nums text-muted-foreground">
+              UTC: {health.serverTimeIso}
+            </dd>
           </div>
         </dl>
         <p className="text-xs text-muted-foreground">

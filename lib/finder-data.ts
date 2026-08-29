@@ -3,6 +3,7 @@ import {
   getCachedFinderBuildings,
   getCachedTimeSlots,
 } from "@/lib/catalog-cache";
+import { getActiveFinderReportDate } from "@/lib/easter-egg";
 import {
   formatSlotRangeLabel,
   getCurrentSlotId,
@@ -154,6 +155,12 @@ export async function queryActiveFreeClassrooms(
   const buildingId = filters.buildingId ?? null;
   const floorId = filters.floorId ?? null;
   const timeSlotId = filters.timeSlotId ?? null;
+  const activeReportDate = getActiveFinderReportDate();
+
+  // Daily cycle ended (23:50–23:59 IST) — Finder shows a fresh empty state.
+  if (!activeReportDate) return [];
+
+  const reportDate = new Date(`${activeReportDate}T00:00:00.000Z`);
 
   // DBMS: SELECT from VIEW + parameterized WHERE (no string concat)
   const rows = await prisma.$queryRaw<ViewRow[]>`
@@ -179,7 +186,8 @@ export async function queryActiveFreeClassrooms(
       end_time
     FROM active_free_classrooms
     WHERE
-      (${buildingId}::text IS NULL OR building_id = ${buildingId})
+      report_date = ${reportDate}
+      AND (${buildingId}::text IS NULL OR building_id = ${buildingId})
       AND (${floorId}::text IS NULL OR floor_id = ${floorId})
       AND (${timeSlotId}::text IS NULL OR time_slot_id = ${timeSlotId})
     ORDER BY building_code ASC, floor_number ASC, room_number ASC

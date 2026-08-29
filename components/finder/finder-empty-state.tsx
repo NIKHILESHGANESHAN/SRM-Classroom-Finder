@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { surfaceElevatedClasses } from "@/lib/glass";
 import { MOTION_STANDARD, EASE_OUT_EXPO } from "@/lib/motion";
 import type { FinderEmptyReason } from "@/lib/finder-realtime";
 
@@ -69,7 +70,9 @@ export function FinderEmptyState({
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: MOTION_STANDARD, ease: EASE_OUT_EXPO }}
-      className="rounded-surface border border-dashed border-border bg-muted/30 px-5 py-10 text-left sm:py-12"
+      className={surfaceElevatedClasses(
+        "border-dashed px-5 py-10 text-left sm:py-12",
+      )}
     >
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <p className="mt-2 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground">

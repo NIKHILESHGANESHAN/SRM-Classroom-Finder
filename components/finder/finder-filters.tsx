@@ -81,7 +81,10 @@ function FilterControls({
   orderedBuildings,
 }: FilterControlsProps) {
   return (
-    <div className={cn("space-y-4", pending && "opacity-80")} aria-busy={pending}>
+    <div
+      className={cn("min-w-0 space-y-4", pending && "opacity-80")}
+      aria-busy={pending}
+    >
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label
@@ -196,7 +199,7 @@ function FilterControls({
             return (
               <GlassControl
                 key={option.value}
-                variant="clear"
+                variant="elevated"
                 size="default"
                 active={selected}
                 className="min-h-11 px-1 text-xs sm:text-sm"
@@ -218,7 +221,7 @@ function FilterControls({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         <p id="finder-favorites-label" className="text-xs text-muted-foreground">
           My buildings
           <span className="font-normal"> · saved on this device</span>
@@ -226,17 +229,17 @@ function FilterControls({
         <div
           role="group"
           aria-labelledby="finder-favorites-label"
-          className="flex flex-wrap gap-2"
+          className="flex min-w-0 max-w-full flex-wrap gap-2"
         >
           {buildings.map((b) => {
             const favorited = favoriteCodes.includes(b.code);
             return (
               <GlassControl
                 key={b.id}
-                variant="clear"
+                variant="elevated"
                 size="default"
                 active={favorited}
-                className="gap-1.5 px-3"
+                className="max-w-full shrink-0 gap-1.5 px-3 min-h-11"
                 aria-pressed={favorited}
                 aria-label={
                   favorited
@@ -258,7 +261,7 @@ function FilterControls({
             variant="clear"
             size="default"
             active={mineOnly}
-            className="px-3"
+            className="max-w-full shrink-0 px-3 min-h-11"
             aria-pressed={mineOnly}
             onClick={() => onMineOnlyChange(!mineOnly)}
           >
@@ -323,7 +326,7 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
 
   if (isDesktop) {
     return (
-      <GlassSurface variant="regular" className="p-3 sm:p-4">
+      <GlassSurface variant="regular" className="relative z-0 min-w-0 p-3 sm:p-4">
         {controls}
       </GlassSurface>
     );
@@ -336,9 +339,9 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
       : "All buildings";
 
   return (
-    <div className="space-y-3">
-      <GlassSurface variant="regular" className="p-3">
-        <div className="grid grid-cols-2 gap-2">
+    <div className="min-w-0 space-y-3">
+      <GlassSurface variant="regular" className="relative z-0 min-w-0 p-3">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
           <div className="col-span-2 space-y-1.5">
             <Label
               htmlFor="finder-building-mobile"
@@ -448,8 +451,8 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <p className="truncate text-xs text-muted-foreground">
+        <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-xs text-muted-foreground">
             {buildingLabel}
             {props.focus !== "all"
               ? ` · ${FOCUS_OPTIONS.find((o) => o.value === props.focus)?.shortLabel ?? props.focus}`
@@ -458,7 +461,7 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <GlassControl
-                variant="clear"
+                variant="elevated"
                 size="default"
                 className="min-h-11 shrink-0 gap-1.5 px-3"
                 aria-label="My buildings filters"
@@ -467,28 +470,31 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
                 My buildings
               </GlassControl>
             </SheetTrigger>
-            <SheetContent side="bottom" className="max-h-[70dvh] rounded-t-sheet pb-8">
-              <SheetHeader>
+            <SheetContent
+              side="bottom"
+              className="max-h-[min(70dvh,calc(100dvh-env(safe-area-inset-bottom)-4rem))] overflow-y-auto rounded-t-sheet pb-[max(2rem,env(safe-area-inset-bottom))]"
+            >
+              <SheetHeader className="text-left">
                 <SheetTitle>My buildings</SheetTitle>
               </SheetHeader>
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 min-w-0 space-y-2">
                 <p className="text-xs text-muted-foreground">
                   Star buildings you use often. Saved on this device only.
                 </p>
                 <div
                   role="group"
                   aria-label="Favorite buildings"
-                  className="flex flex-wrap gap-2"
+                  className="flex min-w-0 max-w-full flex-wrap gap-2"
                 >
                   {props.buildings.map((b) => {
                     const favorited = props.favoriteCodes.includes(b.code);
                     return (
                       <GlassControl
                         key={b.id}
-                        variant="clear"
+                        variant="elevated"
                         size="default"
                         active={favorited}
-                        className="gap-1.5 px-3"
+                        className="max-w-full shrink-0 gap-1.5 px-3 min-h-11"
                         aria-pressed={favorited}
                         onClick={() => props.onToggleFavorite(b.code)}
                       >
@@ -502,10 +508,10 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
                     );
                   })}
                   <GlassControl
-                    variant="clear"
+                    variant="elevated"
                     size="default"
                     active={props.mineOnly}
-                    className="px-3"
+                    className="max-w-full shrink-0 px-3 min-h-11"
                     aria-pressed={props.mineOnly}
                     onClick={() => props.onMineOnlyChange(!props.mineOnly)}
                   >
@@ -521,7 +527,7 @@ export function FinderFiltersBar(props: FinderFiltersBarProps) {
       <div
         role="group"
         aria-label="List focus"
-        className="grid grid-cols-3 gap-2"
+        className="grid min-w-0 grid-cols-3 gap-2"
       >
         {FOCUS_OPTIONS.map((option) => {
           const selected = props.focus === option.value;

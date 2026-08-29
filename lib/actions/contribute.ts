@@ -20,6 +20,7 @@ import {
   RATE_LIMITS,
   rateLimit,
 } from "@/lib/rate-limit";
+import { isReportingAllowed } from "@/lib/easter-egg";
 import {
   buildExpiresAt,
   getCampusDateString,
@@ -27,8 +28,8 @@ import {
   isSlotSelectable,
   timeToMinutes,
 } from "@/lib/slots";
-import { isValidDeviceToken } from "@/lib/token";
 import { getDeviceTokenFromCookies } from "@/lib/token-server";
+import { isValidDeviceToken } from "@/lib/token";
 
 const DAILY_CONTRIBUTION_CAP = 15;
 
@@ -114,6 +115,13 @@ export async function submitFreeReport(
   const startMinutes = timeToMinutes(timeSlot.startTime);
   const endMinutes = timeToMinutes(timeSlot.endTime);
   const nowMinutes = getNowMinutesInTz();
+
+  if (!isReportingAllowed(nowMinutes)) {
+    return {
+      ok: false,
+      error: "Reporting is closed right now. Finder is still available.",
+    };
+  }
 
   if (!isSlotSelectable({ startMinutes, endMinutes }, nowMinutes)) {
     return {

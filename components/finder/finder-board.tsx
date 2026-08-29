@@ -2,7 +2,7 @@
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, LayoutGroup } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { ArrowLeft, Search } from "lucide-react";
 import { ClassroomCard } from "@/components/finder/classroom-card";
 import { FinderEmptyState } from "@/components/finder/finder-empty-state";
@@ -15,6 +15,7 @@ import { GlassNavigation } from "@/components/glass";
 import { MoreOptionsMenu } from "@/components/more-options-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { glassSurfaceClasses } from "@/lib/glass";
 import { PRODUCT_NAME } from "@/lib/design-tokens";
 import { useFinderPoll } from "@/hooks/use-finder-poll";
 import {
@@ -25,10 +26,13 @@ import type { FinderDeepLink, FinderPageData } from "@/lib/finder-data";
 import {
   applyFinderFocus,
   applyRoomSearch,
+  filterRoomsForActiveCycle,
   resolveFinderEmptyReason,
   type FinderFocus,
 } from "@/lib/finder-realtime";
 import { prioritizeFavoriteBuildings } from "@/lib/local-preferences";
+import { shouldShowFinderMorningNote } from "@/lib/finder-morning-note-logic";
+import { cn } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 200;
 
@@ -146,7 +150,8 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
 
   const roomPipeline = useMemo(() => {
     const nowMs = Date.now();
-    const withoutHidden = rooms.filter((r) => !hiddenIds.has(r.freeReportId));
+    const cycleScoped = filterRoomsForActiveCycle(rooms);
+    const withoutHidden = cycleScoped.filter((r) => !hiddenIds.has(r.freeReportId));
     const scoped = mineOnly
       ? withoutHidden.filter((r) => favoriteCodes.includes(r.buildingCode))
       : withoutHidden;
@@ -208,11 +213,11 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
     data.applied.timeSlotId !== null &&
     data.applied.timeSlotId === currentSlotId;
 
-  const showMorningNote =
-    emptyReason === "none_free" &&
-    withoutHiddenCount === 0 &&
-    !deferredSearch &&
-    !mineOnly;
+  const showMorningNote = shouldShowFinderMorningNote({
+    visibleRoomCount: withoutHiddenCount,
+    hasSearch: Boolean(deferredSearch),
+    mineOnly,
+  });
 
   return (
     <div
@@ -223,7 +228,7 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
     >
       <GlassNavigation
         aria-label="Finder navigation"
-        className="flex items-center gap-2 px-2 py-2 sm:px-3"
+        className="relative z-20 flex items-center gap-2 px-2 py-2 sm:px-3"
       >
         <Button variant="ghost" size="icon" className="min-h-11 min-w-11" asChild>
           <Link href="/" aria-label="Back to home">
@@ -266,7 +271,10 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Room number — e.g. 1205"
-          className="min-h-11 rounded-control pl-9 text-base"
+          className={cn(
+            "min-h-11 rounded-control border-0 pl-9 text-base shadow-none",
+            glassSurfaceClasses({ variant: "clear" }),
+          )}
           autoComplete="off"
           inputMode="search"
         />
@@ -295,7 +303,6 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
       ) : null}
 
       <FinderMorningNote
-        timeSlots={data.timeSlots}
         totalActiveReports={withoutHiddenCount}
         show={showMorningNote}
       />
@@ -348,23 +355,21 @@ export function FinderBoard({ data, focus, deepLink }: FinderBoardProps) {
           reason={emptyReason ?? "none_free"}
         />
       ) : (
-        <LayoutGroup>
-          <div className="flex flex-col gap-3">
-            <AnimatePresence mode="popLayout">
-              {visibleRooms.map((room) => (
-                <ClassroomCard
-                  key={room.freeReportId}
-                  room={room}
-                  index={0}
-                  onRemove={handleRemove}
-                  onNeedRefresh={refreshNow}
-                  emphasized={matchesDeepLink(room)}
-                  onShared={rememberRoom}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        </LayoutGroup>
+        <div className="flex flex-col gap-3">
+          <AnimatePresence mode="sync">
+            {visibleRooms.map((room) => (
+              <ClassroomCard
+                key={room.freeReportId}
+                room={room}
+                index={0}
+                onRemove={handleRemove}
+                onNeedRefresh={refreshNow}
+                emphasized={matchesDeepLink(room)}
+                onShared={rememberRoom}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );

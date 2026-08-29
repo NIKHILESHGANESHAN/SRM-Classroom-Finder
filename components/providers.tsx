@@ -1,14 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ThemeProvider } from "next-themes";
 import { AppToaster } from "@/components/app-toaster";
-import { ClassFinderLoading } from "@/components/classfinder-loading";
 import { ClassFinderHelpDeferred } from "@/components/help/classfinder-help-deferred";
 import { DeviceTokenBootstrap } from "@/components/device-token-bootstrap";
 import { PageTransition } from "@/components/page-transition";
 import { EASE_OUT_EXPO, MOTION_MICRO } from "@/lib/motion";
+
+const ClassFinderLoading = dynamic(
+  () =>
+    import("@/components/classfinder-loading").then((m) => ({
+      default: m.ClassFinderLoading,
+    })),
+  { ssr: false },
+);
 
 /**
  * Client-side providers for theme (next-themes), toasts (sonner), anonymous
@@ -17,30 +25,37 @@ import { EASE_OUT_EXPO, MOTION_MICRO } from "@/lib/motion";
  */
 const BOOT_SEEN_KEY = "cf-boot-seen";
 
+type BootPhase = "checking" | "skip" | "playing" | "done";
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const reduceMotion = useReducedMotion();
-  const [appReady, setAppReady] = useState(false);
-  const [sequenceDone, setSequenceDone] = useState(false);
-  const [bootNeeded, setBootNeeded] = useState(true);
-  const showBoot = bootNeeded && !(appReady && sequenceDone);
+  const [bootPhase, setBootPhase] = useState<BootPhase>("checking");
 
   useEffect(() => {
     try {
       if (sessionStorage.getItem(BOOT_SEEN_KEY) === "1") {
-        setBootNeeded(false);
-        setSequenceDone(true);
+        setBootPhase("skip");
+        return;
       }
     } catch {
       /* private mode / blocked storage */
     }
-    setAppReady(true);
-  }, []);
 
-  useEffect(() => {
-    if (reduceMotion) {
-      setSequenceDone(true);
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      try {
+        sessionStorage.setItem(BOOT_SEEN_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      setBootPhase("skip");
+      return;
     }
-  }, [reduceMotion]);
+
+    setBootPhase("playing");
+  }, []);
 
   const handleSequenceComplete = () => {
     try {
@@ -48,8 +63,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
-    setSequenceDone(true);
+    setBootPhase("done");
   };
+
+  const showBoot = bootPhase === "playing";
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

@@ -1,7 +1,11 @@
 import { formatTokenFingerprint } from "@/lib/admin/fingerprint";
-import { isOfficialInventoryRoom } from "@/prisma/data/classroom-inventory";
+import { getAppVersion } from "@/lib/app-version";
 import { prisma } from "@/lib/prisma";
-import { getCampusDateString } from "@/lib/slots";
+import {
+  activeFreeReportWhere,
+  getEffectiveReportStatus,
+} from "@/lib/report-integrity";
+import { getCampusDateString, timeToMinutes } from "@/lib/slots";
 
 export type AdminHealth = {
   databaseOk: boolean;
@@ -63,9 +67,7 @@ export async function getAdminHealth(): Promise<AdminHealth> {
       prisma.classroom.count({ where: { isActive: true } }),
       prisma.classroom.count({ where: { isActive: false } }),
       prisma.classroom.count(),
-      prisma.freeReport.count({
-        where: { status: { in: ["unverified", "confirmed"] } },
-      }),
+      prisma.freeReport.count({ where: activeFreeReportWhere() }),
       prisma.freeReport.count({
         where: { reportDate: campusDate },
       }),
@@ -87,7 +89,7 @@ export async function getAdminHealth(): Promise<AdminHealth> {
     databaseOk,
     serverTimeIso,
     campusTimeLabel,
-    appVersion: "0.1.0",
+    appVersion: getAppVersion(),
     activeClassroomCount,
     inactiveClassroomCount,
     totalClassroomCount,
@@ -118,45 +120,6 @@ export async function getAdminBuildingSummaries(): Promise<AdminBuildingSummary[
   }));
 }
 
-export type AdminInventoryRow = {
-  classroomId: string;
-  buildingCode: string;
-  floorNumber: number;
-  roomNumber: string;
-  isActive: boolean;
-  official: boolean;
-};
-
-export async function getAdminInventory(): Promise<AdminInventoryRow[]> {
-  const rows = await prisma.classroom.findMany({
-    orderBy: [
-      { building: { code: "asc" } },
-      { floor: { floorNumber: "asc" } },
-      { roomNumber: "asc" },
-    ],
-    select: {
-      id: true,
-      roomNumber: true,
-      isActive: true,
-      building: { select: { code: true } },
-      floor: { select: { floorNumber: true } },
-    },
-  });
-
-  return rows.map((row) => ({
-    classroomId: row.id,
-    buildingCode: row.building.code,
-    floorNumber: row.floor.floorNumber,
-    roomNumber: row.roomNumber,
-    isActive: row.isActive,
-    official: isOfficialInventoryRoom(
-      row.building.code,
-      row.floor.floorNumber,
-      row.roomNumber,
-    ),
-  }));
-}
-
 export type AdminReportRow = {
   freeReportId: string;
   status: string;
@@ -167,6 +130,7 @@ export type AdminReportRow = {
   floorNumber: number;
   roomNumber: string;
   slotOrder: number;
+  slotEndMinutes: number;
   reportDate: string;
   createdAt: string;
   expiresAt: string;
@@ -185,15 +149,17 @@ export async function getAdminReports(limit = 80): Promise<AdminReportRow[]> {
           floor: { select: { floorNumber: true } },
         },
       },
-      timeSlot: { select: { slotOrder: true } },
+      timeSlot: { select: { slotOrder: true, endTime: true } },
       occupiedReports: { select: { id: true } },
       reportEvents: { select: { id: true } },
     },
   });
 
+  const now = new Date();
+
   return rows.map((row) => ({
     freeReportId: row.id,
-    status: row.status,
+    status: getEffectiveReportStatus(row.status, row.expiresAt, now),
     confirmationCount: row.confirmationCount,
     occupiedStrikes: row.occupiedReports.length,
     eventCount: row.reportEvents.length,
@@ -201,6 +167,7 @@ export async function getAdminReports(limit = 80): Promise<AdminReportRow[]> {
     floorNumber: row.classroom.floor.floorNumber,
     roomNumber: row.classroom.roomNumber,
     slotOrder: row.timeSlot.slotOrder,
+    slotEndMinutes: timeToMinutes(row.timeSlot.endTime),
     reportDate: row.reportDate.toISOString().slice(0, 10),
     createdAt: row.createdAt.toISOString(),
     expiresAt: row.expiresAt.toISOString(),

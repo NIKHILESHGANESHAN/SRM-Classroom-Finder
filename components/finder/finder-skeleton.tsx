@@ -1,6 +1,9 @@
 /**
- * Finder list skeleton — matches solid classroom card hierarchy.
+ * Finder list skeleton — matches elevated classroom card hierarchy.
  */
+import { surfaceElevatedClasses } from "@/lib/glass";
+import { cn } from "@/lib/utils";
+
 function SkeletonLine({ className }: { className?: string }) {
   return (
     <div
@@ -16,7 +19,7 @@ export function FinderSkeleton({ count = 3 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-surface border border-border/60 bg-card px-4 py-4 sm:px-5 sm:py-5"
+          className={cn(surfaceElevatedClasses(), "px-4 py-4 sm:px-5 sm:py-5")}
         >
           <div className="flex justify-between gap-3">
             <div className="space-y-2">

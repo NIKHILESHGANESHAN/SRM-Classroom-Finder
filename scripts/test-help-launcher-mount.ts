@@ -39,7 +39,6 @@ function main() {
   const adminRoutes = [
     "/admin",
     "/admin/login",
-    "/admin/inventory",
     "/admin/reports",
   ];
   for (const path of publicRoutes) {
@@ -68,21 +67,22 @@ function main() {
   );
   console.log("ok  help is sibling of PageTransition");
 
-  section("Deferred mount — no requestIdleCallback, no nested dynamic");
+  section("Deferred mount — idle defer with hydration gate");
   const deferred = read("components/help/classfinder-help-deferred.tsx");
   assert(
-    !deferred.includes("window.requestIdleCallback"),
-    "idle callback removed",
+    deferred.includes("requestIdleCallback") ||
+      deferred.includes("setTimeout"),
+    "help launcher defers until after first paint",
   );
   assert(
     deferred.includes("ClassFinderHelpGlobal"),
-    "imports global shell directly after hydration",
+    "imports global shell directly after defer",
   );
   assert(
     !deferred.includes('from "next/dynamic"'),
     "no nested dynamic boundary on launcher shell",
   );
-  console.log("ok  client hydration gate only, synchronous shell");
+  console.log("ok  idle/setTimeout defer, synchronous shell after gate");
 
   section("Launcher shell — portal + a11y + positioning");
   const global = read("components/help/classfinder-help-global.tsx");

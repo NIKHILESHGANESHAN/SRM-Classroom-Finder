@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreVertical } from "lucide-react";
+import { GlassPopover } from "@/components/glass";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +59,7 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
   const itemLabel = onContact ? "Home" : "Contact us";
 
   return (
-    <div ref={wrapRef} className={cn("relative", className)}>
+    <div ref={wrapRef} className={cn("relative isolate", className)}>
       <Button
         ref={buttonRef}
         type="button"
@@ -75,26 +76,25 @@ export function MoreOptionsMenu({ className }: MoreOptionsMenuProps) {
         <MoreVertical className="h-5 w-5" aria-hidden />
       </Button>
       {open ? (
-        <ul
+        <GlassPopover
           id={menuId}
           role="menu"
           aria-labelledby={buttonId}
-          className="absolute right-0 z-50 mt-1 min-w-[11rem] rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-lg motion-reduce:transition-none"
+          open
+          className="absolute right-0 z-50 mt-1 min-w-[11rem] overflow-hidden motion-reduce:transition-none"
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <li role="none">
-            <Link
-              ref={itemRef}
-              role="menuitem"
-              href={itemHref}
-              aria-current={onContact && itemHref === pathname ? "page" : undefined}
-              className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-              onClick={() => setOpen(false)}
-            >
-              {itemLabel}
-            </Link>
-          </li>
-        </ul>
+          <Link
+            ref={itemRef}
+            role="menuitem"
+            href={itemHref}
+            aria-current={onContact && itemHref === pathname ? "page" : undefined}
+            className="flex min-h-11 items-center rounded-control px-3 text-sm font-medium text-foreground outline-none transition-standard hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => setOpen(false)}
+          >
+            {itemLabel}
+          </Link>
+        </GlassPopover>
       ) : null}
     </div>
   );

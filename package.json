@@ -1,9 +1,9 @@
 {
   "name": "srm-classroom-finder",
-  "version": "0.1.0",
+  "version": "4.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

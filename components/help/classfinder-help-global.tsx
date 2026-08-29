@@ -160,7 +160,12 @@ export function ClassFinderHelpGlobal() {
             </div>
             <Suspense
               fallback={
-                <div className="rounded-surface border border-border bg-card p-4 text-sm text-muted-foreground">
+                <div
+                  className={cn(
+                    glassSurfaceClasses({ variant: "regular" }),
+                    "rounded-popover p-4 text-sm text-muted-foreground",
+                  )}
+                >
                   Loading Help…
                 </div>
               }

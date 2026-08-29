@@ -51,6 +51,10 @@ async function main() {
     assert(sw.includes('CACHE_VERSION = "srm-classroom-finder-v2.7"'), "cache version");
     assert(sw.includes('url.pathname === "/sw.js"'), "sw.js not cache-first");
     assert(sw.includes("keys") && sw.includes("caches.delete"), "old cache cleanup");
+    assert(
+      !sw.includes("/api/finder") && !sw.includes("url.pathname.startsWith('/api')"),
+      "live Finder API must not be intercepted by the service worker",
+    );
     const pwa = readFileSync(join(root, "components/pwa-register.tsx"), "utf8");
     assert(pwa.includes('updateViaCache: "none"'), "register bypasses HTTP cache");
     console.log("ok  pwa");

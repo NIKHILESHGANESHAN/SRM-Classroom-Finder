@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { GlassSurface } from "@/components/glass";
 import { buildFeedbackMailtoHref } from "@/lib/help/mailto";
 import { cn } from "@/lib/utils";
 
@@ -57,38 +58,40 @@ function OptionRow({
 export function ContactOptions() {
   return (
     <nav aria-label="Contact options">
-      <ul className="overflow-hidden rounded-surface border border-border bg-card shadow-token-sm">
-        {OPTIONS.map((option, index) => {
-          const row = (
-            <OptionRow
-              title={option.title}
-              description={option.description}
-              className={index > 0 ? "border-t border-border/70" : undefined}
-            />
-          );
+      <GlassSurface variant="regular" className="overflow-hidden shadow-token-sm">
+        <ul>
+          {OPTIONS.map((option, index) => {
+            const row = (
+              <OptionRow
+                title={option.title}
+                description={option.description}
+                className={index > 0 ? "border-t border-border/70" : undefined}
+              />
+            );
 
-          return (
-            <li key={option.title}>
-              {option.external ? (
-                <a
-                  href={option.href}
-                  className="block transition-standard hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                  data-feedback-mailto="true"
-                >
-                  {row}
-                </a>
-              ) : (
-                <Link
-                  href={option.href}
-                  className="block transition-standard hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                >
-                  {row}
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li key={option.title}>
+                {option.external ? (
+                  <a
+                    href={option.href}
+                    className="block transition-standard hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    data-feedback-mailto="true"
+                  >
+                    {row}
+                  </a>
+                ) : (
+                  <Link
+                    href={option.href}
+                    className="block transition-standard hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                  >
+                    {row}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </GlassSurface>
     </nav>
   );
 }

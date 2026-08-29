@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+function subscribeMediaQuery(
+  query: string,
+  onChange: () => void,
+): () => void {
+  const media = window.matchMedia(query);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
 
 /**
- * Subscribe to a CSS media query. Returns `false` during SSR / first paint
- * so Sheet (mobile default) is used until the client can measure the viewport.
+ * Subscribe to a CSS media query via useSyncExternalStore.
+ * Returns `false` during SSR — mobile-first layouts render until hydrated.
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const onChange = () => setMatches(media.matches);
-    onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [query]);
-
-  return matches;
+  return useSyncExternalStore(
+    (onChange) => subscribeMediaQuery(query, onChange),
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
 }

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function ContactChatPage() {
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-5 sm:max-w-2xl sm:gap-6">
+    <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-5 overflow-x-hidden sm:max-w-2xl sm:gap-6">
       <ContactHeader
         title="ClassFinder Help"
         subtitle="Answers from the help guide and live Finder data"

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { formatUpdatedAgo } from "@/lib/finder-realtime";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ export function FinderLiveStatus({
   refreshing,
   onRefresh,
 }: FinderLiveStatusProps) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {

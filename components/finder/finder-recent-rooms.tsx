@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { buildClassroomSharePath } from "@/lib/classroom-share";
+import { surfaceElevatedClasses } from "@/lib/glass";
 import type { RecentRoom } from "@/lib/local-preferences";
+import { cn } from "@/lib/utils";
 
 type FinderRecentRoomsProps = {
   rooms: RecentRoom[];
@@ -32,7 +34,10 @@ export function FinderRecentRooms({ rooms, onClear }: FinderRecentRoomsProps) {
             <li key={`${room.buildingCode}-${room.floorNumber}-${room.roomNumber}`}>
               <Link
                 href={href}
-                className="inline-flex min-h-11 items-center rounded-control border border-border bg-card px-3 text-sm tabular-nums hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={cn(
+                  surfaceElevatedClasses(),
+                  "inline-flex min-h-11 items-center px-3 text-sm tabular-nums transition-standard hover:border-cf-accent/30 hover:text-cf-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                )}
               >
                 {label}
                 <span className="sr-only">{` Floor ${room.floorNumber}`}</span>

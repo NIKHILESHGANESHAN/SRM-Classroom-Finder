@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function ContactCommunityPage() {
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 sm:max-w-2xl sm:gap-7">
+    <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-6 overflow-x-hidden sm:max-w-2xl sm:gap-7">
       <ContactHeader
         title="Common questions"
         subtitle="Curated answers about ClassFinder"

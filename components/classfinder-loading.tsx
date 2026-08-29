@@ -50,8 +50,8 @@ export function ClassFinderLoading({
     );
   }
 
-  const stage1End = MOTION_STANDARD;
-  const stage2Duration = MOTION_STANDARD + MOTION_MICRO;
+  const stage1End = MOTION_MICRO;
+  const stage2Duration = MOTION_STANDARD;
   const stage3Start = stage1End + stage2Duration;
 
   return (

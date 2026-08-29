@@ -23,3 +23,11 @@ export function glassSurfaceClasses({
     className,
   );
 }
+
+/**
+ * Opaque elevated surface using glass color tokens — no backdrop-filter.
+ * Use for list cards and controls inside glass shells to avoid stacked blur.
+ */
+export function surfaceElevatedClasses(className?: string): string {
+  return cn("surface-elevated", className);
+}
