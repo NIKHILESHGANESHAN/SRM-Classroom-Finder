@@ -1,10 +1,91 @@
+# QA Report — SRM KTR Classroom Finder
+
+**Project:** SRM KTR Classroom Finder
+
+This file collects QA records and sign-off notes across the project lifecycle. The **current release track is Version 5** (`v5-final`, per [README.md](../README.md)).
+
+Confirmed major-version phase counts: **V1 = 13**, **V2 = 6**, **V3 = 8**, **V4 = 12**, **V5 = 13**.
+
+---
+
+## V5 — QA status
+
+**Date:** *not recorded in this repository*
+
+**Overall status:** **No formal V5 final QA sign-off is documented in this file yet.**
+
+Repository evidence that Version 5 shipped:
+
+| Evidence | Source |
+| -------- | ------ |
+| `feat: complete V5 release` | git commit |
+| `V5 Phase 1 - Add admin operations center` | git commit |
+| Branch `v5-final` | README status |
+| Netlify deployment | README (exact site URL and cron schedule are **not** checked into this repository) |
+
+README documents V5 scope (Operations center, TP1 inventory, sounds, XO Easter Egg, brand integration). See [README.md — Version history](../README.md#version-history) for confirmed **V5 = 13 phases** and which sub-phases are *undocumented*.
+
+### Regression scripts present (results not recorded here)
+
+The repository contains targeted test scripts. **This document does not record pass/fail results for a completed V5 QA pass.** Scripts are listed by what their headers document — not as a confirmed V5 phase checklist.
+
+| Script | Header / documented scope |
+| ------ | ------------------------- |
+| `scripts/test-xo-easter-egg.ts` | V5 Phase 3 / 3.1 — XO Easter Egg game logic + unlock |
+| `scripts/test-sound-effects.ts` | V5 Phase 4 — sound system |
+| `scripts/test-v5-phase-6.ts` | V5 Phase 6 — Easter Egg entry actions, XO close navigation, rounded UI polish |
+| `scripts/test-v5-phase-6-1.ts` | V5 Phase 6.1 — remove X+O test trigger; brand links home |
+| `scripts/test-v5-phase-6-2.ts` | V5 Phase 6.2 — fair XO AI, computer-move reliability, rounded tiles |
+| `scripts/test-easter-egg-windows.ts` | V4 Easter Egg windows + daily reporting cycle |
+| `scripts/test-phase11-v4-bugs.ts` | Phase 11 V4 bug regression tests |
+| `scripts/test-help-launcher-mount.ts` | Phase 10.3 — global Help launcher mount/visibility |
+| `scripts/test-contribute-reportable-periods.ts` | Contributor reportable-period regression |
+| `scripts/measure-phase8.mjs` | Phase 8 / V3 final performance baseline — local TTFB + transfer sizes (measurement tool only; not a V5 sign-off artifact) |
+
+V5 phases **2, 5, 7, 8, 9, 10, 11, 12, and 13** have no dedicated scripts named in this repository (*undocumented*).
+
+Older harnesses (`scripts/test-phase14-qa.ts`, `scripts/test-v2-7-final-qa.ts`, V2.1–V2.6 scripts) remain for regression but were authored for earlier surfaces. The Phase 14 HTTP probe list does **not** include V3–V5 routes such as `/how-it-works`, `/contact`, `/admin/operations`, or Easter Egg flows.
+
+### Deployment checklist (Netlify — from README; not verified here)
+
+1. [ ] Provision Neon or Supabase Postgres
+2. [ ] Set Netlify env: `DATABASE_URL`, `CRON_SECRET` (≥8 chars), `ADMIN_SECRET` (≥16 chars, **not** `CRON_SECRET`, never `NEXT_PUBLIC_`), `NEXT_PUBLIC_APP_URL`
+3. [ ] `npx prisma migrate deploy` against production
+4. [ ] `npx prisma db seed` once (243 classrooms: UB 77 + TP1 88 + TP2 78)
+5. [ ] Configure scheduled HTTP `GET /api/cron/expire` every 5 minutes with `Authorization: Bearer <CRON_SECRET>` (legacy `vercel.json` schedule is not the Netlify source of truth)
+6. [ ] `npm run build` with production-like env
+7. [ ] Smoke: `/`, `/finder`, `/contribute`, `/stats`, `/how-it-works`, `/contact`, `/admin/login`, cron with Bearer secret
+
+**Compatibility:** Next.js 14 App Router; PostgreSQL URL validated by Zod (`postgresql://` / `postgres://`); SSL query params supported for Neon/Supabase.
+
+### Known codebase notes (not from a completed V5 QA pass)
+
+- PWA service worker cache name remains `srm-classroom-finder-v2.7` in `public/sw.js`
+- `package.json` version is `4.0.0` at the time of this documentation pass
+- In-memory rate limits are per serverless isolate (`lib/rate-limit.ts`)
+- `mailto:` feedback depends on the OS mail handler
+- Formal mobile installability, screen-reader (NVDA/VoiceOver), and production Netlify cron verification are **not recorded** in this repository for V5
+
+### Pending
+
+- [ ] Run and record a formal V5 final QA pass (tooling, HTTP smoke, security, accessibility as needed)
+- [ ] Extend or supplement HTTP regression coverage for V3–V5 routes and admin Operations
+- [ ] Record results for the V5-named scripts above
+- [ ] Update README future-improvement items when PWA cache / `package.json` version are bumped
+
+---
+
+## Archive — V2.7 final QA (2026-08-15)
+
+> **Historical.** This section records the Version 2.7 freeze only. **V3, V4, and V5 shipped after this pass.** Statements below (including deployment target and limitation notes) reflect August 2026 V2.7 context unless explicitly marked otherwise.
+
 # V2.7 FINAL QA REPORT
 
 **Project:** SRM KTR Classroom Finder
 **Date:** 2026-08-15
-**Overall Status:** Production Ready With Known Limitations
+**Overall Status:** Production Ready With Known Limitations (V2.7 era)
 
-Version 2 is frozen after this pass. No V3 work was started. Schema/ER/normalization files were already accurate; they were not rewritten.
+Version 2 was frozen after this pass. Schema/ER/normalization files were already accurate at the time; they were not rewritten in V2.7.
 
 ---
 
@@ -60,20 +141,22 @@ Unchanged (already matched implementation): `docs/schema.sql`, `docs/ER-diagram.
 
 ## Known Limitations
 
-- In-memory rate limits are per Vercel isolate.
+- In-memory rate limits are per Vercel isolate (historical wording; app tier is now documented on Netlify in README).
 - `mailto:` depends on the OS mail handler; this pass did not open Mail.app.
 - Local V2 tests recreate `V22-…` fixtures; cleanup is localhost-only.
 - Chat and Finder agree on the **current slot** by default; they differ if the user asks “all slots” or Finder is set to All slots.
 - Add-to-Home-Screen / installability was not re-verified in a mobile browser.
 - Screen-reader (NVDA/VoiceOver) pass was not run.
 - Skip-link mouse click is intercepted while the link is `sr-only`; it is intended for keyboard focus (`focus:not-sr-only`).
-- Historical Git `Co-authored-by: Cursor` entries were left untouched. V2.7 changes are **uncommitted**.
+- Historical Git `Co-authored-by: Cursor` entries were left untouched. V2.7 changes were **uncommitted** at the time of this report.
 
 ---
 
-## V3 Recommendations (do not implement)
+## V2.7-era recommendations (historical — superseded)
 
-- TP1 classroom inventory
+> Several items below were open at V2.7. **TP1 classroom inventory shipped in V5** (`prisma/data/classroom-inventory.ts`). Other items may still apply as future work — see [README.md](../README.md).
+
+- TP1 classroom inventory *(shipped in V5)*
 - Redis/Upstash rate limiting across isolates
 - Optional campus map
 - Push notifications / watched buildings
@@ -83,6 +166,10 @@ Unchanged (already matched implementation): `docs/schema.sql`, `docs/ER-diagram.
 - Extra README screenshots (contact/chat/admin)
 
 ---
+
+## Archive — Phase 14 final QA (2026-08-09)
+
+> **Historical V1 final verification artifact.** Git commit: “Phase 14 - Final QA and production readiness”. This is **not** an additional V1 development phase. **V1 = 13 phases.**
 
 # Phase 14 — Final QA Report
 
@@ -200,6 +287,8 @@ Other query paths already use the `active_free_classrooms` view and indexed filt
 ---
 
 ## 6. Deployment checklist
+
+> **Historical.** Superseded for current production by the Netlify checklist in the [V5 section](#v5--qa-status) and [README.md](../README.md).
 
 Before go-live:
 
