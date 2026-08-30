@@ -108,6 +108,8 @@ Two critical write paths use `prisma.$transaction`:
 2. **Occupied report** — insert `occupied_reports`; if `COUNT(*)` for that free report reaches 2, set `free_reports.status = 'hidden'` in the **same** transaction. Prevents race conditions where two strikes both see count = 1.
 3. **Still Free** — insert `report_events` (`still_free`); unique `(free_report_id, actor_token)` makes retries idempotent and blocks confirmation spam.
 
+Owner-verified classroom rows are seeded from `prisma/data/classroom-inventory.ts` (UB, TP1, and TP2 — 243 rooms at V5). Students do not create classroom rows. The `/admin` console has no inventory editor (removed in V4); `is_active` changes are seed/DB operations.
+
 ---
 
 ## 7. Aggregate Queries
@@ -173,7 +175,7 @@ There is intentionally **no** `users` / OTP schema — tracking is device-scoped
 2. **Indexed fact table** — Finder and cron hit composite indexes instead of full scans.
 3. **View as read model** — application queries stay simple; optimizer can expand the view.
 4. **Retention without bloat in the UI** — expired rows stay for analytics but leave the view.
-5. **Horizontal-friendly app tier** — Next.js on Vercel; Postgres on Neon/Supabase connection pooling.
+5. **Horizontal-friendly app tier** — Next.js on Netlify (per README); Postgres on Neon/Supabase connection pooling.
 6. **Idempotent writes** — natural unique keys + transactions make retries safe under concurrency.
 7. **No auth bottleneck** — anonymous tokens avoid session stores for the common path.
 

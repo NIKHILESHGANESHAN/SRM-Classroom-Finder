@@ -43,6 +43,8 @@ No attribute like `building_name` is stored on `classrooms` or `free_reports` (t
 
 From V2.1, `classrooms` is **master inventory** (seeded, `is_active` for soft-retire). Students do not create classroom rows. `is_active` depends on the classroom entity key, not on reports — still 3NF.
 
+The seed file (`prisma/data/classroom-inventory.ts`) supplies owner-verified rooms for **UB, TP1, and TP2** (243 classrooms at V5). Soft-retiring or adding inventory rows is a seed/database change; the admin console has no inventory editor (removed in V4).
+
 ---
 
 ## 3NF — Third Normal Form
